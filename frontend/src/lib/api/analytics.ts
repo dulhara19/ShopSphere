@@ -14,16 +14,10 @@ import { ApiResponse } from '@/types/api';
 import {
   AnalyticsEvent,
   DashboardMetrics,
-  RealTimeMetrics,
-  KpiMetrics,
   SalesAnalytics,
   CategorySales,
-  RegionSales,
   TopSellingProduct,
   ProductPerformance,
-  CustomerOverview,
-  CohortData,
-  CustomerLTV,
   AnalyticsParams,
   ExportReportRequest,
   ExportReportResponse,
@@ -46,42 +40,34 @@ export const analyticsApi = {
   // ==========================================
 
   /**
-   * GET /api/analytics/dashboard
-   * Get main dashboard metrics
+   * GET /api/analytics/dashboard/admin
+   * Get admin dashboard metrics
    */
   getDashboard: (params: AnalyticsParams) =>
-    analyticsClient.get<ApiResponse<DashboardMetrics>>('/api/analytics/dashboard', {
+    analyticsClient.get<ApiResponse<DashboardMetrics>>('/api/analytics/dashboard/admin', {
       params,
     }),
 
   /**
-   * GET /api/analytics/dashboard/real-time
-   * Get real-time live metrics
+   * GET /api/analytics/dashboard/seller
+   * Get seller dashboard metrics
    */
-  getRealTimeMetrics: () =>
-    analyticsClient.get<ApiResponse<RealTimeMetrics>>(
-      '/api/analytics/dashboard/real-time'
+  getSellerDashboard: (sellerId: string, params: AnalyticsParams) =>
+    analyticsClient.get<ApiResponse<DashboardMetrics>>(
+      '/api/analytics/dashboard/seller',
+      { params: { ...params, sellerId } }
     ),
-
-  /**
-   * GET /api/analytics/dashboard/kpis
-   * Get key performance indicators
-   */
-  getKpis: (params: AnalyticsParams) =>
-    analyticsClient.get<ApiResponse<KpiMetrics>>('/api/analytics/dashboard/kpis', {
-      params,
-    }),
 
   // ==========================================
   // Sales Analytics
   // ==========================================
 
   /**
-   * GET /api/analytics/sales
-   * Get sales analytics with granularity
+   * GET /api/analytics/sales/by-date
+   * Get sales analytics by date with granularity
    */
-  getSalesAnalytics: (params: AnalyticsParams) =>
-    analyticsClient.get<ApiResponse<SalesAnalytics>>('/api/analytics/sales', {
+  getSalesAnalytics: (params: AnalyticsParams & { granularity?: string }) =>
+    analyticsClient.get<ApiResponse<SalesAnalytics>>('/api/analytics/sales/by-date', {
       params,
     }),
 
@@ -106,11 +92,11 @@ export const analyticsApi = {
     ),
 
   /**
-   * GET /api/analytics/sales/by-region
-   * Get sales by region
+   * GET /api/analytics/sales/funnel
+   * Get conversion funnel data
    */
-  getSalesByRegion: (params: AnalyticsParams) =>
-    analyticsClient.get<ApiResponse<RegionSales[]>>('/api/analytics/sales/by-region', {
+  getConversionFunnel: (params: AnalyticsParams) =>
+    analyticsClient.get<ApiResponse<unknown>>('/api/analytics/sales/funnel', {
       params,
     }),
 
@@ -129,45 +115,12 @@ export const analyticsApi = {
     ),
 
   /**
-   * GET /api/analytics/products/performance
+   * GET /api/analytics/products/{productId}/performance
    * Get product performance metrics
    */
-  getProductPerformance: (params: AnalyticsParams) =>
-    analyticsClient.get<ApiResponse<ProductPerformance[]>>(
-      '/api/analytics/products/performance',
-      { params }
-    ),
-
-  // ==========================================
-  // Customer Analytics
-  // ==========================================
-
-  /**
-   * GET /api/analytics/customers/overview
-   * Get customer overview metrics
-   */
-  getCustomerOverview: (params: AnalyticsParams) =>
-    analyticsClient.get<ApiResponse<CustomerOverview>>(
-      '/api/analytics/customers/overview',
-      { params }
-    ),
-
-  /**
-   * GET /api/analytics/customers/cohorts
-   * Get cohort analysis
-   */
-  getCohortAnalysis: (params: AnalyticsParams) =>
-    analyticsClient.get<ApiResponse<CohortData[]>>('/api/analytics/customers/cohorts', {
-      params,
-    }),
-
-  /**
-   * GET /api/analytics/customers/lifetime-value
-   * Get customer lifetime value analysis
-   */
-  getCustomerLTV: (params: AnalyticsParams) =>
-    analyticsClient.get<ApiResponse<CustomerLTV[]>>(
-      '/api/analytics/customers/lifetime-value',
+  getProductPerformance: (productId: string, params: AnalyticsParams) =>
+    analyticsClient.get<ApiResponse<ProductPerformance>>(
+      `/api/analytics/products/${productId}/performance`,
       { params }
     ),
 

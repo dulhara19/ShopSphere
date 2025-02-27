@@ -23,7 +23,7 @@ import {
   UpdateInventoryRequest,
   BulkUpdateInventoryRequest,
   SetThresholdRequest,
-} from '@/types/inventory';
+} from '@/types/api/inventory';
 
 export const inventoryApi = {
   // ==========================================
