@@ -8,7 +8,7 @@
 import { ISO8601, UUID } from './api';
 
 // Product status
-export type ProductStatus = 'ACTIVE' | 'INACTIVE' | 'OUT_OF_STOCK';
+export type ProductStatus = 'ACTIVE' | 'INACTIVE' | 'DRAFT' | 'ARCHIVED' | 'OUT_OF_STOCK';
 
 // Product image
 export interface ProductImage {

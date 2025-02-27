@@ -14,7 +14,11 @@ export type OrderStatus =
   | 'CONFIRMED'
   | 'PROCESSING'
   | 'SHIPPED'
+  | 'OUT_FOR_DELIVERY'
   | 'DELIVERED'
+  | 'CANCELLED'
+  | 'REFUNDED'
+  | 'FAILED'
   | 'CANCELLED';
 
 // Payment status

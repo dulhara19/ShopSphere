@@ -22,6 +22,7 @@ export interface User {
   phone?: string;
   avatarUrl?: string;
   role: UserRole;
+  roles?: UserRole[];
   status: UserStatus;
   emailVerified: boolean;
   createdAt: ISO8601;
