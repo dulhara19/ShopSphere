@@ -17,18 +17,18 @@ export const env = {
   // API Gateway (for staging/production)
   apiGatewayUrl: process.env.NEXT_PUBLIC_API_GATEWAY_URL || '',
 
-  // Individual Service URLs
+  // Individual Service URLs (empty = use Next.js proxy rewrites, avoids CORS)
   services: {
-    user: process.env.NEXT_PUBLIC_USER_SERVICE_URL || 'http://localhost:3001',
-    product: process.env.NEXT_PUBLIC_PRODUCT_SERVICE_URL || 'http://localhost:3002',
-    inventory: process.env.NEXT_PUBLIC_INVENTORY_SERVICE_URL || 'http://localhost:3003',
-    order: process.env.NEXT_PUBLIC_ORDER_SERVICE_URL || 'http://localhost:3004',
-    payment: process.env.NEXT_PUBLIC_PAYMENT_SERVICE_URL || 'http://localhost:3005',
-    shipping: process.env.NEXT_PUBLIC_SHIPPING_SERVICE_URL || 'http://localhost:3006',
-    review: process.env.NEXT_PUBLIC_REVIEW_SERVICE_URL || 'http://localhost:3007',
-    recommendation: process.env.NEXT_PUBLIC_RECOMMENDATION_SERVICE_URL || 'http://localhost:3008',
-    notification: process.env.NEXT_PUBLIC_NOTIFICATION_SERVICE_URL || 'http://localhost:3009',
-    analytics: process.env.NEXT_PUBLIC_ANALYTICS_SERVICE_URL || 'http://localhost:3010',
+    user: process.env.NEXT_PUBLIC_USER_SERVICE_URL || '',
+    product: process.env.NEXT_PUBLIC_PRODUCT_SERVICE_URL || '',
+    inventory: process.env.NEXT_PUBLIC_INVENTORY_SERVICE_URL || '',
+    order: process.env.NEXT_PUBLIC_ORDER_SERVICE_URL || '',
+    payment: process.env.NEXT_PUBLIC_PAYMENT_SERVICE_URL || '',
+    shipping: process.env.NEXT_PUBLIC_SHIPPING_SERVICE_URL || '',
+    review: process.env.NEXT_PUBLIC_REVIEW_SERVICE_URL || '',
+    recommendation: process.env.NEXT_PUBLIC_RECOMMENDATION_SERVICE_URL || '',
+    notification: process.env.NEXT_PUBLIC_NOTIFICATION_SERVICE_URL || '',
+    analytics: process.env.NEXT_PUBLIC_ANALYTICS_SERVICE_URL || '',
   },
 
   // Stripe

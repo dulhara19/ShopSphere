@@ -9,7 +9,7 @@ import { Toaster } from '@/components/ui/toaster';
 async function initMocks() {
   if (typeof window === 'undefined') return;
 
-  if (process.env.NODE_ENV === 'development' || process.env.NEXT_PUBLIC_ENABLE_MSW === 'true') {
+  if (process.env.NEXT_PUBLIC_ENABLE_MSW === 'true') {
     const { worker } = await import('@/mocks/browser');
     await worker.start({
       onUnhandledRequest: 'bypass',
