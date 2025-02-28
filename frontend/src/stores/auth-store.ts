@@ -11,7 +11,7 @@
 
 import { create } from 'zustand';
 import { persist, createJSONStorage } from 'zustand/middleware';
-import { User, AuthResponse, LoginRequest, RegisterRequest } from '@/types/user';
+import { User, LoginRequest, RegisterRequest } from '@/types/user';
 import { userApi } from '@/lib/api/user';
 import {
   ACCESS_TOKEN_KEY,
@@ -57,11 +57,29 @@ export const useAuthStore = create<AuthState>()(
         set({ isLoading: true, error: null });
         try {
           const response = await userApi.login(credentials);
-          const { accessToken, refreshToken, user } = response.data.data;
+          // Backend returns flat response: { accessToken, refreshToken, email, firstName, ... roles: [...] }
+          const data = response.data?.data || response.data;
+          const { accessToken, refreshToken, ...rest } = data;
 
           // Store tokens
           setStorageItem(ACCESS_TOKEN_KEY, accessToken);
           setStorageItem(REFRESH_TOKEN_KEY, refreshToken);
+
+          // Build user object from flat response
+          const user: User = {
+            id: rest.userId || rest.id || '',
+            email: rest.email,
+            firstName: rest.firstName,
+            lastName: rest.lastName,
+            phone: rest.phone,
+            avatarUrl: rest.avatarUrl,
+            role: rest.roles?.[0] || rest.role || 'CUSTOMER',
+            roles: rest.roles,
+            status: rest.status || 'ACTIVE',
+            emailVerified: rest.emailVerified ?? false,
+            createdAt: rest.createdAt || '',
+            updatedAt: rest.updatedAt || '',
+          };
 
           set({
             user,
@@ -72,22 +90,46 @@ export const useAuthStore = create<AuthState>()(
         } catch (error: any) {
           set({
             isLoading: false,
-            error: error.error?.message || 'Login failed',
+            error: error.response?.data?.message || error.error?.message || 'Login failed',
           });
           throw error;
         }
       },
 
       // Register action
-      register: async (data: RegisterRequest) => {
+      register: async (registerData: RegisterRequest) => {
         set({ isLoading: true, error: null });
         try {
-          const response = await userApi.register(data);
-          const { accessToken, refreshToken, user } = response.data.data;
+          const response = await userApi.register(registerData);
+          // Backend register returns: { userId, email, firstName, lastName, message }
+          // No tokens — need to login after register
+          const regData = response.data?.data || response.data;
 
-          // Store tokens
+          // Auto-login after registration
+          const loginResponse = await userApi.login({
+            email: registerData.email,
+            password: registerData.password,
+          });
+          const loginData = loginResponse.data?.data || loginResponse.data;
+          const { accessToken, refreshToken, ...rest } = loginData;
+
           setStorageItem(ACCESS_TOKEN_KEY, accessToken);
           setStorageItem(REFRESH_TOKEN_KEY, refreshToken);
+
+          const user: User = {
+            id: rest.userId || rest.id || regData.userId || '',
+            email: rest.email,
+            firstName: rest.firstName,
+            lastName: rest.lastName,
+            phone: rest.phone,
+            avatarUrl: rest.avatarUrl,
+            role: rest.roles?.[0] || rest.role || 'CUSTOMER',
+            roles: rest.roles,
+            status: rest.status || 'ACTIVE',
+            emailVerified: rest.emailVerified ?? false,
+            createdAt: rest.createdAt || '',
+            updatedAt: rest.updatedAt || '',
+          };
 
           set({
             user,
@@ -98,7 +140,7 @@ export const useAuthStore = create<AuthState>()(
         } catch (error: any) {
           set({
             isLoading: false,
-            error: error.error?.message || 'Registration failed',
+            error: error.response?.data?.message || error.error?.message || 'Registration failed',
           });
           throw error;
         }
@@ -136,8 +178,25 @@ export const useAuthStore = create<AuthState>()(
         set({ isLoading: true });
         try {
           const response = await userApi.getProfile();
+          const data = response.data?.data || response.data;
+
+          const user: User = {
+            id: data.id || '',
+            email: data.email,
+            firstName: data.firstName,
+            lastName: data.lastName,
+            phone: data.phone,
+            avatarUrl: data.profilePictureUrl || data.avatarUrl,
+            role: data.roles?.[0] || data.role || 'CUSTOMER',
+            roles: data.roles,
+            status: data.isEnabled === false ? 'INACTIVE' : 'ACTIVE',
+            emailVerified: data.isEmailVerified ?? false,
+            createdAt: data.createdAt || '',
+            updatedAt: data.updatedAt || '',
+          };
+
           set({
-            user: response.data.data,
+            user,
             isAuthenticated: true,
             isLoading: false,
           });

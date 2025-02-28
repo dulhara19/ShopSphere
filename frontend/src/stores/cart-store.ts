@@ -58,7 +58,7 @@ export const useCartStore = create<CartState>()(
         try {
           const response = await orderApi.getCart();
           set({
-            cart: response.data.data,
+            cart: response.data?.data || response.data,
             isLoading: false,
           });
         } catch (error: any) {
@@ -75,7 +75,7 @@ export const useCartStore = create<CartState>()(
         try {
           const response = await orderApi.addToCart(item);
           set({
-            cart: response.data.data,
+            cart: response.data?.data || response.data,
             isLoading: false,
             isDrawerOpen: true, // Open drawer after adding
           });
@@ -106,7 +106,7 @@ export const useCartStore = create<CartState>()(
 
         try {
           const response = await orderApi.updateCartItem(itemId, { quantity });
-          set({ cart: response.data.data });
+          set({ cart: response.data?.data || response.data });
         } catch (error: any) {
           // Revert on error
           set({ cart, error: error.error?.message || 'Failed to update quantity' });
@@ -129,7 +129,7 @@ export const useCartStore = create<CartState>()(
 
         try {
           const response = await orderApi.removeCartItem(itemId);
-          set({ cart: response.data.data });
+          set({ cart: response.data?.data || response.data });
         } catch (error: any) {
           // Revert on error
           set({ cart, error: error.error?.message || 'Failed to remove item' });
@@ -159,7 +159,7 @@ export const useCartStore = create<CartState>()(
       fetchTotals: async () => {
         try {
           const response = await orderApi.getCartTotals();
-          set({ totals: response.data.data });
+          set({ totals: response.data?.data || response.data });
         } catch (error: any) {
           set({ error: error.error?.message || 'Failed to calculate totals' });
         }
@@ -171,7 +171,7 @@ export const useCartStore = create<CartState>()(
         try {
           const response = await orderApi.applyCoupon({ code });
           set({
-            cart: response.data.data,
+            cart: response.data?.data || response.data,
             isLoading: false,
           });
         } catch (error: any) {
@@ -189,7 +189,7 @@ export const useCartStore = create<CartState>()(
         try {
           const response = await orderApi.removeCoupon();
           set({
-            cart: response.data.data,
+            cart: response.data?.data || response.data,
             isLoading: false,
           });
         } catch (error: any) {
@@ -207,7 +207,7 @@ export const useCartStore = create<CartState>()(
 
         try {
           const response = await orderApi.mergeCart({ guestCartId });
-          set({ cart: response.data.data });
+          set({ cart: response.data?.data || response.data });
         } catch (error) {
           // Silently fail merge
         }
