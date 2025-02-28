@@ -20,7 +20,6 @@ import {
   UpdateReviewRequest,
   AddCommentRequest,
   ReviewListParams,
-  ReviewModerationRequest,
 } from '@/types/review';
 
 export const reviewApi = {
@@ -135,23 +134,4 @@ export const reviewApi = {
       `/api/reviews/${reviewId}/comments/${commentId}`
     ),
 
-  // ==========================================
-  // Moderation (Admin)
-  // ==========================================
-
-  /**
-   * POST /api/admin/reviews/{reviewId}/approve
-   * Approve a review
-   */
-  approveReview: (reviewId: string) =>
-    reviewClient.post<ApiResponse<Review>>(`/api/admin/reviews/${reviewId}/approve`),
-
-  /**
-   * POST /api/admin/reviews/{reviewId}/reject
-   * Reject a review
-   */
-  rejectReview: (reviewId: string, reason?: string) =>
-    reviewClient.post<ApiResponse<void>>(`/api/admin/reviews/${reviewId}/reject`, {
-      reason,
-    }),
 };

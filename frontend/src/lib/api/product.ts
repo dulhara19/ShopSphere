@@ -91,19 +91,22 @@ export const productApi = {
   },
 
   /**
-   * DELETE /api/products/{id}/images/{imageId}
+   * DELETE /api/products/{id}/images?imageUrl=
    * Delete a product image
    */
-  deleteImage: (productId: string, imageId: string) =>
-    productClient.delete<ApiResponse<void>>(`/api/products/${productId}/images/${imageId}`),
+  deleteImage: (productId: string, imageUrl: string) =>
+    productClient.delete<ApiResponse<void>>(`/api/products/${productId}/images`, {
+      params: { imageUrl },
+    }),
 
   /**
-   * PUT /api/products/{id}/images/{imageId}/primary
+   * PATCH /api/products/{id}/primary-image
    * Set image as primary
    */
-  setPrimaryImage: (productId: string, imageId: string) =>
-    productClient.put<ApiResponse<Product>>(
-      `/api/products/${productId}/images/${imageId}/primary`
+  setPrimaryImage: (productId: string, imageUrl: string) =>
+    productClient.patch<ApiResponse<Product>>(
+      `/api/products/${productId}/primary-image`,
+      { imageUrl }
     ),
 
   // ==========================================
@@ -157,19 +160,19 @@ export const productApi = {
   // ==========================================
 
   /**
-   * POST /internal/products/batch
+   * POST /api/products/batch
    * Batch get products by IDs
    */
   batchGetProducts: (data: ProductBatchRequest) =>
-    productClient.post<ApiResponse<Product[]>>('/internal/products/batch', data),
+    productClient.post<ApiResponse<Product[]>>('/api/products/batch', data),
 
   /**
-   * POST /internal/products/validate
+   * POST /api/products/validate
    * Validate products exist and are active
    */
   validateProducts: (data: ProductValidationRequest) =>
     productClient.post<ApiResponse<ProductValidationResponse>>(
-      '/internal/products/validate',
+      '/api/products/validate',
       data
     ),
 };

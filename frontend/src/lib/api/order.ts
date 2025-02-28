@@ -92,11 +92,11 @@ export const orderApi = {
     orderClient.get<ApiResponse<CartTotals>>('/api/cart/totals'),
 
   /**
-   * POST /api/cart/apply-coupon
+   * POST /api/cart/coupon
    * Apply coupon code
    */
   applyCoupon: (data: ApplyCouponRequest) =>
-    orderClient.post<ApiResponse<Cart>>('/api/cart/apply-coupon', data),
+    orderClient.post<ApiResponse<Cart>>('/api/cart/coupon', data),
 
   /**
    * DELETE /api/cart/coupon

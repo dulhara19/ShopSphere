@@ -13,69 +13,11 @@ import { notificationClient } from './client';
 import { ApiResponse, PaginatedResponse } from '@/types/api';
 import {
   Notification,
-  NotificationPreferences,
-  Device,
   NotificationListParams,
-  UpdatePreferencesRequest,
-  RegisterDeviceRequest,
   UnreadCountResponse,
-  NotificationTemplate,
 } from '@/types/notification';
 
 export const notificationApi = {
-  // ==========================================
-  // Preferences
-  // ==========================================
-
-  /**
-   * GET /api/notifications/preferences
-   * Get notification preferences
-   */
-  getPreferences: () =>
-    notificationClient.get<ApiResponse<NotificationPreferences>>(
-      '/api/notifications/preferences'
-    ),
-
-  /**
-   * PUT /api/notifications/preferences
-   * Update all notification preferences
-   */
-  updatePreferences: (data: UpdatePreferencesRequest) =>
-    notificationClient.put<ApiResponse<NotificationPreferences>>(
-      '/api/notifications/preferences',
-      data
-    ),
-
-  /**
-   * PUT /api/notifications/preferences/email
-   * Update email preferences only
-   */
-  updateEmailPreferences: (data: UpdatePreferencesRequest['email']) =>
-    notificationClient.put<ApiResponse<NotificationPreferences>>(
-      '/api/notifications/preferences/email',
-      data
-    ),
-
-  /**
-   * PUT /api/notifications/preferences/sms
-   * Update SMS preferences only
-   */
-  updateSmsPreferences: (data: UpdatePreferencesRequest['sms']) =>
-    notificationClient.put<ApiResponse<NotificationPreferences>>(
-      '/api/notifications/preferences/sms',
-      data
-    ),
-
-  /**
-   * PUT /api/notifications/preferences/push
-   * Update push preferences only
-   */
-  updatePushPreferences: (data: UpdatePreferencesRequest['push']) =>
-    notificationClient.put<ApiResponse<NotificationPreferences>>(
-      '/api/notifications/preferences/push',
-      data
-    ),
-
   // ==========================================
   // Notifications
   // ==========================================
@@ -126,56 +68,4 @@ export const notificationApi = {
   deleteNotification: (id: string) =>
     notificationClient.delete<ApiResponse<void>>(`/api/notifications/${id}`),
 
-  // ==========================================
-  // Device Management
-  // ==========================================
-
-  /**
-   * POST /api/notifications/devices
-   * Register device for push notifications
-   */
-  registerDevice: (data: RegisterDeviceRequest) =>
-    notificationClient.post<ApiResponse<Device>>('/api/notifications/devices', data),
-
-  /**
-   * DELETE /api/notifications/devices/{deviceId}
-   * Remove device
-   */
-  removeDevice: (deviceId: string) =>
-    notificationClient.delete<ApiResponse<void>>(
-      `/api/notifications/devices/${deviceId}`
-    ),
-
-  // ==========================================
-  // Templates (Admin)
-  // ==========================================
-
-  /**
-   * GET /api/admin/notification-templates
-   * List notification templates
-   */
-  getTemplates: () =>
-    notificationClient.get<ApiResponse<NotificationTemplate[]>>(
-      '/api/admin/notification-templates'
-    ),
-
-  /**
-   * POST /api/admin/notification-templates
-   * Create template
-   */
-  createTemplate: (data: Partial<NotificationTemplate>) =>
-    notificationClient.post<ApiResponse<NotificationTemplate>>(
-      '/api/admin/notification-templates',
-      data
-    ),
-
-  /**
-   * PUT /api/admin/notification-templates/{id}
-   * Update template
-   */
-  updateTemplate: (id: string, data: Partial<NotificationTemplate>) =>
-    notificationClient.put<ApiResponse<NotificationTemplate>>(
-      `/api/admin/notification-templates/${id}`,
-      data
-    ),
 };
