@@ -20,8 +20,9 @@ export default function HomePage() {
     queryFn: () => recommendationApi.getTrending({ limit: 4 }),
   });
 
-  const products = productsData?.data.data || [];
-  const trending = trendingData?.data.data || [];
+  const rawProducts = productsData?.data?.data || productsData?.data;
+  const products = rawProducts?.content || rawProducts || [];
+  const trending = trendingData?.data?.data || trendingData?.data || [];
 
   return (
     <div className="flex flex-col">

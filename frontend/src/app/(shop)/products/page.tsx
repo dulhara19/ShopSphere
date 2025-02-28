@@ -52,9 +52,11 @@ export default function ProductsPage() {
     queryFn: () => productApi.getCategories(),
   });
 
-  const products = data?.data.data || [];
-  const meta = data?.data.meta;
-  const categories = categoriesData?.data.data || [];
+  const rawData = data?.data?.data || data?.data;
+  const products = rawData?.content || rawData || [];
+  const meta = rawData?.totalPages ? { totalElements: rawData.totalElements, totalPages: rawData.totalPages } : data?.data?.meta;
+  const rawCategories = categoriesData?.data?.data || categoriesData?.data;
+  const categories = Array.isArray(rawCategories) ? rawCategories : rawCategories?.content || [];
 
   const handlePriceRangeChange = (min: number, max: number | null) => {
     setMinPrice(min);
