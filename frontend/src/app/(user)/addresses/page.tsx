@@ -82,7 +82,7 @@ export default function AddressesPage() {
     queryFn: () => userApi.getAddresses(),
   });
 
-  const addresses = addressesData?.data.data || [];
+  const addresses = addressesData?.data?.data || addressesData?.data || [];
 
   const form = useForm<AddressFormValues>({
     resolver: zodResolver(addressSchema),

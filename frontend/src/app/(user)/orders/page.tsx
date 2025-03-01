@@ -63,7 +63,8 @@ export default function OrdersPage() {
       }),
   });
 
-  const orders = ordersData?.data.data || [];
+  const rawOrders = ordersData?.data?.data || ordersData?.data;
+  const orders = rawOrders?.content || rawOrders || [];
 
   const filteredOrders = orders.filter((order) => {
     if (searchQuery) {

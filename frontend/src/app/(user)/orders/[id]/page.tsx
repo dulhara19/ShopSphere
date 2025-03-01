@@ -108,7 +108,7 @@ export default function OrderDetailPage() {
     },
   });
 
-  const order = orderData?.data.data;
+  const order = orderData?.data?.data || orderData?.data;
 
   if (isLoading) {
     return (
