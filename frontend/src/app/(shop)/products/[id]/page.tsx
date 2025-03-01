@@ -46,10 +46,11 @@ export default function ProductDetailPage() {
     queryFn: () => recommendationApi.getSimilarProducts(productId, { limit: 4 }),
   });
 
-  const product = productData?.data.data;
-  const reviews = reviewsData?.data.data || [];
-  const ratingSummary = ratingSummaryData?.data.data;
-  const similarProducts = similarData?.data.data || [];
+  const product = productData?.data?.data || productData?.data;
+  const reviewsRaw = reviewsData?.data?.data || reviewsData?.data;
+  const reviews = reviewsRaw?.content || reviewsRaw || [];
+  const ratingSummary = ratingSummaryData?.data?.data || ratingSummaryData?.data;
+  const similarProducts = similarData?.data?.data || similarData?.data || [];
 
   const handleAddToCart = async () => {
     if (product) {
@@ -84,6 +85,14 @@ export default function ProductDetailPage() {
     );
   }
 
+  // Handle images - backend returns string[] or ProductImage[]
+  const productImages: string[] = (product.images || []).map((img: any) =>
+    typeof img === 'string' ? img : img.url
+  ).filter(Boolean);
+  if (!productImages.length && product.primaryImage) {
+    productImages.push(product.primaryImage);
+  }
+
   const discount = product.compareAtPrice
     ? Math.round(
         ((product.compareAtPrice - product.price) / product.compareAtPrice) * 100
@@ -96,33 +105,36 @@ export default function ProductDetailPage() {
         {/* Images */}
         <div className="space-y-4">
           <div className="relative aspect-square rounded-lg overflow-hidden bg-muted">
-            <Image
-              src={
-                product.images[selectedImage]?.url ||
-                '/images/placeholder-product.svg'
-              }
-              alt={product.name}
-              fill
-              className="object-cover"
-            />
+            {productImages.length > 0 ? (
+              <Image
+                src={productImages[selectedImage]}
+                alt={product.name}
+                fill
+                className="object-cover"
+              />
+            ) : (
+              <div className="w-full h-full flex items-center justify-center text-muted-foreground">
+                <ShoppingCart className="h-16 w-16" />
+              </div>
+            )}
             {discount > 0 && (
               <Badge variant="destructive" className="absolute top-4 left-4">
                 -{discount}%
               </Badge>
             )}
           </div>
-          {product.images.length > 1 && (
+          {productImages.length > 1 && (
             <div className="flex gap-2 overflow-x-auto">
-              {product.images.map((image, i) => (
+              {productImages.map((imgUrl, i) => (
                 <button
-                  key={image.id}
+                  key={i}
                   onClick={() => setSelectedImage(i)}
                   className={`relative h-20 w-20 rounded-md overflow-hidden border-2 ${
                     selectedImage === i ? 'border-primary' : 'border-transparent'
                   }`}
                 >
                   <Image
-                    src={image.thumbnailUrl}
+                    src={imgUrl}
                     alt={`${product.name} ${i + 1}`}
                     fill
                     className="object-cover"
@@ -136,7 +148,7 @@ export default function ProductDetailPage() {
         {/* Product Info */}
         <div className="space-y-6">
           <div>
-            <p className="text-sm text-muted-foreground">{product.categoryName}</p>
+            <p className="text-sm text-muted-foreground">{product.categoryName || product.category?.name || ''}</p>
             <h1 className="text-3xl font-bold mt-1">{product.name}</h1>
             {product.brand && (
               <p className="text-muted-foreground">by {product.brand}</p>
@@ -147,11 +159,11 @@ export default function ProductDetailPage() {
             <div className="flex items-center">
               <Star className="h-5 w-5 fill-yellow-400 text-yellow-400" />
               <span className="ml-1 font-medium">
-                {formatRating(product.averageRating)}
+                {formatRating(product.averageRating || 0)}
               </span>
             </div>
             <span className="text-muted-foreground">
-              ({product.reviewCount} reviews)
+              ({product.reviewCount || 0} reviews)
             </span>
           </div>
 
@@ -206,7 +218,7 @@ export default function ProductDetailPage() {
 
           <div className="flex gap-4 text-sm text-muted-foreground">
             <span>SKU: {product.sku}</span>
-            {product.tags.length > 0 && (
+            {product.tags?.length > 0 && (
               <span>Tags: {product.tags.join(', ')}</span>
             )}
           </div>

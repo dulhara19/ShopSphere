@@ -104,8 +104,8 @@ export default function CheckoutPage() {
     enabled: !!shippingData && !!cart,
   });
 
-  const addresses = addressesData?.data.data || [];
-  const shippingRates = shippingRatesData?.data.data || [];
+  const addresses = addressesData?.data?.data || addressesData?.data || [];
+  const shippingRates = shippingRatesData?.data?.data || shippingRatesData?.data || [];
   const selectedRate = shippingRates.find((r) => r.id === selectedShippingRate);
 
   useEffect(() => {
@@ -180,11 +180,12 @@ export default function CheckoutPage() {
       });
 
       await clearCart();
+      const order = response.data?.data || response.data;
       toast({
         title: 'Order placed successfully!',
-        description: `Order #${response.data.data.orderNumber} has been created.`,
+        description: `Order #${order.orderNumber} has been created.`,
       });
-      router.push(`/orders/${response.data.data.id}`);
+      router.push(`/orders/${order.id}`);
     } catch (error) {
       toast({
         title: 'Error',
