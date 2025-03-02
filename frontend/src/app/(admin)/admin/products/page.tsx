@@ -104,8 +104,11 @@ export default function AdminProductsPage() {
     },
   });
 
-  const products = productsData?.data.data || [];
-  const pagination = productsData?.data.pagination;
+  const rawData = productsData?.data?.data || productsData?.data;
+  const products = rawData?.content || rawData?.data || rawData || [];
+  const pagination = rawData?.totalPages
+    ? { totalPages: rawData.totalPages, totalItems: rawData.totalElements }
+    : productsData?.data?.pagination;
 
   return (
     <div className="space-y-6">
@@ -210,15 +213,18 @@ export default function AdminProductsPage() {
                       <TableCell>
                         <div className="flex items-center gap-3">
                           <div className="relative h-10 w-10 rounded overflow-hidden bg-muted">
-                            <Image
-                              src={
-                                product.thumbnailUrl ||
-                                '/images/placeholder-product.svg'
-                              }
-                              alt={product.name}
-                              fill
-                              className="object-cover"
-                            />
+                            {product.primaryImage || product.thumbnailUrl ? (
+                              <Image
+                                src={product.primaryImage || product.thumbnailUrl}
+                                alt={product.name}
+                                fill
+                                className="object-cover"
+                              />
+                            ) : (
+                              <div className="w-full h-full flex items-center justify-center text-muted-foreground">
+                                <Package className="h-5 w-5" />
+                              </div>
+                            )}
                           </div>
                           <div>
                             <p className="font-medium">{product.name}</p>
@@ -246,17 +252,9 @@ export default function AdminProductsPage() {
                         </div>
                       </TableCell>
                       <TableCell>
-                        <span
-                          className={
-                            product.stockQuantity <= 10
-                              ? 'text-red-600 font-medium'
-                              : ''
-                          }
-                        >
-                          {product.stockQuantity}
-                        </span>
+                        <span className="text-muted-foreground">—</span>
                       </TableCell>
-                      <TableCell>{product.categoryName}</TableCell>
+                      <TableCell>{product.categoryName || product.category?.name || '—'}</TableCell>
                       <TableCell className="text-right">
                         <DropdownMenu>
                           <DropdownMenuTrigger asChild>
