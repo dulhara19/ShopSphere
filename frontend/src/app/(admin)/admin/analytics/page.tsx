@@ -36,22 +36,22 @@ export default function AdminAnalyticsPage() {
 
   const { data: salesData, isLoading: salesLoading } = useQuery({
     queryKey: ['salesAnalytics', timeRange],
-    queryFn: () => analyticsApi.getSalesAnalytics({ period: timeRange }),
+    queryFn: () => analyticsApi.getSalesAnalytics({ startDate: '', endDate: '' }),
   });
 
   const { data: productData, isLoading: productLoading } = useQuery({
     queryKey: ['productAnalytics', timeRange],
-    queryFn: () => analyticsApi.getProductAnalytics({ period: timeRange }),
+    queryFn: () => analyticsApi.getTopSellingProducts({ startDate: '', endDate: '', limit: 10 }),
   });
 
   const { data: customerData, isLoading: customerLoading } = useQuery({
     queryKey: ['customerAnalytics', timeRange],
-    queryFn: () => analyticsApi.getCustomerAnalytics({ period: timeRange }),
+    queryFn: () => analyticsApi.getDashboard({ startDate: '', endDate: '' }),
   });
 
-  const sales = salesData?.data.data;
-  const products = productData?.data.data;
-  const customers = customerData?.data.data;
+  const sales = salesData?.data?.data || salesData?.data || ({} as any);
+  const products = productData?.data?.data || productData?.data || ({} as any);
+  const customers = customerData?.data?.data || customerData?.data || ({} as any);
 
   return (
     <div className="space-y-6">

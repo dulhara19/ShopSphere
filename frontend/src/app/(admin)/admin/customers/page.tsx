@@ -55,7 +55,7 @@ export default function AdminCustomersPage() {
   const { data: customersData, isLoading } = useQuery({
     queryKey: ['adminCustomers', page, statusFilter, searchQuery],
     queryFn: () =>
-      userApi.getUsers({
+      userApi.listUsers({
         page,
         size: 10,
         role: 'CUSTOMER',
@@ -63,8 +63,11 @@ export default function AdminCustomersPage() {
       }),
   });
 
-  const customers = customersData?.data.data || [];
-  const pagination = customersData?.data.pagination;
+  const rawCustomers: any = customersData?.data?.data || customersData?.data;
+  const customers = rawCustomers?.content || rawCustomers || [];
+  const pagination = rawCustomers?.totalPages
+    ? { totalPages: rawCustomers.totalPages, totalItems: rawCustomers.totalElements }
+    : customersData?.data?.pagination;
 
   return (
     <div className="space-y-6">
