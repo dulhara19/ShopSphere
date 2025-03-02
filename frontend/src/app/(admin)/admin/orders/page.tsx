@@ -79,15 +79,18 @@ export default function AdminOrdersPage() {
   const { data: ordersData, isLoading } = useQuery({
     queryKey: ['adminOrders', page, statusFilter, searchQuery],
     queryFn: () =>
-      orderApi.getOrders({
+      orderApi.listAllOrders({
         page,
         size: 10,
         status: statusFilter !== 'all' ? (statusFilter as OrderStatus) : undefined,
       }),
   });
 
-  const orders = ordersData?.data.data || [];
-  const pagination = ordersData?.data.pagination;
+  const rawOrders: any = ordersData?.data?.data || ordersData?.data;
+  const orders: any[] = rawOrders?.content || rawOrders || [];
+  const pagination = rawOrders?.totalPages
+    ? { totalPages: rawOrders.totalPages, totalItems: rawOrders.totalElements }
+    : ordersData?.data?.pagination;
 
   const filteredOrders = orders.filter((order) => {
     if (searchQuery) {

@@ -25,10 +25,10 @@ import { formatPriceSimple } from '@/lib/utils/format';
 export default function AdminDashboardPage() {
   const { data: dashboardData, isLoading } = useQuery({
     queryKey: ['adminDashboard'],
-    queryFn: () => analyticsApi.getDashboard(),
+    queryFn: () => analyticsApi.getDashboard({ startDate: '', endDate: '' }),
   });
 
-  const metrics = dashboardData?.data.data;
+  const metrics: any = dashboardData?.data?.data || dashboardData?.data;
 
   const statCards = [
     {
