@@ -1,21 +1,326 @@
-version: '3.8'
+version: "3.9"
+
 services:
-  mongodb:
-    image: mongo:latest
+  # ============================================================
+  # SHARED INFRASTRUCTURE
+  # ============================================================
+
+  shopsphere-postgres:
+    image: postgres:15
+    container_name: shopsphere-postgres
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: postgres
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+      - ./infrastructure/docker/init-postgres.sh:/docker-entrypoint-initdb.d/init-postgres.sh
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  shopsphere-mongo:
+    image: mongo:7
+    container_name: shopsphere-mongo
     ports:
       - "27017:27017"
-    container_name: shopsphere-mongo
+    volumes:
+      - mongo-data:/data/db
+    healthcheck:
+      test: ["CMD", "mongosh", "--eval", "db.adminCommand('ping')"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
 
-  elasticsearch:
-    image: docker.elastic.co/elasticsearch/elasticsearch:7.17.0
-    environment:
-      - discovery.type=single-node
-    ports:
-      - "9200:9200"
-    container_name: shopsphere-elastic
-
-  redis:
-    image: redis:latest
+  shopsphere-redis:
+    image: redis:7
+    container_name: shopsphere-redis
     ports:
       - "6379:6379"
-    container_name: shopsphere-redis
+    command: ["redis-server", "--appendonly", "yes"]
+    volumes:
+      - redis-data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  shopsphere-rabbitmq:
+    image: rabbitmq:3-management
+    container_name: shopsphere-rabbitmq
+    ports:
+      - "5672:5672"
+      - "15672:15672"
+    environment:
+      RABBITMQ_DEFAULT_USER: guest
+      RABBITMQ_DEFAULT_PASS: guest
+    volumes:
+      - rabbitmq-data:/var/lib/rabbitmq
+    healthcheck:
+      test: ["CMD", "rabbitmq-diagnostics", "check_running"]
+      interval: 15s
+      timeout: 10s
+      retries: 5
+
+  shopsphere-zookeeper:
+    image: confluentinc/cp-zookeeper:7.6.1
+    container_name: shopsphere-zookeeper
+    environment:
+      ZOOKEEPER_CLIENT_PORT: 2181
+      ZOOKEEPER_TICK_TIME: 2000
+    ports:
+      - "2181:2181"
+
+  shopsphere-kafka:
+    image: confluentinc/cp-kafka:7.6.1
+    container_name: shopsphere-kafka
+    depends_on:
+      - shopsphere-zookeeper
+    ports:
+      - "9092:9092"
+      - "29092:29092"
+    environment:
+      KAFKA_BROKER_ID: 1
+      KAFKA_ZOOKEEPER_CONNECT: shopsphere-zookeeper:2181
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: PLAINTEXT:PLAINTEXT,PLAINTEXT_HOST:PLAINTEXT
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://shopsphere-kafka:9092,PLAINTEXT_HOST://localhost:29092
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+      KAFKA_AUTO_CREATE_TOPICS_ENABLE: "true"
+    healthcheck:
+      test: ["CMD-SHELL", "kafka-broker-api-versions --bootstrap-server localhost:9092"]
+      interval: 15s
+      timeout: 10s
+      retries: 5
+
+  shopsphere-elasticsearch:
+    image: docker.elastic.co/elasticsearch/elasticsearch:7.17.0
+    container_name: shopsphere-elasticsearch
+    environment:
+      - discovery.type=single-node
+      - xpack.security.enabled=false
+      - "ES_JAVA_OPTS=-Xms256m -Xmx256m"
+    ports:
+      - "9200:9200"
+    volumes:
+      - elasticsearch-data:/usr/share/elasticsearch/data
+    healthcheck:
+      test: ["CMD-SHELL", "curl -f http://localhost:9200/_cluster/health || exit 1"]
+      interval: 15s
+      timeout: 10s
+      retries: 10
+
+  # ============================================================
+  # APPLICATION SERVICES
+  # ============================================================
+
+  user-service:
+    build:
+      context: ./services/user-service
+      dockerfile: Dockerfile
+    container_name: user-service
+    depends_on:
+      shopsphere-postgres:
+        condition: service_healthy
+      shopsphere-redis:
+        condition: service_healthy
+      shopsphere-rabbitmq:
+        condition: service_healthy
+    ports:
+      - "3001:3001"
+    environment:
+      SERVER_PORT: 3001
+      SPRING_DATASOURCE_URL: jdbc:postgresql://shopsphere-postgres:5432/shopsphere_user_dev
+      SPRING_DATASOURCE_USERNAME: postgres
+      SPRING_DATASOURCE_PASSWORD: postgres
+      SPRING_DATA_REDIS_HOST: shopsphere-redis
+      SPRING_DATA_REDIS_PORT: 6379
+      SPRING_RABBITMQ_HOST: shopsphere-rabbitmq
+      SPRING_RABBITMQ_PORT: 5672
+      SPRING_RABBITMQ_USERNAME: guest
+      SPRING_RABBITMQ_PASSWORD: guest
+      SPRING_JPA_HIBERNATE_DDL_AUTO: update
+      JWT_SECRET: shopsphere-dev-secret-key-minimum-32-characters-long-2026
+    restart: unless-stopped
+
+  product-service:
+    build:
+      context: ./services/product-service
+      dockerfile: Dockerfile
+    container_name: product-service
+    depends_on:
+      shopsphere-mongo:
+        condition: service_healthy
+      shopsphere-elasticsearch:
+        condition: service_healthy
+    ports:
+      - "3002:3002"
+    environment:
+      SERVER_PORT: 3002
+      SPRING_DATA_MONGODB_URI: mongodb://shopsphere-mongo:27017/productdb
+      SPRING_ELASTICSEARCH_URIS: http://shopsphere-elasticsearch:9200
+    restart: unless-stopped
+
+  inventory-service:
+    build:
+      context: ./services/inventory-service
+      dockerfile: Dockerfile
+    container_name: inventory-service
+    depends_on:
+      shopsphere-postgres:
+        condition: service_healthy
+      shopsphere-redis:
+        condition: service_healthy
+      shopsphere-kafka:
+        condition: service_healthy
+    ports:
+      - "3003:3003"
+    environment:
+      SERVER_PORT: 3003
+      SPRING_DATASOURCE_URL: jdbc:postgresql://shopsphere-postgres:5432/shopsphere_inventory
+      SPRING_DATASOURCE_USERNAME: postgres
+      SPRING_DATASOURCE_PASSWORD: postgres
+      SPRING_REDIS_HOST: shopsphere-redis
+      SPRING_REDIS_PORT: 6379
+      SPRING_KAFKA_BOOTSTRAP_SERVERS: shopsphere-kafka:9092
+      SPRING_JPA_HIBERNATE_DDL_AUTO: update
+    restart: unless-stopped
+
+  order-service:
+    build:
+      context: ./services/order-service
+      dockerfile: Dockerfile
+    container_name: order-service
+    depends_on:
+      shopsphere-postgres:
+        condition: service_healthy
+      shopsphere-redis:
+        condition: service_healthy
+      shopsphere-rabbitmq:
+        condition: service_healthy
+    ports:
+      - "3004:3004"
+    environment:
+      SERVER_PORT: 3004
+      SPRING_DATASOURCE_URL: jdbc:postgresql://shopsphere-postgres:5432/shopsphere_orders
+      SPRING_DATASOURCE_USERNAME: postgres
+      SPRING_DATASOURCE_PASSWORD: postgres
+      SPRING_DATA_REDIS_HOST: shopsphere-redis
+      SPRING_DATA_REDIS_PORT: 6379
+      SPRING_RABBITMQ_HOST: shopsphere-rabbitmq
+      SPRING_RABBITMQ_PORT: 5672
+      SPRING_RABBITMQ_USERNAME: guest
+      SPRING_RABBITMQ_PASSWORD: guest
+      SPRING_JPA_HIBERNATE_DDL_AUTO: update
+      JWT_SECRET: shopsphere-dev-secret-key-minimum-32-characters-long-2026
+      SERVICE_SECRET: internal-service-secret-key
+    restart: unless-stopped
+
+  review-service:
+    build:
+      context: ./services/review-service
+      dockerfile: Dockerfile
+    container_name: review-service
+    depends_on:
+      shopsphere-mongo:
+        condition: service_healthy
+      shopsphere-redis:
+        condition: service_healthy
+    ports:
+      - "3007:3007"
+    environment:
+      SERVER_PORT: 3007
+      SPRING_DATA_MONGODB_URI: mongodb://shopsphere-mongo:27017/reviewdb
+      SPRING_DATA_REDIS_HOST: shopsphere-redis
+      SPRING_DATA_REDIS_PORT: 6379
+    restart: unless-stopped
+
+  recommendation-service:
+    build:
+      context: ./services/recommendation-service
+      dockerfile: Dockerfile
+    container_name: recommendation-service
+    depends_on:
+      shopsphere-mongo:
+        condition: service_healthy
+      shopsphere-redis:
+        condition: service_healthy
+      shopsphere-rabbitmq:
+        condition: service_healthy
+    ports:
+      - "3008:3008"
+    environment:
+      SERVER_PORT: 3008
+      SPRING_PROFILES_ACTIVE: dev
+      SPRING_DATA_MONGODB_URI: mongodb://shopsphere-mongo:27017/recommendation_service
+      SPRING_DATA_REDIS_HOST: shopsphere-redis
+      SPRING_DATA_REDIS_PORT: 6379
+      SPRING_RABBITMQ_HOST: shopsphere-rabbitmq
+      SPRING_RABBITMQ_PORT: 5672
+      SPRING_RABBITMQ_USERNAME: guest
+      SPRING_RABBITMQ_PASSWORD: guest
+    restart: unless-stopped
+
+  notification-service:
+    build:
+      context: ./services/notification-service
+      dockerfile: Dockerfile
+    container_name: notification-service
+    depends_on:
+      shopsphere-mongo:
+        condition: service_healthy
+      shopsphere-rabbitmq:
+        condition: service_healthy
+    ports:
+      - "3009:3009"
+    environment:
+      SERVER_PORT: 3009
+      SPRING_DATA_MONGODB_URI: mongodb://shopsphere-mongo:27017/shopsphere_notification_db
+      SPRING_RABBITMQ_HOST: shopsphere-rabbitmq
+      SPRING_RABBITMQ_PORT: 5672
+      SPRING_RABBITMQ_USERNAME: guest
+      SPRING_RABBITMQ_PASSWORD: guest
+      SENDGRID_ENABLED: "false"
+    restart: unless-stopped
+
+  analytics-service:
+    build:
+      context: ./services/analytics-service
+      dockerfile: Dockerfile
+    container_name: analytics-service
+    depends_on:
+      shopsphere-postgres:
+        condition: service_healthy
+      shopsphere-redis:
+        condition: service_healthy
+      shopsphere-rabbitmq:
+        condition: service_healthy
+    ports:
+      - "3010:3010"
+    environment:
+      SERVER_PORT: 3010
+      SPRING_PROFILES_ACTIVE: default
+      SPRING_DATASOURCE_URL: jdbc:postgresql://shopsphere-postgres:5432/analytics_db
+      SPRING_DATASOURCE_USERNAME: postgres
+      SPRING_DATASOURCE_PASSWORD: postgres
+      SPRING_DATA_REDIS_HOST: shopsphere-redis
+      SPRING_DATA_REDIS_PORT: 6379
+      SPRING_REDIS_HOST: shopsphere-redis
+      SPRING_REDIS_PORT: 6379
+      SPRING_RABBITMQ_HOST: shopsphere-rabbitmq
+      SPRING_RABBITMQ_PORT: 5672
+      SPRING_RABBITMQ_USERNAME: guest
+      SPRING_RABBITMQ_PASSWORD: guest
+      SPRING_JPA_HIBERNATE_DDL_AUTO: update
+    restart: unless-stopped
+
+volumes:
+  postgres-data:
+  mongo-data:
+  redis-data:
+  rabbitmq-data:
+  elasticsearch-data:
