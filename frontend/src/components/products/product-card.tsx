@@ -54,7 +54,7 @@ export function ProductCard({ product, className }: ProductCardProps) {
           <div className="flex items-center gap-1 mt-1">
             <Star className="h-4 w-4 fill-yellow-400 text-yellow-400" />
             <span className="text-sm text-muted-foreground">
-              {product.averageRating.toFixed(1)} ({product.reviewCount})
+              {(product.averageRating || 0).toFixed(1)} ({product.reviewCount || 0})
             </span>
           </div>
           <div className="flex items-center gap-2 mt-2">

@@ -52,8 +52,9 @@ export default function LoginPage() {
   const onSubmit = async (data: LoginFormValues) => {
     try {
       await login(data);
-      await mergeGuestCart();
-      await fetchCart();
+      // Cart sync is non-blocking — don't let it prevent navigation
+      mergeGuestCart().catch(() => {});
+      fetchCart().catch(() => {});
       router.push('/');
     } catch (error) {
       // Error is handled by store
