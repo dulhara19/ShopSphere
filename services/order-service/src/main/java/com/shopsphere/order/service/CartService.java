@@ -151,7 +151,7 @@ public class CartService {
 
     @Transactional
     public CartDto mergeCart(UUID userId, MergeCartRequest request) {
-        Cart userCart = cartRepository.findByUserIdWithItems(userId)
+        final Cart userCart = cartRepository.findByUserIdWithItems(userId)
             .orElseGet(() -> {
                 Cart newCart = Cart.builder()
                     .userId(userId)
@@ -202,8 +202,8 @@ public class CartService {
             log.info("Merged guest cart {} into user cart {}", request.getSessionId(), userId);
         }
 
-        userCart = cartRepository.save(userCart);
-        return CartDto.from(userCart);
+        Cart savedCart = cartRepository.save(userCart);
+        return CartDto.from(savedCart);
     }
 
     @Transactional(readOnly = true)

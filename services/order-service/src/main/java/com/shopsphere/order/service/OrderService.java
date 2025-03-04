@@ -15,6 +15,8 @@ import com.shopsphere.order.model.OrderStatusHistory;
 import com.shopsphere.order.repository.OrderRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import java.util.ArrayList;
+
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -254,7 +256,7 @@ public class OrderService {
     public List<OrderStatusHistory> getOrderAuditTrail(UUID orderId) {
         Order order = orderRepository.findByIdWithDetails(orderId)
             .orElseThrow(() -> OrderNotFoundException.forId(orderId));
-        return order.getStatusHistory();
+        return new ArrayList<>(order.getStatusHistory());
     }
 
     private void publishStatusChangeEvent(Order order) {

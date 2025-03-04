@@ -83,6 +83,17 @@ public class GlobalExceptionHandler {
             .body(ApiResponse.error("CANCELLATION_NOT_ALLOWED", ex.getMessage(), getPath(request)));
     }
 
+    @ExceptionHandler(MaxCartItemsExceededException.class)
+    public ResponseEntity<ApiResponse<Void>> handleMaxCartItemsExceededException(
+        MaxCartItemsExceededException ex,
+        WebRequest request
+    ) {
+        log.warn("Max cart items exceeded: {}", ex.getMessage());
+        return ResponseEntity
+            .status(HttpStatus.UNPROCESSABLE_ENTITY)
+            .body(ApiResponse.error("MAX_CART_ITEMS_EXCEEDED", ex.getMessage(), getPath(request)));
+    }
+
     @ExceptionHandler(CartValidationException.class)
     public ResponseEntity<ApiResponse<Void>> handleCartValidationException(
         CartValidationException ex,

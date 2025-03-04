@@ -8,6 +8,10 @@ public class CartItemNotFoundException extends RuntimeException {
         super(message);
     }
 
+    public CartItemNotFoundException(UUID itemId) {
+        super("Cart item not found with ID: " + itemId);
+    }
+
     public static CartItemNotFoundException forId(UUID itemId) {
         return new CartItemNotFoundException("Cart item not found with ID: " + itemId);
     }

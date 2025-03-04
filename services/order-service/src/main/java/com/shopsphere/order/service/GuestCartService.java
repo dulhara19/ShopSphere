@@ -60,12 +60,14 @@ public class GuestCartService {
             item.setQuantity(newQuantity);
         } else {
             // Fetch product details (mock for now)
+            BigDecimal mockPrice = BigDecimal.valueOf(29.99);
             CartItem newItem = CartItem.builder()
                 .productId(request.getProductId())
                 .productName("Product " + request.getProductId().toString().substring(0, 8))
                 .productImage("https://placeholder.com/product.jpg")
                 .quantity(Math.min(request.getQuantity(), maxQuantityPerItem))
-                .unitPrice(BigDecimal.valueOf(29.99)) // Mock price
+                .unitPrice(mockPrice)
+                .priceAtAdd(mockPrice)
                 .build();
             cart.addItem(newItem);
         }
