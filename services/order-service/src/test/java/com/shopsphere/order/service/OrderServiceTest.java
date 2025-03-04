@@ -24,6 +24,7 @@ import org.springframework.data.domain.Pageable;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
@@ -62,7 +63,7 @@ class OrderServiceTest {
             .userId(userId)
             .status(OrderStatus.PENDING)
             .items(new ArrayList<>())
-            .statusHistory(new ArrayList<>())
+            .statusHistory(new LinkedHashSet<>())
             .shippingAddress(Address.builder().fullName("John Doe").build())
             .billingAddress(Address.builder().fullName("John Doe").build())
             .subtotal(BigDecimal.valueOf(100.00))
@@ -123,7 +124,7 @@ class OrderServiceTest {
             OrderStatusResponseDto result = orderService.getOrderStatus(orderId, userId);
 
             assertThat(result).isNotNull();
-            assertThat(result.getStatus()).isEqualTo(OrderStatus.PENDING);
+            assertThat(result.getCurrentStatus()).isEqualTo(OrderStatus.PENDING);
         }
     }
 

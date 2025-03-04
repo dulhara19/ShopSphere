@@ -145,7 +145,7 @@ class CheckoutControllerIntegrationTest extends BaseIntegrationTest {
             CheckoutRequest request = CheckoutRequest.builder()
                 .shippingAddressId(UUID.randomUUID())
                 .billingAddressId(UUID.randomUUID())
-                .paymentMethod(PaymentMethod.CREDIT_CARD)
+                .paymentMethod(PaymentMethod.CARD)
                 .idempotencyKey(UUID.randomUUID().toString())
                 .build();
 
@@ -172,7 +172,7 @@ class CheckoutControllerIntegrationTest extends BaseIntegrationTest {
             CheckoutRequest request = CheckoutRequest.builder()
                 .shippingAddressId(UUID.randomUUID())
                 .billingAddressId(UUID.randomUUID())
-                .paymentMethod(PaymentMethod.CREDIT_CARD)
+                .paymentMethod(PaymentMethod.CARD)
                 .idempotencyKey(UUID.randomUUID().toString())
                 .build();
 
@@ -193,7 +193,7 @@ class CheckoutControllerIntegrationTest extends BaseIntegrationTest {
             CheckoutRequest request = CheckoutRequest.builder()
                 .shippingAddressId(UUID.randomUUID())
                 .billingAddressId(UUID.randomUUID())
-                .paymentMethod(PaymentMethod.CREDIT_CARD)
+                .paymentMethod(PaymentMethod.CARD)
                 .idempotencyKey(UUID.randomUUID().toString())
                 .build();
 

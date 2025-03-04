@@ -19,6 +19,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.math.BigDecimal;
 import java.util.ArrayList;
+import java.util.LinkedHashSet;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -63,7 +64,7 @@ class CheckoutServiceTest {
         checkoutRequest = CheckoutRequest.builder()
             .shippingAddressId(UUID.randomUUID())
             .billingAddressId(UUID.randomUUID())
-            .paymentMethod(PaymentMethod.CREDIT_CARD)
+            .paymentMethod(PaymentMethod.CARD)
             .build();
     }
 
@@ -167,7 +168,7 @@ class CheckoutServiceTest {
                 .userId(userId)
                 .status(OrderStatus.PENDING)
                 .items(new ArrayList<>())
-                .statusHistory(new ArrayList<>())
+                .statusHistory(new LinkedHashSet<>())
                 .subtotal(BigDecimal.valueOf(100.00))
                 .taxAmount(BigDecimal.valueOf(8.00))
                 .shippingAmount(BigDecimal.ZERO)
@@ -232,7 +233,7 @@ class CheckoutServiceTest {
                 .userId(userId)
                 .status(OrderStatus.PENDING)
                 .items(new ArrayList<>())
-                .statusHistory(new ArrayList<>())
+                .statusHistory(new LinkedHashSet<>())
                 .subtotal(BigDecimal.valueOf(100.00))
                 .totalAmount(BigDecimal.valueOf(108.00))
                 .build();
