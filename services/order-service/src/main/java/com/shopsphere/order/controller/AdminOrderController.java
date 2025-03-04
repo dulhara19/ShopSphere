@@ -3,6 +3,7 @@ package com.shopsphere.order.controller;
 import com.shopsphere.order.dto.OrderDto;
 import com.shopsphere.order.dto.OrderStatusHistoryDto;
 import com.shopsphere.order.dto.request.AddInternalNoteRequest;
+import com.shopsphere.order.dto.request.UpdateStatusRequest;
 import com.shopsphere.order.dto.response.ApiResponse;
 import com.shopsphere.order.dto.response.PaginationMeta;
 import com.shopsphere.order.model.OrderStatus;
@@ -54,6 +55,27 @@ public class AdminOrderController {
         List<OrderDto> orders = orderService.listAllOrders(status, userId, orderNumber, fromDate, toDate, page, limit);
         PaginationMeta meta = orderService.getAdminOrdersPaginationMeta(status, userId, orderNumber, fromDate, toDate, page, limit);
         return ResponseEntity.ok(ApiResponse.success(orders, meta));
+    }
+
+    @GetMapping("/{orderId}")
+    @Operation(summary = "Get order by ID", description = "Retrieves a single order by its ID")
+    public ResponseEntity<ApiResponse<OrderDto>> getOrderById(
+        @Parameter(description = "Order ID") @PathVariable UUID orderId
+    ) {
+        OrderDto order = orderService.getOrderById(orderId);
+        return ResponseEntity.ok(ApiResponse.success(order));
+    }
+
+    @PutMapping("/{orderId}/status")
+    @Operation(summary = "Update order status", description = "Updates the status of an order")
+    public ResponseEntity<ApiResponse<OrderDto>> updateOrderStatus(
+        @Parameter(description = "Order ID") @PathVariable UUID orderId,
+        @Valid @RequestBody UpdateStatusRequest request,
+        @Parameter(hidden = true) @AuthenticationPrincipal UserDetails userDetails
+    ) {
+        String adminUser = userDetails != null ? userDetails.getUsername() : "ADMIN";
+        OrderDto order = orderService.updateOrderStatus(orderId, request, adminUser);
+        return ResponseEntity.ok(ApiResponse.success(order));
     }
 
     @PostMapping("/{orderId}/notes")
