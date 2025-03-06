@@ -26,7 +26,7 @@ CREATE INDEX idx_created_at ON payments(created_at);
 
 CREATE TABLE IF NOT EXISTS refunds (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    payment_id VARCHAR(255) NOT NULL,
+    payment_id UUID NOT NULL,
     stripe_refund_id VARCHAR(255),
     amount DECIMAL(19, 2) NOT NULL,
     reason VARCHAR(50) NOT NULL,
