@@ -21,7 +21,7 @@ import org.springframework.web.bind.annotation.*;
  * Implements Epic 1.4 API endpoints.
  */
 @RestController
-@RequestMapping("/api")
+@RequestMapping("/api/payments")
 @Tag(name = "Refunds", description = "Refund processing endpoints")
 @Slf4j
 public class RefundController {
