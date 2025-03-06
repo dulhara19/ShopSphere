@@ -40,6 +40,11 @@ const nextConfig = {
         { source: '/api/events/:path*', destination: 'http://localhost:3008/api/events/:path*' },
         // Notification service (3009)
         { source: '/api/notifications/:path*', destination: 'http://localhost:3009/api/notifications/:path*' },
+        // Payment service (3005)
+        { source: '/api/payments/:path*', destination: 'http://localhost:3005/api/payments/:path*' },
+        { source: '/api/payment-methods/:path*', destination: 'http://localhost:3005/api/payment-methods/:path*' },
+        { source: '/api/transactions/:path*', destination: 'http://localhost:3005/api/transactions/:path*' },
+        { source: '/api/webhooks/:path*', destination: 'http://localhost:3005/api/webhooks/:path*' },
         // Analytics service (3010)
         { source: '/api/analytics/:path*', destination: 'http://localhost:3010/api/analytics/:path*' },
       ];

@@ -2,106 +2,115 @@
  * Payment Service Types
  *
  * Types for payment processing.
- * Based on: shared/contracts/payment-service.yaml
+ * Aligned with backend DTOs in payment-service.
  */
 
 import { ISO8601, UUID } from './api';
 
-// Payment status
-export type PaymentIntentStatus = 'pending' | 'processing' | 'succeeded' | 'failed';
+// === Payment Processing ===
 
-// Refund status
-export type RefundStatus = 'INITIATED' | 'COMPLETED' | 'FAILED';
-
-// Payment intent
-export interface PaymentIntent {
-  id: string;
-  clientSecret: string;
+// Maps to CreatePaymentIntentRequest.java
+export interface CreatePaymentIntentRequest {
+  orderId: string;
   amount: number;
-  currency: string;
-  status: PaymentIntentStatus;
-  orderId: UUID;
+  currency?: string;
+  userId: string;
+  paymentMethodId?: string;
+  saveCard?: boolean;
+  description?: string;
 }
 
-// Payment method
+// Maps to CreatePaymentIntentResponse.java
+export interface PaymentIntent {
+  paymentId: string;
+  clientSecret: string;
+  status: string;
+  orderId: string;
+  message?: string;
+}
+
+// Maps to ConfirmPaymentRequest.java
+export interface ConfirmPaymentRequest {
+  paymentId: string;
+  paymentMethodId?: string;
+}
+
+// Maps to PaymentStatusResponse.java
+export interface PaymentStatusResponse {
+  paymentId: string;
+  orderId: string;
+  status: string;
+  amount: number;
+  currency: string;
+  paymentMethod: string;
+  failureReason?: string;
+  createdAt: ISO8601;
+  updatedAt: ISO8601;
+}
+
+// === Payment Methods ===
+
+// Maps to PaymentMethodResponse.java
 export interface PaymentMethod {
   id: string;
-  type: 'card' | 'paypal';
-  card?: {
-    brand: string;
-    last4: string;
-    expiryMonth: number;
-    expiryYear: number;
-  };
+  cardBrand: string;
+  lastFourDigits: string;
+  expiryMonth: number;
+  expiryYear: number;
   isDefault: boolean;
   createdAt: ISO8601;
 }
 
-// Payment record
-export interface Payment {
-  id: UUID;
-  orderId: UUID;
-  amount: number;
-  currency: string;
-  status: 'PENDING' | 'PAID' | 'FAILED' | 'REFUNDED';
-  paymentMethod: string;
-  transactionId: string;
-  createdAt: ISO8601;
+// Maps to CardPaymentMethodRequest.java
+export interface SavePaymentMethodRequest {
+  userId: string;
+  cardToken: string;
+  setAsDefault?: boolean;
 }
 
-// Refund record
-export interface Refund {
-  id: UUID;
-  paymentId: UUID;
-  amount: number;
-  reason: string;
-  status: RefundStatus;
-  createdAt: ISO8601;
-}
+// === Refunds ===
 
-// Transaction record
-export interface Transaction {
-  id: UUID;
-  type: 'PAYMENT' | 'REFUND';
-  amount: number;
-  currency: string;
-  status: string;
-  orderId: UUID;
-  orderNumber: string;
-  createdAt: ISO8601;
-}
-
-// Create payment intent request
-export interface CreatePaymentIntentRequest {
-  orderId: UUID;
-  amount: number;
-  currency?: string;
-  paymentMethodId?: string;
-}
-
-// Confirm payment request
-export interface ConfirmPaymentRequest {
-  paymentIntentId: string;
-}
-
-// Process refund request
+// Maps to RefundRequest.java
 export interface ProcessRefundRequest {
-  paymentId: UUID;
   amount?: number;
   reason: string;
 }
 
-// Save payment method request
-export interface SavePaymentMethodRequest {
-  paymentMethodId: string;
-  setAsDefault?: boolean;
+// Maps to RefundResponse.java
+export interface Refund {
+  refundId: string;
+  paymentId: string;
+  amount: number;
+  reason: string;
+  status: string;
+  failureReason?: string;
+  createdAt: ISO8601;
 }
 
-// Transaction list params
+// === Transactions ===
+
+// Maps to TransactionResponse.java
+export interface Transaction {
+  transactionId: string;
+  orderId?: string;
+  userId?: string;
+  amount: number;
+  currency?: string;
+  type: 'PAYMENT' | 'REFUND';
+  status: string;
+  description?: string;
+  createdAt: ISO8601;
+}
+
 export interface TransactionListParams {
+  userId: string;
   page?: number;
   size?: number;
-  type?: 'PAYMENT' | 'REFUND';
   startDate?: string;
   endDate?: string;
 }
+
+// Legacy aliases for backward compatibility
+export type Payment = PaymentStatusResponse;
+export type RefundStatus = string;
+export type PaymentIntentStatus = string;
