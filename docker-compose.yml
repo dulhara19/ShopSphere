@@ -220,6 +220,28 @@ services:
       SERVICE_SECRET: internal-service-secret-key
     restart: unless-stopped
 
+  payment-service:
+    build:
+      context: ./services/payment-service
+      dockerfile: Dockerfile
+    container_name: payment-service
+    depends_on:
+      shopsphere-postgres:
+        condition: service_healthy
+    ports:
+      - "3005:3005"
+    environment:
+      SERVER_PORT: 3005
+      SPRING_PROFILES_ACTIVE: prod
+      SPRING_DATASOURCE_URL: jdbc:postgresql://shopsphere-postgres:5432/payment_db
+      SPRING_DATASOURCE_USERNAME: postgres
+      SPRING_DATASOURCE_PASSWORD: postgres
+      SPRING_JPA_HIBERNATE_DDL_AUTO: validate
+      SPRING_FLYWAY_ENABLED: "true"
+      STRIPE_API_KEY: ${STRIPE_API_KEY:-sk_test_placeholder}
+      STRIPE_WEBHOOK_SECRET: ${STRIPE_WEBHOOK_SECRET:-whsec_test_placeholder}
+    restart: unless-stopped
+
   review-service:
     build:
       context: ./services/review-service

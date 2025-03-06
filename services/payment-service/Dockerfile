@@ -1,29 +1,18 @@
-# Dockerfile for Payment Service
+FROM maven:3.9.9-eclipse-temurin-17 AS build
 
-FROM openjdk:17-jdk-slim
+WORKDIR /workspace
 
-# Set working directory
+COPY pom.xml .
+COPY src ./src
+
+RUN mvn clean package -DskipTests
+
+FROM eclipse-temurin:17-jre
+
 WORKDIR /app
 
-# Add Spring Boot application JAR
-ARG JAR_FILE=target/payment-service-1.0.0.jar
-COPY ${JAR_FILE} payment-service.jar
+COPY --from=build /workspace/target/*.jar app.jar
 
-# Create non-root user
-RUN useradd -m -u 1000 payment && chown -R payment:payment /app
-
-USER payment
-
-# Expose port
 EXPOSE 3005
 
-# Environment variables
-ENV SPRING_PROFILES_ACTIVE=prod
-ENV JAVA_OPTS="-Xmx512m -Xms256m"
-
-# Health check
-HEALTHCHECK --interval=30s --timeout=10s --start-period=40s --retries=3 \
-    CMD curl -f http://localhost:3005/actuator/health || exit 1
-
-# Start application
-ENTRYPOINT ["java", "-jar", "payment-service.jar"]
+ENTRYPOINT ["java", "-jar", "/app/app.jar"]
