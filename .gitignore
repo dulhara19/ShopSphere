@@ -1,0 +1,422 @@
+# Keep all brainstorming, planning, and workflow tracking local
+_bmad/
+bmad/
+.bmad/
+*.bmad
+BMAD/
+brainstorm/
+planning/
+methodology/
+
+# ============================================
+# IDE & EDITOR FILES
+# ============================================
+# Cursor IDE
+.cursor/
+.cursor-tutor/
+
+# Claude AI
+.claude/
+
+# VSCode
+.vscode/
+*.code-workspace
+
+# IntelliJ IDEA
+.idea/
+*.iml
+*.ipr
+*.iws
+
+# Sublime Text
+*.sublime-project
+*.sublime-workspace
+
+# Vim
+*.swp
+*.swo
+*~
+.*.swp
+
+# Emacs
+*~
+\#*\#
+.\#*
+
+# ============================================
+# NODE.JS
+# ============================================
+# Dependencies
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+lerna-debug.log*
+.pnpm-debug.log*
+
+# Package manager locks (optional - uncomment if you want to ignore)
+# package-lock.json
+# yarn.lock
+# pnpm-lock.yaml
+
+# Build outputs
+dist/
+build/
+out/
+*.tsbuildinfo
+
+# Testing
+coverage/
+*.lcov
+.nyc_output/
+.jest-cache/
+
+# ============================================
+# PYTHON
+# ============================================
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+
+# Virtual environments
+venv/
+env/
+ENV/
+.venv/
+.ENV/
+pipenv/
+.Python
+
+# Distribution / packaging
+.eggs/
+*.egg-info/
+*.egg
+dist/
+build/
+wheels/
+pip-wheel-metadata/
+
+# PyCharm
+.idea/
+
+# Jupyter Notebook
+.ipynb_checkpoints/
+
+# pytest
+.pytest_cache/
+.tox/
+
+# mypy
+.mypy_cache/
+.dmypy.json
+dmypy.json
+
+# ============================================
+# GO
+# ============================================
+# Binaries
+*.exe
+*.exe~
+*.dll
+*.so
+*.dylib
+
+# Test binary
+*.test
+
+# Output of the go coverage tool
+*.out
+
+# Go workspace file
+go.work
+
+# ============================================
+# ENVIRONMENT & SECRETS
+# ============================================
+# Environment variables
+.env
+.env.local
+.env.development
+.env.test
+.env.production
+.env.*.local
+*.env
+
+# Secrets and credentials
+secrets/
+credentials/
+*.pem
+*.key
+*.cert
+*.crt
+*.p12
+*.jks
+.aws/
+.gcloud/
+
+# ============================================
+# LOGS
+# ============================================
+logs/
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+lerna-debug.log*
+pnpm-debug.log*
+log/
+*.log.*
+
+# ============================================
+# DOCKER
+# ============================================
+# Docker volumes (local data)
+docker-volumes/
+volumes/
+.docker/
+
+# Docker override files (optional local configs)
+docker-compose.override.yml
+docker-compose.local.yml
+
+# ============================================
+# DATABASES
+# ============================================
+# Database files
+*.sqlite
+*.sqlite3
+*.db
+*.db-journal
+*.db-wal
+*.db-shm
+
+# PostgreSQL
+postgres-data/
+pgdata/
+
+# MongoDB
+mongo-data/
+mongodb-data/
+
+# Redis
+redis-data/
+dump.rdb
+
+# ============================================
+# OPERATING SYSTEMS
+# ============================================
+# macOS
+.DS_Store
+.AppleDouble
+.LSOverride
+._*
+.Spotlight-V100
+.Trashes
+
+# Windows
+Thumbs.db
+Thumbs.db:encryptable
+ehthumbs.db
+ehthumbs_vista.db
+Desktop.ini
+$RECYCLE.BIN/
+*.lnk
+
+# Linux
+*~
+.fuse_hidden*
+.directory
+.Trash-*
+
+# ============================================
+# TEMPORARY FILES
+# ============================================
+tmp/
+temp/
+*.tmp
+*.bak
+*.swp
+*.swo
+*.old
+.cache/
+.temp/
+
+# ============================================
+# TESTING & COVERAGE
+# ============================================
+coverage/
+.coverage
+.coverage.*
+htmlcov/
+*.cover
+.hypothesis/
+.pytest_cache/
+test-results/
+junit.xml
+
+# ============================================
+# BUILD ARTIFACTS
+# ============================================
+dist/
+build/
+*.egg-info/
+target/
+bin/
+obj/
+
+# ============================================
+# CDN & STATIC FILES
+# ============================================
+# Uploaded files (development)
+uploads/
+public/uploads/
+media/
+static/collected-static/
+
+# ============================================
+# MONITORING & OBSERVABILITY
+# ============================================
+# Prometheus data
+prometheus-data/
+
+# Grafana data
+grafana-data/
+
+# Jaeger data
+jaeger-data/
+
+# ============================================
+# MESSAGE QUEUES
+# ============================================
+# RabbitMQ data
+rabbitmq-data/
+
+# Kafka data
+kafka-data/
+zookeeper-data/
+
+# ============================================
+# ELASTICSEARCH
+# ============================================
+elasticsearch-data/
+elastic-data/
+
+# ============================================
+# CERTIFICATES & SSL
+# ============================================
+*.pem
+*.key
+*.crt
+*.csr
+*.pfx
+ssl/
+certs/
+
+# ============================================
+# BACKUP FILES
+# ============================================
+*.backup
+*.bak
+*.orig
+backup/
+backups/
+
+# ============================================
+# LOCAL CONFIGURATION
+# ============================================
+# Local overrides
+local.config.js
+local.config.json
+*.local.json
+*.local.js
+
+# Personal notes
+notes.md
+TODO.local.md
+personal-notes/
+
+# ============================================
+# CLOUD & DEPLOYMENT
+# ============================================
+# Terraform
+*.tfstate
+*.tfstate.*
+*.tfvars
+.terraform/
+.terraform.lock.hcl
+
+# Kubernetes secrets
+secrets.yaml
+*-secrets.yaml
+
+# Serverless
+.serverless/
+
+# ============================================
+# PACKAGE MANAGERS
+# ============================================
+# Yarn
+.yarn/cache
+.yarn/unplugged
+.yarn/build-state.yml
+.yarn/install-state.gz
+.pnp.*
+
+# npm
+.npm/
+
+# pnpm
+.pnpm-store/
+
+# ============================================
+# MISC
+# ============================================
+# Archives
+*.zip
+*.tar
+*.tar.gz
+*.rar
+*.7z
+
+# Large files that shouldn't be in git
+*.iso
+*.dmg
+*.pkg
+
+# Lock files for tools
+.husky/_/
+
+# Next.js
+.next/
+out/
+
+# Nuxt.js
+.nuxt/
+dist/
+
+# Gatsby
+.cache/
+public/
+
+# SvelteKit
+.svelte-kit/
+
+# ============================================
+# TEAM-SPECIFIC (Add your own)
+# ============================================
+# Add any team-specific files or folders below:
+
+# Team member personal tracking files
+team-member-notes/
+personal-tracking/
+individual-progress/
+
+# Meeting notes (if kept locally)
+meeting-notes/
+minutes/
+
+# Local documentation drafts
+docs-draft/
+documentation-wip/
