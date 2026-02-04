@@ -1,5 +1,6 @@
 # Keep all brainstorming, planning, and workflow tracking local
 _bmad/
+_bmad-output/
 bmad/
 .bmad/
 *.bmad
