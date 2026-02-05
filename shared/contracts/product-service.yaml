@@ -1,0 +1,967 @@
+openapi: 3.0.3
+info:
+  title: Product Service API
+  description: |
+    Product Service manages the product catalog, categories, and search functionality for ShopSphere.
+  version: 1.0.0
+  contact:
+    name: Team Member 2
+    email: team2@shopsphere.com
+
+servers:
+  - url: http://localhost:3002
+    description: Local development
+  - url: https://api.shopsphere.com
+    description: Production
+
+tags:
+  - name: Products
+    description: Product CRUD operations
+  - name: Categories
+    description: Category management
+  - name: Search
+    description: Product search and filtering
+  - name: Images
+    description: Product image management
+  - name: Internal
+    description: Internal service-to-service APIs
+
+paths:
+  # ==================== PRODUCTS ====================
+  /api/products:
+    get:
+      tags:
+        - Products
+      summary: List products
+      description: Get paginated list of products with optional filters
+      operationId: listProducts
+      parameters:
+        - name: page
+          in: query
+          schema:
+            type: integer
+            default: 0
+        - name: size
+          in: query
+          schema:
+            type: integer
+            default: 20
+            maximum: 100
+        - name: category
+          in: query
+          description: Filter by category ID
+          schema:
+            type: string
+            format: uuid
+        - name: minPrice
+          in: query
+          schema:
+            type: number
+            format: double
+        - name: maxPrice
+          in: query
+          schema:
+            type: number
+            format: double
+        - name: search
+          in: query
+          description: Search in name and description
+          schema:
+            type: string
+        - name: sort
+          in: query
+          description: Sort field and direction
+          schema:
+            type: string
+            enum: [price_asc, price_desc, newest, name_asc, name_desc]
+            default: newest
+        - name: status
+          in: query
+          schema:
+            $ref: '#/components/schemas/ProductStatus'
+      responses:
+        '200':
+          description: Products retrieved
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProductListResponse'
+
+    post:
+      tags:
+        - Products
+      summary: Create product
+      description: Create a new product (Seller only)
+      operationId: createProduct
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateProductRequest'
+      responses:
+        '201':
+          description: Product created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProductResponse'
+        '400':
+          description: Invalid input
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: Forbidden - Seller role required
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /api/products/{id}:
+    get:
+      tags:
+        - Products
+      summary: Get product by ID
+      description: Get full product details
+      operationId: getProductById
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Product retrieved
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProductDetailResponse'
+        '404':
+          description: Product not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+    put:
+      tags:
+        - Products
+      summary: Update product
+      description: Update product details (Owner or Admin)
+      operationId: updateProduct
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateProductRequest'
+      responses:
+        '200':
+          description: Product updated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProductResponse'
+        '403':
+          description: Forbidden
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: Product not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+    delete:
+      tags:
+        - Products
+      summary: Delete product
+      description: Soft delete product (Owner or Admin)
+      operationId: deleteProduct
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Product deleted
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MessageResponse'
+        '403':
+          description: Forbidden
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: Product not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /api/products/seller/me:
+    get:
+      tags:
+        - Products
+      summary: Get seller's products
+      description: Get products owned by the current seller
+      operationId: getSellerProducts
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: page
+          in: query
+          schema:
+            type: integer
+            default: 0
+        - name: size
+          in: query
+          schema:
+            type: integer
+            default: 20
+        - name: status
+          in: query
+          schema:
+            $ref: '#/components/schemas/ProductStatus'
+      responses:
+        '200':
+          description: Products retrieved
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProductListResponse'
+
+  # ==================== CATEGORIES ====================
+  /api/categories:
+    get:
+      tags:
+        - Categories
+      summary: List categories
+      description: Get all categories in hierarchical structure
+      operationId: listCategories
+      responses:
+        '200':
+          description: Categories retrieved
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/CategoryResponse'
+
+    post:
+      tags:
+        - Categories
+      summary: Create category
+      description: Create a new category (Admin only)
+      operationId: createCategory
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateCategoryRequest'
+      responses:
+        '201':
+          description: Category created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CategoryResponse'
+        '403':
+          description: Forbidden - Admin only
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /api/categories/{id}:
+    get:
+      tags:
+        - Categories
+      summary: Get category by ID
+      description: Get category with subcategories
+      operationId: getCategoryById
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Category retrieved
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CategoryDetailResponse'
+        '404':
+          description: Category not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+    put:
+      tags:
+        - Categories
+      summary: Update category
+      description: Update category (Admin only)
+      operationId: updateCategory
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateCategoryRequest'
+      responses:
+        '200':
+          description: Category updated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CategoryResponse'
+
+    delete:
+      tags:
+        - Categories
+      summary: Delete category
+      description: Delete category (Admin only)
+      operationId: deleteCategory
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Category deleted
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MessageResponse'
+        '400':
+          description: Cannot delete - has products
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /api/categories/{id}/subcategories:
+    get:
+      tags:
+        - Categories
+      summary: Get subcategories
+      description: Get subcategories of a category
+      operationId: getSubcategories
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Subcategories retrieved
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/CategoryResponse'
+
+  # ==================== IMAGES ====================
+  /api/products/{id}/images:
+    post:
+      tags:
+        - Images
+      summary: Upload product images
+      description: Upload images for a product
+      operationId: uploadProductImages
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              properties:
+                images:
+                  type: array
+                  items:
+                    type: string
+                    format: binary
+                  maxItems: 10
+      responses:
+        '200':
+          description: Images uploaded
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProductImagesResponse'
+        '400':
+          description: Invalid file type or size
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /api/products/{id}/images/{imageId}:
+    delete:
+      tags:
+        - Images
+      summary: Delete product image
+      description: Delete a specific image from product
+      operationId: deleteProductImage
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: imageId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Image deleted
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MessageResponse'
+
+  /api/products/{id}/images/{imageId}/primary:
+    put:
+      tags:
+        - Images
+      summary: Set primary image
+      description: Set an image as the primary product image
+      operationId: setPrimaryImage
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: imageId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Primary image set
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProductResponse'
+
+  # ==================== INTERNAL ====================
+  /internal/products/{id}:
+    get:
+      tags:
+        - Internal
+      summary: Get product (internal)
+      description: Internal endpoint for other services
+      operationId: getInternalProduct
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Product retrieved
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/InternalProductResponse'
+        '404':
+          description: Product not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /internal/products/batch:
+    post:
+      tags:
+        - Internal
+      summary: Batch get products
+      description: Get multiple products by IDs
+      operationId: getInternalProductsBatch
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/BatchProductsRequest'
+      responses:
+        '200':
+          description: Products retrieved
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BatchProductsResponse'
+
+  /internal/products/validate:
+    post:
+      tags:
+        - Internal
+      summary: Validate products
+      description: Check if products exist and are active
+      operationId: validateProducts
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ValidateProductsRequest'
+      responses:
+        '200':
+          description: Validation result
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ValidateProductsResponse'
+
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+
+  schemas:
+    # ==================== REQUEST SCHEMAS ====================
+    CreateProductRequest:
+      type: object
+      required:
+        - name
+        - description
+        - price
+        - categoryId
+      properties:
+        name:
+          type: string
+          minLength: 1
+          maxLength: 255
+        description:
+          type: string
+          maxLength: 5000
+        price:
+          type: number
+          format: double
+          minimum: 0.01
+        compareAtPrice:
+          type: number
+          format: double
+          description: Original price (for showing discounts)
+        categoryId:
+          type: string
+          format: uuid
+        subcategoryId:
+          type: string
+          format: uuid
+        sku:
+          type: string
+          maxLength: 100
+        brand:
+          type: string
+          maxLength: 100
+        tags:
+          type: array
+          items:
+            type: string
+          maxItems: 20
+
+    UpdateProductRequest:
+      type: object
+      properties:
+        name:
+          type: string
+          minLength: 1
+          maxLength: 255
+        description:
+          type: string
+          maxLength: 5000
+        price:
+          type: number
+          format: double
+          minimum: 0.01
+        compareAtPrice:
+          type: number
+          format: double
+        categoryId:
+          type: string
+          format: uuid
+        subcategoryId:
+          type: string
+          format: uuid
+        status:
+          $ref: '#/components/schemas/ProductStatus'
+        brand:
+          type: string
+        tags:
+          type: array
+          items:
+            type: string
+
+    CreateCategoryRequest:
+      type: object
+      required:
+        - name
+      properties:
+        name:
+          type: string
+          minLength: 1
+          maxLength: 100
+        description:
+          type: string
+          maxLength: 500
+        parentId:
+          type: string
+          format: uuid
+          description: Parent category ID for subcategories
+        imageUrl:
+          type: string
+          format: uri
+
+    UpdateCategoryRequest:
+      type: object
+      properties:
+        name:
+          type: string
+          minLength: 1
+          maxLength: 100
+        description:
+          type: string
+          maxLength: 500
+        parentId:
+          type: string
+          format: uuid
+        imageUrl:
+          type: string
+          format: uri
+
+    BatchProductsRequest:
+      type: object
+      required:
+        - productIds
+      properties:
+        productIds:
+          type: array
+          items:
+            type: string
+            format: uuid
+          maxItems: 100
+
+    ValidateProductsRequest:
+      type: object
+      required:
+        - productIds
+      properties:
+        productIds:
+          type: array
+          items:
+            type: string
+            format: uuid
+
+    # ==================== RESPONSE SCHEMAS ====================
+    ProductResponse:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        sellerId:
+          type: string
+          format: uuid
+        name:
+          type: string
+        description:
+          type: string
+        price:
+          type: number
+          format: double
+        compareAtPrice:
+          type: number
+          format: double
+        categoryId:
+          type: string
+          format: uuid
+        categoryName:
+          type: string
+        subcategoryId:
+          type: string
+          format: uuid
+        subcategoryName:
+          type: string
+        sku:
+          type: string
+        brand:
+          type: string
+        images:
+          type: array
+          items:
+            $ref: '#/components/schemas/ProductImage'
+        status:
+          $ref: '#/components/schemas/ProductStatus'
+        averageRating:
+          type: number
+          format: double
+        reviewCount:
+          type: integer
+        tags:
+          type: array
+          items:
+            type: string
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+
+    ProductDetailResponse:
+      allOf:
+        - $ref: '#/components/schemas/ProductResponse'
+        - type: object
+          properties:
+            seller:
+              $ref: '#/components/schemas/SellerSummary'
+            stockStatus:
+              type: string
+              enum: [IN_STOCK, LOW_STOCK, OUT_OF_STOCK]
+            stockQuantity:
+              type: integer
+
+    ProductListResponse:
+      type: object
+      properties:
+        content:
+          type: array
+          items:
+            $ref: '#/components/schemas/ProductResponse'
+        page:
+          type: integer
+        size:
+          type: integer
+        totalElements:
+          type: integer
+        totalPages:
+          type: integer
+
+    ProductImage:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        url:
+          type: string
+          format: uri
+        thumbnailUrl:
+          type: string
+          format: uri
+        isPrimary:
+          type: boolean
+        sortOrder:
+          type: integer
+
+    ProductImagesResponse:
+      type: object
+      properties:
+        images:
+          type: array
+          items:
+            $ref: '#/components/schemas/ProductImage'
+
+    CategoryResponse:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        name:
+          type: string
+        description:
+          type: string
+        parentId:
+          type: string
+          format: uuid
+        imageUrl:
+          type: string
+          format: uri
+        productCount:
+          type: integer
+        subcategories:
+          type: array
+          items:
+            $ref: '#/components/schemas/CategoryResponse'
+
+    CategoryDetailResponse:
+      allOf:
+        - $ref: '#/components/schemas/CategoryResponse'
+        - type: object
+          properties:
+            parent:
+              $ref: '#/components/schemas/CategoryResponse'
+
+    SellerSummary:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        name:
+          type: string
+        rating:
+          type: number
+          format: double
+
+    InternalProductResponse:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        name:
+          type: string
+        price:
+          type: number
+          format: double
+        imageUrl:
+          type: string
+          format: uri
+        sellerId:
+          type: string
+          format: uuid
+        status:
+          $ref: '#/components/schemas/ProductStatus'
+
+    BatchProductsResponse:
+      type: object
+      properties:
+        products:
+          type: array
+          items:
+            $ref: '#/components/schemas/InternalProductResponse'
+
+    ValidateProductsResponse:
+      type: object
+      properties:
+        valid:
+          type: boolean
+        invalidProducts:
+          type: array
+          items:
+            type: object
+            properties:
+              productId:
+                type: string
+                format: uuid
+              reason:
+                type: string
+
+    MessageResponse:
+      type: object
+      properties:
+        message:
+          type: string
+        timestamp:
+          type: string
+          format: date-time
+
+    ErrorResponse:
+      type: object
+      properties:
+        error:
+          type: string
+        message:
+          type: string
+        details:
+          type: array
+          items:
+            type: object
+            properties:
+              field:
+                type: string
+              message:
+                type: string
+        timestamp:
+          type: string
+          format: date-time
+        path:
+          type: string
+
+    # ==================== ENUMS ====================
+    ProductStatus:
+      type: string
+      enum:
+        - ACTIVE
+        - INACTIVE
+        - OUT_OF_STOCK

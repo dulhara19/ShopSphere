@@ -1,0 +1,730 @@
+openapi: 3.0.3
+info:
+  title: Inventory Service API
+  description: |
+    Inventory Service manages stock levels, reservations, and low stock alerts for ShopSphere.
+  version: 1.0.0
+  contact:
+    name: Team Member 3
+    email: team3@shopsphere.com
+
+servers:
+  - url: http://localhost:3003
+    description: Local development
+  - url: https://api.shopsphere.com
+    description: Production
+
+tags:
+  - name: Inventory
+    description: Stock management
+  - name: Reservations
+    description: Stock reservation for checkout
+  - name: Alerts
+    description: Low stock alerts
+  - name: Internal
+    description: Internal service-to-service APIs
+
+paths:
+  # ==================== INVENTORY ====================
+  /api/inventory:
+    post:
+      tags:
+        - Inventory
+      summary: Create inventory record
+      description: Initialize inventory for a new product
+      operationId: createInventory
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateInventoryRequest'
+      responses:
+        '201':
+          description: Inventory created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/InventoryResponse'
+        '409':
+          description: Inventory already exists for product
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /api/inventory/{productId}:
+    get:
+      tags:
+        - Inventory
+      summary: Get stock level
+      description: Get current stock level for a product
+      operationId: getInventory
+      parameters:
+        - name: productId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Inventory retrieved
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/InventoryResponse'
+        '404':
+          description: Inventory not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+    put:
+      tags:
+        - Inventory
+      summary: Update stock quantity
+      description: Update stock level for a product (Seller)
+      operationId: updateInventory
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: productId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateInventoryRequest'
+      responses:
+        '200':
+          description: Inventory updated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/InventoryResponse'
+        '400':
+          description: Invalid quantity
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: Inventory not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+    delete:
+      tags:
+        - Inventory
+      summary: Delete inventory record
+      description: Delete inventory when product is deleted
+      operationId: deleteInventory
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: productId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Inventory deleted
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MessageResponse'
+
+  /api/inventory/bulk-update:
+    post:
+      tags:
+        - Inventory
+      summary: Bulk update stock
+      description: Update stock for multiple products at once
+      operationId: bulkUpdateInventory
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/BulkUpdateRequest'
+      responses:
+        '200':
+          description: Inventory updated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BulkUpdateResponse'
+
+  /api/inventory/{productId}/threshold:
+    put:
+      tags:
+        - Inventory
+      summary: Set low stock threshold
+      description: Set the threshold for low stock alerts
+      operationId: setLowStockThreshold
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: productId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SetThresholdRequest'
+      responses:
+        '200':
+          description: Threshold set
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/InventoryResponse'
+
+  # ==================== RESERVATIONS ====================
+  /api/inventory/reserve:
+    post:
+      tags:
+        - Reservations
+      summary: Reserve stock
+      description: Reserve stock for checkout (holds for 15 minutes)
+      operationId: reserveStock
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ReserveStockRequest'
+      responses:
+        '200':
+          description: Stock reserved
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ReservationResponse'
+        '400':
+          description: Insufficient stock
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /api/inventory/confirm:
+    post:
+      tags:
+        - Reservations
+      summary: Confirm reservation
+      description: Confirm reservation after successful payment
+      operationId: confirmReservation
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ConfirmReservationRequest'
+      responses:
+        '200':
+          description: Reservation confirmed
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MessageResponse'
+        '404':
+          description: Reservation not found or expired
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /api/inventory/release:
+    post:
+      tags:
+        - Reservations
+      summary: Release reservation
+      description: Release reserved stock back to available
+      operationId: releaseReservation
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ReleaseReservationRequest'
+      responses:
+        '200':
+          description: Reservation released
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MessageResponse'
+
+  /api/inventory/check-availability:
+    post:
+      tags:
+        - Reservations
+      summary: Check availability
+      description: Check if requested quantities are available
+      operationId: checkAvailability
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CheckAvailabilityRequest'
+      responses:
+        '200':
+          description: Availability checked
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CheckAvailabilityResponse'
+
+  # ==================== ALERTS ====================
+  /api/inventory/low-stock:
+    get:
+      tags:
+        - Alerts
+      summary: Get low stock products
+      description: Get products with stock below threshold
+      operationId: getLowStock
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: page
+          in: query
+          schema:
+            type: integer
+            default: 0
+        - name: size
+          in: query
+          schema:
+            type: integer
+            default: 20
+      responses:
+        '200':
+          description: Low stock products retrieved
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LowStockListResponse'
+
+  /api/inventory/out-of-stock:
+    get:
+      tags:
+        - Alerts
+      summary: Get out of stock products
+      description: Get products with zero stock
+      operationId: getOutOfStock
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: page
+          in: query
+          schema:
+            type: integer
+            default: 0
+        - name: size
+          in: query
+          schema:
+            type: integer
+            default: 20
+      responses:
+        '200':
+          description: Out of stock products retrieved
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LowStockListResponse'
+
+  # ==================== INTERNAL ====================
+  /internal/inventory/{productId}:
+    get:
+      tags:
+        - Internal
+      summary: Get stock (internal)
+      description: Internal endpoint for other services
+      operationId: getInternalInventory
+      parameters:
+        - name: productId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Inventory retrieved
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/InternalInventoryResponse'
+        '404':
+          description: Not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /internal/inventory/batch:
+    post:
+      tags:
+        - Internal
+      summary: Batch get stock
+      description: Get stock for multiple products
+      operationId: getInternalInventoryBatch
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/BatchInventoryRequest'
+      responses:
+        '200':
+          description: Inventory retrieved
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BatchInventoryResponse'
+
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+
+  schemas:
+    # ==================== REQUEST SCHEMAS ====================
+    CreateInventoryRequest:
+      type: object
+      required:
+        - productId
+      properties:
+        productId:
+          type: string
+          format: uuid
+        quantity:
+          type: integer
+          minimum: 0
+          default: 0
+        lowStockThreshold:
+          type: integer
+          minimum: 0
+          default: 10
+
+    UpdateInventoryRequest:
+      type: object
+      required:
+        - quantity
+      properties:
+        quantity:
+          type: integer
+          minimum: 0
+        operation:
+          type: string
+          enum: [SET, ADD, SUBTRACT]
+          default: SET
+          description: SET replaces, ADD/SUBTRACT adjusts
+
+    BulkUpdateRequest:
+      type: object
+      required:
+        - updates
+      properties:
+        updates:
+          type: array
+          items:
+            type: object
+            required:
+              - productId
+              - quantity
+            properties:
+              productId:
+                type: string
+                format: uuid
+              quantity:
+                type: integer
+                minimum: 0
+          maxItems: 100
+
+    SetThresholdRequest:
+      type: object
+      required:
+        - threshold
+      properties:
+        threshold:
+          type: integer
+          minimum: 0
+
+    ReserveStockRequest:
+      type: object
+      required:
+        - items
+      properties:
+        items:
+          type: array
+          items:
+            type: object
+            required:
+              - productId
+              - quantity
+            properties:
+              productId:
+                type: string
+                format: uuid
+              quantity:
+                type: integer
+                minimum: 1
+        orderId:
+          type: string
+          format: uuid
+          description: Optional order reference
+
+    ConfirmReservationRequest:
+      type: object
+      required:
+        - reservationId
+      properties:
+        reservationId:
+          type: string
+          format: uuid
+
+    ReleaseReservationRequest:
+      type: object
+      required:
+        - reservationId
+      properties:
+        reservationId:
+          type: string
+          format: uuid
+
+    CheckAvailabilityRequest:
+      type: object
+      required:
+        - items
+      properties:
+        items:
+          type: array
+          items:
+            type: object
+            required:
+              - productId
+              - quantity
+            properties:
+              productId:
+                type: string
+                format: uuid
+              quantity:
+                type: integer
+                minimum: 1
+
+    BatchInventoryRequest:
+      type: object
+      required:
+        - productIds
+      properties:
+        productIds:
+          type: array
+          items:
+            type: string
+            format: uuid
+          maxItems: 100
+
+    # ==================== RESPONSE SCHEMAS ====================
+    InventoryResponse:
+      type: object
+      properties:
+        productId:
+          type: string
+          format: uuid
+        quantity:
+          type: integer
+        reservedQuantity:
+          type: integer
+        availableQuantity:
+          type: integer
+        lowStockThreshold:
+          type: integer
+        status:
+          $ref: '#/components/schemas/StockStatus'
+        lastUpdated:
+          type: string
+          format: date-time
+
+    ReservationResponse:
+      type: object
+      properties:
+        reservationId:
+          type: string
+          format: uuid
+        items:
+          type: array
+          items:
+            type: object
+            properties:
+              productId:
+                type: string
+                format: uuid
+              quantity:
+                type: integer
+              reserved:
+                type: boolean
+        expiresAt:
+          type: string
+          format: date-time
+        status:
+          type: string
+          enum: [RESERVED, PARTIAL, FAILED]
+
+    BulkUpdateResponse:
+      type: object
+      properties:
+        updated:
+          type: integer
+        failed:
+          type: integer
+        results:
+          type: array
+          items:
+            type: object
+            properties:
+              productId:
+                type: string
+                format: uuid
+              success:
+                type: boolean
+              error:
+                type: string
+
+    CheckAvailabilityResponse:
+      type: object
+      properties:
+        available:
+          type: boolean
+        items:
+          type: array
+          items:
+            type: object
+            properties:
+              productId:
+                type: string
+                format: uuid
+              requested:
+                type: integer
+              available:
+                type: integer
+              sufficient:
+                type: boolean
+
+    LowStockListResponse:
+      type: object
+      properties:
+        content:
+          type: array
+          items:
+            $ref: '#/components/schemas/LowStockItem'
+        page:
+          type: integer
+        size:
+          type: integer
+        totalElements:
+          type: integer
+        totalPages:
+          type: integer
+
+    LowStockItem:
+      type: object
+      properties:
+        productId:
+          type: string
+          format: uuid
+        productName:
+          type: string
+        quantity:
+          type: integer
+        threshold:
+          type: integer
+        status:
+          $ref: '#/components/schemas/StockStatus'
+
+    InternalInventoryResponse:
+      type: object
+      properties:
+        productId:
+          type: string
+          format: uuid
+        availableQuantity:
+          type: integer
+        status:
+          $ref: '#/components/schemas/StockStatus'
+
+    BatchInventoryResponse:
+      type: object
+      properties:
+        inventory:
+          type: array
+          items:
+            $ref: '#/components/schemas/InternalInventoryResponse'
+
+    MessageResponse:
+      type: object
+      properties:
+        message:
+          type: string
+        timestamp:
+          type: string
+          format: date-time
+
+    ErrorResponse:
+      type: object
+      properties:
+        error:
+          type: string
+        message:
+          type: string
+        details:
+          type: array
+          items:
+            type: object
+            properties:
+              field:
+                type: string
+              message:
+                type: string
+        timestamp:
+          type: string
+          format: date-time
+        path:
+          type: string
+
+    # ==================== ENUMS ====================
+    StockStatus:
+      type: string
+      enum:
+        - IN_STOCK
+        - LOW_STOCK
+        - OUT_OF_STOCK
