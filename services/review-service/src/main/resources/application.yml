@@ -1,0 +1,15 @@
+server:
+  port: 3007
+
+spring:
+  data:
+    mongodb:
+      uri: mongodb://localhost:27017/reviewdb
+  redis:
+    host: localhost
+    port: 6379
+
+# Logging
+logging:
+  level:
+    root: INFO
