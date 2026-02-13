@@ -1,0 +1,1095 @@
+openapi: 3.0.3
+info:
+  title: Order Service API
+  description: |
+    ShopSphere Order Service - Handles shopping cart, checkout, and order management.
+
+    ## Authentication
+    - Public endpoints require JWT Bearer token
+    - Internal endpoints require X-Service-Name and X-Service-Secret headers
+    - Admin endpoints require JWT with ADMIN role
+  version: 1.0.0
+  contact:
+    name: Team Member 4 (LakshanDulhara)
+
+servers:
+  - url: http://localhost:3004
+    description: Local development
+  - url: https://api.shopsphere.com/orders
+    description: Production
+
+tags:
+  - name: cart
+    description: Shopping cart operations
+  - name: checkout
+    description: Checkout process
+  - name: orders
+    description: Order management
+  - name: admin
+    description: Admin operations
+  - name: internal
+    description: Internal service-to-service APIs
+
+paths:
+  # ==================== CART ENDPOINTS ====================
+  /api/cart:
+    get:
+      tags: [cart]
+      summary: Get user's cart
+      description: Returns the current user's shopping cart with all items
+      operationId: getCart
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Cart retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiResponse_Cart'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+    delete:
+      tags: [cart]
+      summary: Clear cart
+      description: Removes all items from the user's cart
+      operationId: clearCart
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Cart cleared successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiResponse_Empty'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+  /api/cart/items:
+    post:
+      tags: [cart]
+      summary: Add item to cart
+      description: Adds a product to the shopping cart or updates quantity if already exists
+      operationId: addToCart
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AddToCartRequest'
+      responses:
+        '200':
+          description: Item added to cart
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiResponse_Cart'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '422':
+          description: Product not available or insufficient stock
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /api/cart/items/{itemId}:
+    put:
+      tags: [cart]
+      summary: Update cart item quantity
+      description: Updates the quantity of an item in the cart
+      operationId: updateCartItem
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: itemId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateCartItemRequest'
+      responses:
+        '200':
+          description: Cart item updated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiResponse_Cart'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+    delete:
+      tags: [cart]
+      summary: Remove item from cart
+      description: Removes a specific item from the cart
+      operationId: removeCartItem
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: itemId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Item removed from cart
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiResponse_Cart'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  /api/cart/merge:
+    post:
+      tags: [cart]
+      summary: Merge guest cart
+      description: Merges a guest session cart with the authenticated user's cart after login
+      operationId: mergeCart
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/MergeCartRequest'
+      responses:
+        '200':
+          description: Carts merged successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiResponse_Cart'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+  /api/cart/validate:
+    post:
+      tags: [checkout]
+      summary: Validate cart for checkout
+      description: Validates all cart items are in stock and prices are current
+      operationId: validateCart
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Cart validation result
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiResponse_CartValidation'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+  /api/cart/totals:
+    get:
+      tags: [checkout]
+      summary: Calculate order totals
+      description: Calculates subtotal, tax, shipping, and total for the cart
+      operationId: calculateTotals
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: shippingAddressId
+          in: query
+          required: false
+          schema:
+            type: string
+            format: uuid
+        - name: couponCode
+          in: query
+          required: false
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Order totals calculated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiResponse_OrderTotals'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+  # ==================== CHECKOUT ENDPOINTS ====================
+  /api/orders/checkout:
+    post:
+      tags: [checkout]
+      summary: Create order (checkout)
+      description: |
+        Creates a new order from the user's cart.
+
+        Flow:
+        1. Validates cart items
+        2. Reserves inventory
+        3. Creates order with PENDING status
+        4. Initiates payment
+        5. Clears cart on success
+      operationId: checkout
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CheckoutRequest'
+      responses:
+        '201':
+          description: Order created successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiResponse_Order'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '422':
+          description: Checkout failed (inventory, validation, etc.)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  # ==================== ORDER ENDPOINTS ====================
+  /api/orders:
+    get:
+      tags: [orders]
+      summary: List user's orders
+      description: Returns paginated list of the authenticated user's orders
+      operationId: listOrders
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/PageParam'
+        - $ref: '#/components/parameters/LimitParam'
+        - name: status
+          in: query
+          required: false
+          schema:
+            $ref: '#/components/schemas/OrderStatus'
+        - name: sort
+          in: query
+          required: false
+          schema:
+            type: string
+            enum: [createdAt, updatedAt, totalAmount]
+            default: createdAt
+        - name: order
+          in: query
+          required: false
+          schema:
+            type: string
+            enum: [asc, desc]
+            default: desc
+      responses:
+        '200':
+          description: Orders retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiResponse_OrderList'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+  /api/orders/{orderId}:
+    get:
+      tags: [orders]
+      summary: Get order by ID
+      description: Returns full order details including items, addresses, and status history
+      operationId: getOrder
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: orderId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Order retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiResponse_Order'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  /api/orders/{orderId}/status:
+    get:
+      tags: [orders]
+      summary: Get order status
+      description: Returns current status and status history
+      operationId: getOrderStatus
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: orderId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Order status retrieved
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiResponse_OrderStatus'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  /api/orders/{orderId}/cancel:
+    post:
+      tags: [orders]
+      summary: Cancel order
+      description: |
+        Cancels an order. Only allowed if status is PENDING or CONFIRMED.
+
+        - Releases inventory reservation
+        - Initiates refund if payment was made
+        - Publishes order.cancelled event
+      operationId: cancelOrder
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: orderId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CancelOrderRequest'
+      responses:
+        '200':
+          description: Order cancelled successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiResponse_Order'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '422':
+          description: Order cannot be cancelled (already shipped, delivered, etc.)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  # ==================== ADMIN ENDPOINTS ====================
+  /api/admin/orders:
+    get:
+      tags: [admin]
+      summary: List all orders (Admin)
+      description: Returns paginated list of all orders with filters
+      operationId: adminListOrders
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/PageParam'
+        - $ref: '#/components/parameters/LimitParam'
+        - name: status
+          in: query
+          required: false
+          schema:
+            $ref: '#/components/schemas/OrderStatus'
+        - name: userId
+          in: query
+          required: false
+          schema:
+            type: string
+            format: uuid
+        - name: orderNumber
+          in: query
+          required: false
+          schema:
+            type: string
+        - name: fromDate
+          in: query
+          required: false
+          schema:
+            type: string
+            format: date
+        - name: toDate
+          in: query
+          required: false
+          schema:
+            type: string
+            format: date
+      responses:
+        '200':
+          description: Orders retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiResponse_OrderList'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+
+  # ==================== INTERNAL ENDPOINTS ====================
+  /internal/orders/{orderId}:
+    get:
+      tags: [internal]
+      summary: Get order for internal services
+      description: Returns order details for payment/shipping services
+      operationId: internalGetOrder
+      security:
+        - serviceAuth: []
+      parameters:
+        - name: orderId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Order retrieved
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiResponse_Order'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  /internal/orders/{orderId}/status:
+    put:
+      tags: [internal]
+      summary: Update order status (internal)
+      description: |
+        Updates order status from other services.
+
+        Valid transitions:
+        - PENDING → CONFIRMED (from Payment Service)
+        - CONFIRMED → PROCESSING (from Seller)
+        - PROCESSING → SHIPPED (from Shipping Service)
+        - SHIPPED → DELIVERED (from Shipping Service)
+      operationId: internalUpdateStatus
+      security:
+        - serviceAuth: []
+      parameters:
+        - name: orderId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateStatusRequest'
+      responses:
+        '200':
+          description: Status updated successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiResponse_Order'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '422':
+          description: Invalid status transition
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /internal/orders/{orderId}/shipping-details:
+    get:
+      tags: [internal]
+      summary: Get shipping details
+      description: Returns order items and addresses for Shipping Service
+      operationId: getShippingDetails
+      security:
+        - serviceAuth: []
+      parameters:
+        - name: orderId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Shipping details retrieved
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiResponse_ShippingDetails'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: JWT token from User Service
+    serviceAuth:
+      type: apiKey
+      in: header
+      name: X-Service-Secret
+      description: Service-to-service authentication
+
+  parameters:
+    PageParam:
+      name: page
+      in: query
+      required: false
+      schema:
+        type: integer
+        minimum: 1
+        default: 1
+    LimitParam:
+      name: limit
+      in: query
+      required: false
+      schema:
+        type: integer
+        minimum: 1
+        maximum: 100
+        default: 20
+
+  responses:
+    BadRequest:
+      description: Invalid request parameters
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+    Unauthorized:
+      description: Missing or invalid authentication
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+    Forbidden:
+      description: Insufficient permissions
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+    NotFound:
+      description: Resource not found
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+
+  schemas:
+    # ==================== COMMON SCHEMAS ====================
+    ApiResponse_Empty:
+      type: object
+      properties:
+        success:
+          type: boolean
+          example: true
+        data:
+          type: object
+          nullable: true
+
+    ErrorResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+          example: false
+        error:
+          type: object
+          properties:
+            code:
+              type: string
+              example: RESOURCE_NOT_FOUND
+            message:
+              type: string
+              example: Order not found with ID
+            timestamp:
+              type: string
+              format: date-time
+            path:
+              type: string
+              example: /api/orders/123
+
+    PaginationMeta:
+      type: object
+      properties:
+        page:
+          type: integer
+          example: 1
+        limit:
+          type: integer
+          example: 20
+        total:
+          type: integer
+          example: 100
+        totalPages:
+          type: integer
+          example: 5
+
+    # ==================== CART SCHEMAS ====================
+    Cart:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        userId:
+          type: string
+          format: uuid
+          nullable: true
+        sessionId:
+          type: string
+          nullable: true
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/CartItem'
+        itemCount:
+          type: integer
+        subtotal:
+          type: number
+          format: decimal
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+
+    CartItem:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        productId:
+          type: string
+          format: uuid
+        productName:
+          type: string
+        productImage:
+          type: string
+          format: uri
+        quantity:
+          type: integer
+          minimum: 1
+        unitPrice:
+          type: number
+          format: decimal
+        totalPrice:
+          type: number
+          format: decimal
+        priceAtAdd:
+          type: number
+          format: decimal
+        addedAt:
+          type: string
+          format: date-time
+
+    AddToCartRequest:
+      type: object
+      required:
+        - productId
+        - quantity
+      properties:
+        productId:
+          type: string
+          format: uuid
+        quantity:
+          type: integer
+          minimum: 1
+          default: 1
+
+    UpdateCartItemRequest:
+      type: object
+      required:
+        - quantity
+      properties:
+        quantity:
+          type: integer
+          minimum: 0
+          description: Set to 0 to remove item
+
+    MergeCartRequest:
+      type: object
+      required:
+        - sessionId
+      properties:
+        sessionId:
+          type: string
+
+    ApiResponse_Cart:
+      type: object
+      properties:
+        success:
+          type: boolean
+        data:
+          $ref: '#/components/schemas/Cart'
+
+    # ==================== CHECKOUT SCHEMAS ====================
+    CartValidation:
+      type: object
+      properties:
+        valid:
+          type: boolean
+        issues:
+          type: array
+          items:
+            $ref: '#/components/schemas/ValidationIssue'
+
+    ValidationIssue:
+      type: object
+      properties:
+        productId:
+          type: string
+          format: uuid
+        productName:
+          type: string
+        issue:
+          type: string
+          enum:
+            - OUT_OF_STOCK
+            - INSUFFICIENT_STOCK
+            - PRICE_CHANGED
+            - PRODUCT_UNAVAILABLE
+        currentStock:
+          type: integer
+        requestedQuantity:
+          type: integer
+        oldPrice:
+          type: number
+          format: decimal
+        newPrice:
+          type: number
+          format: decimal
+
+    OrderTotals:
+      type: object
+      properties:
+        subtotal:
+          type: number
+          format: decimal
+        taxAmount:
+          type: number
+          format: decimal
+        taxRate:
+          type: number
+          format: decimal
+        shippingAmount:
+          type: number
+          format: decimal
+        discountAmount:
+          type: number
+          format: decimal
+        discountCode:
+          type: string
+          nullable: true
+        totalAmount:
+          type: number
+          format: decimal
+
+    CheckoutRequest:
+      type: object
+      required:
+        - shippingAddressId
+        - billingAddressId
+        - paymentMethod
+      properties:
+        shippingAddressId:
+          type: string
+          format: uuid
+        billingAddressId:
+          type: string
+          format: uuid
+        paymentMethod:
+          type: string
+          enum: [card, paypal, crypto]
+        couponCode:
+          type: string
+          nullable: true
+        notes:
+          type: string
+          nullable: true
+
+    ApiResponse_CartValidation:
+      type: object
+      properties:
+        success:
+          type: boolean
+        data:
+          $ref: '#/components/schemas/CartValidation'
+
+    ApiResponse_OrderTotals:
+      type: object
+      properties:
+        success:
+          type: boolean
+        data:
+          $ref: '#/components/schemas/OrderTotals'
+
+    # ==================== ORDER SCHEMAS ====================
+    OrderStatus:
+      type: string
+      enum:
+        - PENDING
+        - CONFIRMED
+        - PROCESSING
+        - SHIPPED
+        - DELIVERED
+        - CANCELLED
+
+    Order:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        orderNumber:
+          type: string
+          description: Human-readable order number
+          example: ORD-2026-000123
+        userId:
+          type: string
+          format: uuid
+        status:
+          $ref: '#/components/schemas/OrderStatus'
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/OrderItem'
+        shippingAddress:
+          $ref: '#/components/schemas/Address'
+        billingAddress:
+          $ref: '#/components/schemas/Address'
+        subtotal:
+          type: number
+          format: decimal
+        taxAmount:
+          type: number
+          format: decimal
+        shippingAmount:
+          type: number
+          format: decimal
+        discountAmount:
+          type: number
+          format: decimal
+        totalAmount:
+          type: number
+          format: decimal
+        paymentId:
+          type: string
+          format: uuid
+          nullable: true
+        paymentStatus:
+          type: string
+          enum: [pending, completed, failed, refunded]
+        trackingNumber:
+          type: string
+          nullable: true
+        notes:
+          type: string
+          nullable: true
+        statusHistory:
+          type: array
+          items:
+            $ref: '#/components/schemas/StatusHistoryItem'
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+
+    OrderItem:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        productId:
+          type: string
+          format: uuid
+        productName:
+          type: string
+        productImage:
+          type: string
+          format: uri
+        quantity:
+          type: integer
+        unitPrice:
+          type: number
+          format: decimal
+        totalPrice:
+          type: number
+          format: decimal
+
+    Address:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        fullName:
+          type: string
+        addressLine1:
+          type: string
+        addressLine2:
+          type: string
+          nullable: true
+        city:
+          type: string
+        state:
+          type: string
+        postalCode:
+          type: string
+        country:
+          type: string
+        phone:
+          type: string
+
+    StatusHistoryItem:
+      type: object
+      properties:
+        status:
+          $ref: '#/components/schemas/OrderStatus'
+        timestamp:
+          type: string
+          format: date-time
+        note:
+          type: string
+          nullable: true
+        updatedBy:
+          type: string
+
+    CancelOrderRequest:
+      type: object
+      required:
+        - reason
+      properties:
+        reason:
+          type: string
+          minLength: 10
+
+    UpdateStatusRequest:
+      type: object
+      required:
+        - status
+      properties:
+        status:
+          $ref: '#/components/schemas/OrderStatus'
+        trackingNumber:
+          type: string
+          nullable: true
+        note:
+          type: string
+          nullable: true
+
+    OrderStatusResponse:
+      type: object
+      properties:
+        currentStatus:
+          $ref: '#/components/schemas/OrderStatus'
+        history:
+          type: array
+          items:
+            $ref: '#/components/schemas/StatusHistoryItem'
+
+    ShippingDetails:
+      type: object
+      properties:
+        orderId:
+          type: string
+          format: uuid
+        orderNumber:
+          type: string
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/OrderItem'
+        shippingAddress:
+          $ref: '#/components/schemas/Address'
+        totalWeight:
+          type: number
+          format: decimal
+          nullable: true
+
+    ApiResponse_Order:
+      type: object
+      properties:
+        success:
+          type: boolean
+        data:
+          $ref: '#/components/schemas/Order'
+
+    ApiResponse_OrderList:
+      type: object
+      properties:
+        success:
+          type: boolean
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/Order'
+        meta:
+          $ref: '#/components/schemas/PaginationMeta'
+
+    ApiResponse_OrderStatus:
+      type: object
+      properties:
+        success:
+          type: boolean
+        data:
+          $ref: '#/components/schemas/OrderStatusResponse'
+
+    ApiResponse_ShippingDetails:
+      type: object
+      properties:
+        success:
+          type: boolean
+        data:
+          $ref: '#/components/schemas/ShippingDetails'
