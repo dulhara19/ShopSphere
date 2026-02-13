@@ -1,0 +1,145 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "{Service Name} Events",
+  "description": "Event schemas for {Service Name} - ShopSphere",
+  "version": "1.0.0",
+  "owner": "{Owner Name}",
+
+  "_instructions": [
+    "1. Copy this file and rename to {your-service}-events.json",
+    "2. Replace all {placeholders} with actual values",
+    "3. Define all events your service PUBLISHES in the 'events' section",
+    "4. Define all events your service CONSUMES in the 'consumedEvents' section",
+    "5. Follow the EventEnvelope structure for all events",
+    "6. Get Team Lead approval before implementing"
+  ],
+
+  "definitions": {
+    "EventEnvelope": {
+      "type": "object",
+      "description": "Standard envelope for all events - DO NOT MODIFY",
+      "required": ["eventId", "eventType", "eventVersion", "source", "timestamp", "data"],
+      "properties": {
+        "eventId": {
+          "type": "string",
+          "format": "uuid",
+          "description": "Unique identifier for this event instance"
+        },
+        "eventType": {
+          "type": "string",
+          "description": "Event type in format: domain.action (e.g., order.created)"
+        },
+        "eventVersion": {
+          "type": "string",
+          "description": "Schema version for this event type",
+          "default": "1.0"
+        },
+        "source": {
+          "type": "string",
+          "description": "Service that produced this event (e.g., order-service)"
+        },
+        "timestamp": {
+          "type": "string",
+          "format": "date-time",
+          "description": "ISO 8601 timestamp when event was produced"
+        },
+        "correlationId": {
+          "type": "string",
+          "format": "uuid",
+          "description": "ID to correlate related events across services"
+        },
+        "data": {
+          "type": "object",
+          "description": "Event-specific payload"
+        },
+        "metadata": {
+          "type": "object",
+          "properties": {
+            "userId": { "type": "string", "format": "uuid" },
+            "traceId": { "type": "string" },
+            "spanId": { "type": "string" }
+          }
+        }
+      }
+    }
+  },
+
+  "events": {
+    "{domain}.{action}": {
+      "description": "Describe what triggers this event",
+      "exchange": "shopsphere.{service}.events",
+      "routingKey": "{domain}.{action}",
+      "consumers": ["list", "of", "consuming-services"],
+      "schema": {
+        "allOf": [
+          { "$ref": "#/definitions/EventEnvelope" },
+          {
+            "properties": {
+              "eventType": { "const": "{domain}.{action}" },
+              "data": {
+                "type": "object",
+                "required": ["list", "required", "fields"],
+                "properties": {
+                  "id": { "type": "string", "format": "uuid" }
+                }
+              }
+            }
+          }
+        ]
+      },
+      "example": {
+        "eventId": "550e8400-e29b-41d4-a716-446655440000",
+        "eventType": "{domain}.{action}",
+        "eventVersion": "1.0",
+        "source": "{service}-service",
+        "timestamp": "2026-02-14T10:30:00Z",
+        "correlationId": "660e8400-e29b-41d4-a716-446655440001",
+        "data": {
+          "id": "770e8400-e29b-41d4-a716-446655440002"
+        },
+        "metadata": {
+          "userId": "880e8400-e29b-41d4-a716-446655440003",
+          "traceId": "abc123"
+        }
+      }
+    }
+  },
+
+  "consumedEvents": {
+    "{domain}.{action}": {
+      "description": "Describe why you consume this event",
+      "source": "{producing-service}",
+      "action": "Describe what action you take when receiving this event"
+    }
+  },
+
+  "_eventNamingConventions": {
+    "pattern": "{domain}.{action}",
+    "examples": [
+      "user.registered",
+      "user.updated",
+      "user.deleted",
+      "product.created",
+      "product.updated",
+      "product.deleted",
+      "product.viewed",
+      "inventory.reserved",
+      "inventory.released",
+      "inventory.low_stock",
+      "order.created",
+      "order.confirmed",
+      "order.shipped",
+      "order.delivered",
+      "order.cancelled",
+      "payment.initiated",
+      "payment.completed",
+      "payment.failed",
+      "payment.refunded",
+      "shipping.label_created",
+      "shipping.shipped",
+      "shipping.delivered",
+      "review.created",
+      "notification.sent"
+    ]
+  }
+}
