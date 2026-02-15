@@ -1,5 +1,5 @@
 ---
-name: master-sync
+name: bmad-master-sync
 description: Sync slave EPICS.md files to master status files - keeps master copy updated
 scope: project
 ---

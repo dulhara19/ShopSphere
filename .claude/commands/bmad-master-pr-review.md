@@ -1,5 +1,5 @@
 ---
-name: master-pr-review
+name: bmad-master-pr-review
 description: Master Agent PR Review - Validates service PRs against EPICS, contracts, and standards
 scope: project
 ---

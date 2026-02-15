@@ -1,5 +1,5 @@
 ---
-name: master-status
+name: bmad-master-status
 description: Quick status check for all microservices - shows progress dashboard
 scope: project
 ---
