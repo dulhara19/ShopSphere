@@ -4,6 +4,8 @@ import com.shopsphere.inventory.dto.InventoryDTO;
 import com.shopsphere.inventory.dto.ReservationDTO;
 import com.shopsphere.inventory.dto.request.*;
 import com.shopsphere.inventory.dto.response.AvailabilityCheckResponse;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.shopsphere.inventory.service.InventoryService;
 import com.shopsphere.inventory.service.LowStockService;
 import com.shopsphere.inventory.service.ReservationService;
@@ -27,6 +29,7 @@ public class InventoryController {
     private final InventoryService inventoryService;
     private final ReservationService reservationService;
     private final LowStockService lowStockService;
+    private final ObjectMapper objectMapper;
 
     // ==================== Epic 1.1: Basic Inventory Management ====================
 
@@ -66,10 +69,11 @@ public class InventoryController {
      * Epic 1.1.4: Bulk stock update
      */
     @PostMapping("/bulk-update")
-    public ResponseEntity<Void> bulkUpdateStock(@Valid @RequestBody List<UpdateInventoryRequest> updates) {
+    public ResponseEntity<List<InventoryDTO>> bulkUpdateStock(
+            @Valid @RequestBody List<BulkUpdateInventoryRequest> updates) {
         log.info("POST /inventory/bulk-update - Updating {} products", updates.size());
-        // TODO: Implement bulk update with product ID in request
-        return ResponseEntity.accepted().build();
+        List<InventoryDTO> updatedInventories = inventoryService.bulkUpdateStock(updates);
+        return ResponseEntity.ok(updatedInventories);
     }
 
     /**
@@ -118,34 +122,40 @@ public class InventoryController {
      * Epic 1.2.4: Check availability for single product or batch
      */
     @PostMapping("/check-availability")
-    public ResponseEntity<?> checkAvailability(@Valid @RequestBody Object request) {
+    public ResponseEntity<?> checkAvailability(@RequestBody JsonNode requestBody) {
         log.info("POST /inventory/check-availability - Checking availability");
 
-        // Handle both single and batch requests
-        if (request instanceof CheckAvailabilityRequest) {
-            CheckAvailabilityRequest singleRequest = (CheckAvailabilityRequest) request;
-            boolean available = reservationService.checkAvailability(
-                    singleRequest.getProductId(),
-                    singleRequest.getQuantity()
+        if (requestBody.isArray()) {
+            List<CheckAvailabilityRequest> requests = objectMapper.convertValue(
+                    requestBody,
+                    objectMapper.getTypeFactory().constructCollectionType(List.class, CheckAvailabilityRequest.class)
             );
 
-            InventoryDTO inventory = inventoryService.getStockLevel(singleRequest.getProductId());
-            AvailabilityCheckResponse response = AvailabilityCheckResponse.builder()
-                    .productId(singleRequest.getProductId())
-                    .requestedQuantity(singleRequest.getQuantity())
-                    .availableQuantity(inventory.getAvailableQuantity())
-                    .available(available)
-                    .message(available ? "Available" : "Insufficient stock")
-                    .build();
+            List<AvailabilityCheckResponse> responses = requests.stream()
+                    .map(this::buildAvailabilityResponse)
+                    .collect(Collectors.toList());
 
-            return ResponseEntity.ok(response);
-        } else if (request instanceof List) {
-            List<?> items = (List<?>) request;
-            // Implement batch checking if needed
-            return ResponseEntity.ok(items);
+            return ResponseEntity.ok(responses);
         }
 
-        return ResponseEntity.badRequest().build();
+        CheckAvailabilityRequest request = objectMapper.convertValue(requestBody, CheckAvailabilityRequest.class);
+        return ResponseEntity.ok(buildAvailabilityResponse(request));
+    }
+
+    private AvailabilityCheckResponse buildAvailabilityResponse(CheckAvailabilityRequest request) {
+        boolean available = reservationService.checkAvailability(
+                request.getProductId(),
+                request.getQuantity()
+        );
+
+        InventoryDTO inventory = inventoryService.getStockLevel(request.getProductId());
+        return AvailabilityCheckResponse.builder()
+                .productId(request.getProductId())
+                .requestedQuantity(request.getQuantity())
+                .availableQuantity(inventory.getAvailableQuantity())
+                .available(available)
+                .message(available ? "Available" : "Insufficient stock")
+                .build();
     }
 
     // ==================== Epic 1.3: Low Stock Alerts ====================

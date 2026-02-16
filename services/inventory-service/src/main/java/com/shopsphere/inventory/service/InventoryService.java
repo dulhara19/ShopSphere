@@ -1,6 +1,7 @@
 package com.shopsphere.inventory.service;
 
 import com.shopsphere.inventory.dto.InventoryDTO;
+import com.shopsphere.inventory.dto.request.BulkUpdateInventoryRequest;
 import com.shopsphere.inventory.dto.request.CreateInventoryRequest;
 import com.shopsphere.inventory.dto.request.UpdateInventoryRequest;
 import com.shopsphere.inventory.exception.InsufficientStockException;
@@ -98,19 +99,28 @@ public class InventoryService {
      * Epic 1.1.4: Bulk stock update
      */
     @Transactional
-    public List<InventoryDTO> bulkUpdateStock(List<UpdateInventoryRequest> updates) {
+    public List<InventoryDTO> bulkUpdateStock(List<BulkUpdateInventoryRequest> updates) {
         log.info("Performing bulk stock update for {} products", updates.size());
 
         return updates.stream()
                 .map(update -> {
-                    try {
-                        // Note: This requires productId to be available
-                        // The actual implementation would need proper request structure
-                        return null;
-                    } catch (Exception e) {
-                        log.error("Error updating inventory", e);
-                        return null;
+                    Inventory inventory = inventoryRepository.findByProductId(update.getProductId())
+                            .orElseThrow(() -> new ProductNotFoundException(update.getProductId().toString()));
+
+                    if (update.getQuantity() < 0) {
+                        throw new IllegalArgumentException("Quantity cannot be negative");
                     }
+
+                    inventory.setQuantity(update.getQuantity());
+
+                    if (update.getLowStockThreshold() != null) {
+                        inventory.setLowStockThreshold(update.getLowStockThreshold());
+                    }
+
+                    inventory.updateStatus();
+                    Inventory saved = inventoryRepository.save(inventory);
+                    eventService.publishStockUpdatedEvent(saved);
+                    return InventoryDTO.fromEntity(saved);
                 })
                 .collect(Collectors.toList());
     }
