@@ -4,18 +4,25 @@ import com.shopsphere.inventory.dto.InventoryDTO;
 import com.shopsphere.inventory.dto.ReservationDTO;
 import com.shopsphere.inventory.dto.request.*;
 import com.shopsphere.inventory.dto.response.AvailabilityCheckResponse;
+import com.shopsphere.inventory.dto.response.BulkUpdateResponse;
+import com.shopsphere.inventory.dto.response.StockHistoryResponse;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.shopsphere.inventory.model.StockMovementLog;
 import com.shopsphere.inventory.service.InventoryService;
 import com.shopsphere.inventory.service.LowStockService;
 import com.shopsphere.inventory.service.ReservationService;
+import com.shopsphere.inventory.service.StockHistoryService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.web.bind.annotation.*;
 
 import javax.validation.Valid;
+import javax.validation.constraints.NotEmpty;
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.UUID;
 import java.util.stream.Collectors;
@@ -29,6 +36,7 @@ public class InventoryController {
     private final InventoryService inventoryService;
     private final ReservationService reservationService;
     private final LowStockService lowStockService;
+    private final StockHistoryService stockHistoryService;
     private final ObjectMapper objectMapper;
 
     // ==================== Epic 1.1: Basic Inventory Management ====================
@@ -69,11 +77,13 @@ public class InventoryController {
      * Epic 1.1.4: Bulk stock update
      */
     @PostMapping("/bulk-update")
-    public ResponseEntity<List<InventoryDTO>> bulkUpdateStock(
-            @Valid @RequestBody List<BulkUpdateInventoryRequest> updates) {
+    public ResponseEntity<BulkUpdateResponse> bulkUpdateStock(
+            @RequestBody @NotEmpty(message = "Bulk update payload cannot be empty")
+            List<@Valid BulkUpdateInventoryRequest> updates) {
         log.info("POST /inventory/bulk-update - Updating {} products", updates.size());
-        List<InventoryDTO> updatedInventories = inventoryService.bulkUpdateStock(updates);
-        return ResponseEntity.ok(updatedInventories);
+        BulkUpdateResponse response = inventoryService.bulkUpdateStock(updates);
+        HttpStatus status = response.getFailureCount() > 0 ? HttpStatus.MULTI_STATUS : HttpStatus.OK;
+        return ResponseEntity.status(status).body(response);
     }
 
     /**
@@ -125,13 +135,22 @@ public class InventoryController {
     public ResponseEntity<?> checkAvailability(@RequestBody JsonNode requestBody) {
         log.info("POST /inventory/check-availability - Checking availability");
 
+        if (requestBody == null || requestBody.isNull() || requestBody.isMissingNode()) {
+            throw new IllegalArgumentException("Request body is required");
+        }
+
         if (requestBody.isArray()) {
+            if (requestBody.size() == 0) {
+                throw new IllegalArgumentException("Batch request cannot be empty");
+            }
+
             List<CheckAvailabilityRequest> requests = objectMapper.convertValue(
                     requestBody,
                     objectMapper.getTypeFactory().constructCollectionType(List.class, CheckAvailabilityRequest.class)
             );
 
             List<AvailabilityCheckResponse> responses = requests.stream()
+                    .peek(this::validateCheckAvailabilityRequest)
                     .map(this::buildAvailabilityResponse)
                     .collect(Collectors.toList());
 
@@ -139,7 +158,20 @@ public class InventoryController {
         }
 
         CheckAvailabilityRequest request = objectMapper.convertValue(requestBody, CheckAvailabilityRequest.class);
+        validateCheckAvailabilityRequest(request);
         return ResponseEntity.ok(buildAvailabilityResponse(request));
+    }
+
+    private void validateCheckAvailabilityRequest(CheckAvailabilityRequest request) {
+        if (request.getProductId() == null) {
+            throw new IllegalArgumentException("Product ID is required");
+        }
+        if (request.getQuantity() == null) {
+            throw new IllegalArgumentException("Quantity is required");
+        }
+        if (request.getQuantity() < 1) {
+            throw new IllegalArgumentException("Quantity must be at least 1");
+        }
     }
 
     private AvailabilityCheckResponse buildAvailabilityResponse(CheckAvailabilityRequest request) {
@@ -212,5 +244,31 @@ public class InventoryController {
         log.info("GET /inventory/order/{}/reservations - Getting reservations", orderId);
         List<ReservationDTO> reservations = reservationService.getReservationsByOrder(orderId);
         return ResponseEntity.ok(reservations);
+    }
+
+    /**
+     * Epic 2.2.2: Get stock history by product
+     */
+    @GetMapping("/{productId}/history")
+    public ResponseEntity<List<StockHistoryResponse>> getStockHistory(
+            @PathVariable UUID productId,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime from,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime to,
+            @RequestParam(required = false) StockMovementLog.ChangeType changeType) {
+        log.info("GET /inventory/{}/history - Fetching stock history", productId);
+        List<StockHistoryResponse> history = stockHistoryService.getHistory(productId, from, to, changeType);
+        return ResponseEntity.ok(history);
+    }
+
+    /**
+     * Epic 2.2.3: Stock adjustment endpoint
+     */
+    @PostMapping("/{productId}/adjustment")
+    public ResponseEntity<InventoryDTO> adjustInventory(
+            @PathVariable UUID productId,
+            @Valid @RequestBody InventoryAdjustmentRequest request) {
+        log.info("POST /inventory/{}/adjustment - Applying stock adjustment", productId);
+        InventoryDTO updated = stockHistoryService.adjustStock(productId, request);
+        return ResponseEntity.ok(updated);
     }
 }
