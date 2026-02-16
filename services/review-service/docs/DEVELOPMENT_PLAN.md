@@ -20,7 +20,7 @@ Goal: Reviews danna saha balanna puluwan basic functions.
 - [x] **2.1 Review Submission**
     - `POST /api/reviews` endpoint eka hadima.
     - Review ekak save karana logic eka `ReviewService` eke liyanna.
-- [x] **2.2 Review Retrieval**
+- [ ] **2.2 Review Retrieval**
     - `GET /api/reviews/product/{productId}` (Pagination & Sorting ekka).
     - `GET /api/reviews/{reviewId}` individual review ganna endpoint eka.
 - [ ] **2.3 Review Management**
