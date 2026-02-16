@@ -3,13 +3,13 @@
 ## 🛠️ Phase 1: Foundation & Security Layer
 **Goal:** Base project setup, PostgreSQL integration, and JWT infrastructure.
 
-- [ ] **1.1 Project Configuration**
+- [x] **1.1 Project Configuration**
     - `pom.xml` setup with Spring Boot 3.x, Security, JPA, PostgreSQL, Redis, and Lombok.
     - `application.yml` setup (Server Port: 3001, DB Connection strings).
-- [ ] **1.2 Core Domain Models**
+- [x] **1.2 Core Domain Models**
     - `User.java` Entity (UUID for ID, unique email,passwordHash, firstName, lastName, phone, and roles).
     - `Role` Enum (CUSTOMER, SELLER, ADMIN).
-- [ ] **1.3 Security Base**
+- [x] **1.3 Security Base**
     - Setup `BCryptPasswordEncoder` for password security.
     - Create `JwtUtils` class (Sign, Parse, Expiration logic).
 
