@@ -5,11 +5,14 @@ spring:
   data:
     mongodb:
       uri: mongodb://localhost:27017/reviewdb
-  redis:
-    host: localhost
-    port: 6379
+    # Redis configuration updated for Spring Boot 3.x
+    redis:
+      host: localhost
+      port: 6379
 
-# Logging
+# Logging configuration
 logging:
   level:
     root: INFO
+    org.springframework.data.mongodb: DEBUG # MongoDB queries balanna ona nam meka danna
+    com.shopsphere.review: DEBUG # Oyaage code eke logs balanna
