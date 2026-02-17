@@ -21,10 +21,10 @@
 - [x] **2.1 User Registration**
     - `POST /api/auth/register` endpoint.
     - Logic: Email duplication check & Password hashing.
-- [ ] **2.2 Authentication & JWT**
+- [x] **2.2 Authentication & JWT**
     - `POST /api/auth/login` endpoint.
     - Credential validation & Token generation (Access 15m / Refresh 7d).
-- [ ] **2.3 Token Management**
+- [x] **2.3 Token Management**
     - `POST /api/auth/refresh` for token rotation.
     - Logout logic (Token blacklisting in Redis).
 

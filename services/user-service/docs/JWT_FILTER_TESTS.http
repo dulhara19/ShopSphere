@@ -1,0 +1,126 @@
+### Test 1: Successful Login (Get JWT Token)
+POST http://localhost:3001/api/auth/login
+Content-Type: application/json
+
+{
+  "email": "john.doe@example.com",
+  "password": "SecurePass123"
+}
+
+###
+
+### Test 2: Access Protected Endpoint Without Token (Should Fail)
+GET http://localhost:3001/api/users/me
+Content-Type: application/json
+
+###
+
+### Test 3: Access Protected Endpoint With Invalid Token (Should Fail)
+GET http://localhost:3001/api/users/me
+Authorization: Bearer invalid_token_xyz
+Content-Type: application/json
+
+###
+
+### Test 4: Access Protected Endpoint With Valid Token (Should Succeed)
+GET http://localhost:3001/api/users/me
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJqb2huLmRvZUBleGFtcGxlLmNvbSIsInVzZXJJZCI6IjU1MGU4NDAwLWUyOWItNDFkNC1hNzE2LTQ0NjY1NTQ0MDAwMCIsInRva2VuVHlwZSI6ImFjY2VzcyIsImlhdCI6MTcwODEwODgwMCwiZXhwIjoxNzA4MTA5NzAwfQ.signature
+Content-Type: application/json
+
+###
+
+### Test 5: Register New User (Public Endpoint)
+POST http://localhost:3001/api/auth/register
+Content-Type: application/json
+
+{
+  "firstName": "Jane",
+  "lastName": "Smith",
+  "email": "jane.smith@example.com",
+  "password": "AnotherSecure456"
+}
+
+###
+
+### Test 6: Login with Newly Registered User
+POST http://localhost:3001/api/auth/login
+Content-Type: application/json
+
+{
+  "email": "jane.smith@example.com",
+  "password": "AnotherSecure456"
+}
+
+###
+
+### Test 7: Health Check (Actuator - No Auth Required)
+GET http://localhost:3001/actuator/health
+
+###
+
+### Test 8: Missing Authorization Header
+GET http://localhost:3001/api/users/me
+Content-Type: application/json
+
+###
+
+### Test 9: Malformed Authorization Header (No Bearer Prefix)
+GET http://localhost:3001/api/users/me
+Authorization: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJqb2huLmRvZUBleGFtcGxlLmNvbSIsInVzZXJJZCI6IjU1MGU4NDAwLWUyOWItNDFkNC1hNzE2LTQ0NjY1NTQ0MDAwMCIsInRva2VuVHlwZSI6ImFjY2VzcyIsImlhdCI6MTcwODEwODgwMCwiZXhwIjoxNzA4MTA5NzAwfQ.signature
+Content-Type: application/json
+
+###
+
+### Test 10: Correct Bearer Format
+GET http://localhost:3001/api/users/me
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJqb2huLmRvZUBleGFtcGxlLmNvbSIsInVzZXJJZCI6IjU1MGU4NDAwLWUyOWItNDFkNC1hNzE2LTQ0NjY1NTQ0MDAwMCIsInRva2VuVHlwZSI6ImFjY2VzcyIsImlhdCI6MTcwODEwODgwMCwiZXhwIjoxNzA4MTA5NzAwfQ.signature
+Content-Type: application/json
+
+###
+
+### Test 11: Bearer Token with Extra Spaces
+GET http://localhost:3001/api/users/me
+Authorization: Bearer    eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJqb2huLmRvZUBleGFtcGxlLmNvbSIsInVzZXJJZCI6IjU1MGU4NDAwLWUyOWItNDFkNC1hNzE2LTQ0NjY1NTQ0MDAwMCIsInRva2VuVHlwZSI6ImFjY2VzcyIsImlhdCI6MTcwODEwODgwMCwiZXhwIjoxNzA4MTA5NzAwfQ.signature
+Content-Type: application/json
+
+###
+
+### Test 12: Authorization Header Case Sensitivity
+GET http://localhost:3001/api/users/me
+authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJqb2huLmRvZUBleGFtcGxlLmNvbSIsInVzZXJJZCI6IjU1MGU4NDAwLWUyOWItNDFkNC1hNzE2LTQ0NjY1NTQ0MDAwMCIsInRva2VuVHlwZSI6ImFjY2VzcyIsImlhdCI6MTcwODEwODgwMCwiZXhwIjoxNzA4MTA5NzAwfQ.signature
+Content-Type: application/json
+
+###
+
+### Test 13: Multiple Endpoints (Sequence)
+# Step 1: Register user
+POST http://localhost:3001/api/auth/register
+Content-Type: application/json
+
+{
+  "firstName": "Test",
+  "lastName": "User",
+  "email": "test.user@example.com",
+  "password": "TestPass123"
+}
+
+###
+
+# Step 2: Login to get token
+POST http://localhost:3001/api/auth/login
+Content-Type: application/json
+
+{
+  "email": "test.user@example.com",
+  "password": "TestPass123"
+}
+
+###
+
+# Step 3: Use token to access protected endpoint
+GET http://localhost:3001/api/users/me
+Authorization: Bearer <use_token_from_step_2>
+Content-Type: application/json
+
+###
+

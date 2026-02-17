@@ -2,6 +2,8 @@ package com.shopsphere.user.controller;
 
 import com.shopsphere.user.dto.RegisterRequest;
 import com.shopsphere.user.dto.RegisterResponse;
+import com.shopsphere.user.dto.LoginRequest;
+import com.shopsphere.user.dto.LoginResponse;
 import com.shopsphere.user.model.User;
 import com.shopsphere.user.service.AuthService;
 import lombok.RequiredArgsConstructor;
@@ -16,7 +18,7 @@ import jakarta.validation.Valid;
  *
  * Endpoints:
  * - POST /api/auth/register - User registration
- * - POST /api/auth/login - User login (future implementation)
+ * - POST /api/auth/login - User login (returns JWT tokens)
  * - POST /api/auth/refresh - Token refresh (future implementation)
  */
 @RestController
@@ -30,19 +32,7 @@ public class AuthController {
     /**
      * Register a new user.
      *
-     * Endpoint: POST /api/auth/register
-     *
-     * Request body:
-     * {
-     *   "firstName": "John",
-     *   "lastName": "Doe",
-     *   "email": "john.doe@example.com",
-     *   "password": "securePassword123",
-     *   "roles": ["CUSTOMER"]
-     * }
-     *
      * @param registerRequest the registration request
-     * @param bindingResult validation results
      * @return RegisterResponse with user details and success message
      */
     @PostMapping("/register")
@@ -67,6 +57,53 @@ public class AuthController {
         return ResponseEntity
             .status(HttpStatus.CREATED)
             .body(response);
+    }
+
+    /**
+     * Authenticate a user and return JWT tokens.
+     * <p>
+     * Endpoint: POST /api/auth/login
+     * <p>
+     * Request body:
+     * {
+     * "email": "john.doe@example.com",
+     * "password": "securePassword123"
+     * }
+     * <p>
+     * Success Response (HTTP 200):
+     * {
+     * "accessToken": "eyJhbGc...",
+     * "refreshToken": "eyJhbGc...",
+     * "tokenType": "Bearer",
+     * "email": "john.doe@example.com",
+     * "firstName": "John",
+     * "lastName": "Doe",
+     * "roles": ["CUSTOMER"],
+     * "expiresIn": 900000
+     * }
+     *
+     * @param loginRequest the login credentials
+     * @return LoginResponse with JWT tokens and user details
+     */
+    @PostMapping("/login")
+    public ResponseEntity<LoginResponse> login(
+        @Valid @RequestBody LoginRequest loginRequest
+    ) {
+        log.info("Received login request for email: {}", loginRequest.getEmail());
+
+        try {
+            // Call service to authenticate user and generate JWT tokens
+            LoginResponse response = authService.login(loginRequest);
+
+            log.info("User successfully authenticated: {}", loginRequest.getEmail());
+            return ResponseEntity
+                .status(HttpStatus.OK)
+                .body(response);
+
+        } catch (Exception e) {
+            log.error("Login failed for email: {} - {}", loginRequest.getEmail(), e.getMessage());
+            throw e;
+        }
     }
 }
 
