@@ -1,0 +1,273 @@
+### Test 1: Successful User Registration
+POST http://localhost:3001/api/auth/register
+Content-Type: application/json
+
+{
+  "firstName": "John",
+  "lastName": "Doe",
+  "email": "john.doe@example.com",
+  "password": "SecurePassword123"
+}
+
+###
+
+### Test 2: Successful Registration with Explicit Roles
+POST http://localhost:3001/api/auth/register
+Content-Type: application/json
+
+{
+  "firstName": "Jane",
+  "lastName": "Smith",
+  "email": "jane.smith@example.com",
+  "password": "AnotherSecure456",
+  "roles": ["CUSTOMER"]
+}
+
+###
+
+### Test 3: Duplicate Email (Should Fail - HTTP 409)
+POST http://localhost:3001/api/auth/register
+Content-Type: application/json
+
+{
+  "firstName": "John2",
+  "lastName": "Doe2",
+  "email": "john.doe@example.com",
+  "password": "DifferentPassword789"
+}
+
+###
+
+### Test 4: Invalid Email Format (Should Fail - HTTP 400)
+POST http://localhost:3001/api/auth/register
+Content-Type: application/json
+
+{
+  "firstName": "Invalid",
+  "lastName": "Email",
+  "email": "not-an-email",
+  "password": "SecurePassword123"
+}
+
+###
+
+### Test 5: Password Too Short (Should Fail - HTTP 400)
+POST http://localhost:3001/api/auth/register
+Content-Type: application/json
+
+{
+  "firstName": "Short",
+  "lastName": "Pass",
+  "email": "shortpass@example.com",
+  "password": "Pass1"
+}
+
+###
+
+### Test 6: Password Too Long (Should Fail - HTTP 400)
+POST http://localhost:3001/api/auth/register
+Content-Type: application/json
+
+{
+  "firstName": "Long",
+  "lastName": "Pass",
+  "email": "longpass@example.com",
+  "password": "ThisIsAVeryLongPasswordThatExceedsOneHundredCharactersAndShouldFailValidationBecauseItIsTooLongForThePasswordFieldInTheSystem123456789"
+}
+
+###
+
+### Test 7: Missing First Name (Should Fail - HTTP 400)
+POST http://localhost:3001/api/auth/register
+Content-Type: application/json
+
+{
+  "lastName": "NoFirstName",
+  "email": "nofirst@example.com",
+  "password": "SecurePassword123"
+}
+
+###
+
+### Test 8: Empty First Name (Should Fail - HTTP 400)
+POST http://localhost:3001/api/auth/register
+Content-Type: application/json
+
+{
+  "firstName": "",
+  "lastName": "EmptyFirst",
+  "email": "emptyfirst@example.com",
+  "password": "SecurePassword123"
+}
+
+###
+
+### Test 9: Missing Last Name (Should Fail - HTTP 400)
+POST http://localhost:3001/api/auth/register
+Content-Type: application/json
+
+{
+  "firstName": "NoLastName",
+  "email": "nolast@example.com",
+  "password": "SecurePassword123"
+}
+
+###
+
+### Test 10: Missing Email (Should Fail - HTTP 400)
+POST http://localhost:3001/api/auth/register
+Content-Type: application/json
+
+{
+  "firstName": "NoEmail",
+  "lastName": "Test",
+  "password": "SecurePassword123"
+}
+
+###
+
+### Test 11: Missing Password (Should Fail - HTTP 400)
+POST http://localhost:3001/api/auth/register
+Content-Type: application/json
+
+{
+  "firstName": "NoPassword",
+  "lastName": "Test",
+  "email": "nopass@example.com"
+}
+
+###
+
+### Test 12: Email with Spaces (Should Fail - HTTP 400)
+POST http://localhost:3001/api/auth/register
+Content-Type: application/json
+
+{
+  "firstName": "Email",
+  "lastName": "Space",
+  "email": "email space@example.com",
+  "password": "SecurePassword123"
+}
+
+###
+
+### Test 13: First Name with Special Characters (Should Pass)
+POST http://localhost:3001/api/auth/register
+Content-Type: application/json
+
+{
+  "firstName": "José",
+  "lastName": "García",
+  "email": "jose.garcia@example.com",
+  "password": "SecurePassword123"
+}
+
+###
+
+### Test 14: Very Long First Name (Should Fail - HTTP 400)
+POST http://localhost:3001/api/auth/register
+Content-Type: application/json
+
+{
+  "firstName": "ThisIsAVeryLongFirstNameThatExceedsFiftyCharactersLimit",
+  "lastName": "Smith",
+  "email": "longfirst@example.com",
+  "password": "SecurePassword123"
+}
+
+###
+
+### Test 15: Multiple Users Registration (Should Pass)
+POST http://localhost:3001/api/auth/register
+Content-Type: application/json
+
+{
+  "firstName": "User",
+  "lastName": "One",
+  "email": "user1@example.com",
+  "password": "SecurePassword123"
+}
+
+###
+
+### Test 15b: Another User Registration
+POST http://localhost:3001/api/auth/register
+Content-Type: application/json
+
+{
+  "firstName": "User",
+  "lastName": "Two",
+  "email": "user2@example.com",
+  "password": "SecurePassword123"
+}
+
+###
+
+### Test 16: Seller Role Registration (Should Pass)
+POST http://localhost:3001/api/auth/register
+Content-Type: application/json
+
+{
+  "firstName": "Merchant",
+  "lastName": "Vendor",
+  "email": "merchant@example.com",
+  "password": "SecurePassword123",
+  "roles": ["SELLER"]
+}
+
+###
+
+### Test 17: Multiple Roles Registration (Should Pass)
+POST http://localhost:3001/api/auth/register
+Content-Type: application/json
+
+{
+  "firstName": "Admin",
+  "lastName": "User",
+  "email": "admin@example.com",
+  "password": "SecurePassword123",
+  "roles": ["ADMIN", "CUSTOMER"]
+}
+
+###
+
+### Test 18: Empty Roles Array (Should Use Default)
+POST http://localhost:3001/api/auth/register
+Content-Type: application/json
+
+{
+  "firstName": "Default",
+  "lastName": "Roles",
+  "email": "default.roles@example.com",
+  "password": "SecurePassword123",
+  "roles": []
+}
+
+###
+
+### Test 19: Case-Sensitive Email Check (Should Pass - Different Email)
+POST http://localhost:3001/api/auth/register
+Content-Type: application/json
+
+{
+  "firstName": "Case",
+  "lastName": "Test",
+  "email": "John.Doe@example.com",
+  "password": "SecurePassword123"
+}
+
+###
+
+### Test 20: Password with Special Characters (Should Pass)
+POST http://localhost:3001/api/auth/register
+Content-Type: application/json
+
+{
+  "firstName": "Special",
+  "lastName": "Chars",
+  "email": "special.chars@example.com",
+  "password": "P@ssw0rd!#$%^&*()"
+}
+
+###
+

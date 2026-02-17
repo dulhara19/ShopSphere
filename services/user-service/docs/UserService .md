@@ -18,7 +18,7 @@
 ## 🔑 Phase 2: Core Auth APIs (Epic 1.1)
 **Goal:** Enable users to join the platform and stay authenticated.
 
-- [ ] **2.1 User Registration**
+- [x] **2.1 User Registration**
     - `POST /api/auth/register` endpoint.
     - Logic: Email duplication check & Password hashing.
 - [ ] **2.2 Authentication & JWT**
