@@ -1,0 +1,174 @@
+### Phase 3.1: Profile Update Tests
+
+### Test 1: Register User
+POST http://localhost:3001/api/auth/register
+Content-Type: application/json
+
+{
+  "firstName": "Saman",
+  "lastName": "Perera",
+  "email": "saman@example.com",
+  "password": "password123"
+}
+
+###
+
+### Test 2: Login User
+POST http://localhost:3001/api/auth/login
+Content-Type: application/json
+
+{
+  "email": "saman@example.com",
+  "password": "password123"
+}
+
+###
+
+### Test 3: Get Profile Before Update
+GET http://localhost:3001/api/users/me
+Authorization: Bearer [TOKEN_FROM_TEST_2]
+Content-Type: application/json
+
+###
+
+### Test 4: Update Own Profile - Success
+PUT http://localhost:3001/api/users/[USER_ID_FROM_TEST_3]
+Authorization: Bearer [TOKEN_FROM_TEST_2]
+Content-Type: application/json
+
+{
+  "firstName": "Saman",
+  "lastName": "Perera Updated",
+  "phone": "+94711234567",
+  "address": "123 Main Street",
+  "city": "Colombo",
+  "state": "WP",
+  "postalCode": "00100",
+  "country": "Sri Lanka"
+}
+
+###
+
+### Test 5: Get Profile After Update
+GET http://localhost:3001/api/users/me
+Authorization: Bearer [TOKEN_FROM_TEST_2]
+Content-Type: application/json
+
+###
+
+### Test 6: Partial Update - Only Phone and Address
+PUT http://localhost:3001/api/users/[USER_ID_FROM_TEST_3]
+Authorization: Bearer [TOKEN_FROM_TEST_2]
+Content-Type: application/json
+
+{
+  "phone": "+94722234567",
+  "address": "456 Oak Avenue"
+}
+
+###
+
+### Test 7: Register Second User (For access control testing)
+POST http://localhost:3001/api/auth/register
+Content-Type: application/json
+
+{
+  "firstName": "John",
+  "lastName": "Doe",
+  "email": "john@example.com",
+  "password": "password123"
+}
+
+###
+
+### Test 8: Login Second User
+POST http://localhost:3001/api/auth/login
+Content-Type: application/json
+
+{
+  "email": "john@example.com",
+  "password": "password123"
+}
+
+###
+
+### Test 9: Try to Update Another User's Profile - Access Denied (HTTP 403)
+PUT http://localhost:3001/api/users/[SAMAN_USER_ID_FROM_TEST_3]
+Authorization: Bearer [TOKEN_FROM_TEST_8]
+Content-Type: application/json
+
+{
+  "firstName": "Hacked",
+  "lastName": "Profile"
+}
+
+###
+
+### Test 10: Update Own Profile - Partial Update (Only firstName)
+PUT http://localhost:3001/api/users/[JOHN_USER_ID_FROM_TEST_8]
+Authorization: Bearer [TOKEN_FROM_TEST_8]
+Content-Type: application/json
+
+{
+  "firstName": "Jonathan"
+}
+
+###
+
+### Test 11: Update Profile - Validation Error (firstName too short)
+PUT http://localhost:3001/api/users/[USER_ID_FROM_TEST_3]
+Authorization: Bearer [TOKEN_FROM_TEST_2]
+Content-Type: application/json
+
+{
+  "firstName": "A"
+}
+
+###
+
+### Test 12: Update Profile - Validation Error (phone too long)
+PUT http://localhost:3001/api/users/[USER_ID_FROM_TEST_3]
+Authorization: Bearer [TOKEN_FROM_TEST_2]
+Content-Type: application/json
+
+{
+  "phone": "+947112345671234567890123"
+}
+
+###
+
+### Test 13: Update Profile - No Token (HTTP 401)
+PUT http://localhost:3001/api/users/[USER_ID_FROM_TEST_3]
+Content-Type: application/json
+
+{
+  "firstName": "TestName"
+}
+
+###
+
+### Test 14: Update Non-Existent User (HTTP 404)
+PUT http://localhost:3001/api/users/550e8400-e29b-41d4-a716-000000000000
+Authorization: Bearer [TOKEN_FROM_TEST_2]
+Content-Type: application/json
+
+{
+  "firstName": "Test"
+}
+
+###
+
+### Test 15: Update Profile with Empty Fields (Should be ignored)
+PUT http://localhost:3001/api/users/[USER_ID_FROM_TEST_3]
+Authorization: Bearer [TOKEN_FROM_TEST_2]
+Content-Type: application/json
+
+{
+  "firstName": "Saman",
+  "lastName": "",
+  "phone": null,
+  "address": "123 Updated St"
+}
+
+###
+

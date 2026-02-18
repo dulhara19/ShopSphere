@@ -1,4 +1,6 @@
 package com.shopsphere.user.security;
+import io.jsonwebtoken.Claims;
+import java.util.List;
 
 import io.jsonwebtoken.*;
 import io.jsonwebtoken.security.Keys;
@@ -52,8 +54,8 @@ public class JwtUtils {
      * @param userId the user ID
      * @return JWT token string
      */
-    public String generateAccessToken(String username, String userId) {
-        return generateToken(username, userId, jwtExpiration, "access");
+    public String generateAccessToken(String username, String userId, List<String> roles) {
+        return generateToken(username, userId, roles, jwtExpiration, "access");
     }
 
     /**
@@ -64,7 +66,7 @@ public class JwtUtils {
      * @return JWT token string
      */
     public String generateRefreshToken(String username, String userId) {
-        return generateToken(username, userId, jwtRefreshExpiration, "refresh");
+        return generateToken(username, userId, null, jwtRefreshExpiration, "refresh");
     }
 
     /**
@@ -76,22 +78,23 @@ public class JwtUtils {
      * @param tokenType type of token (access/refresh)
      * @return JWT token string
      */
-    private String generateToken(String username, String userId, long expirationTime, String tokenType) {
+    private String generateToken(String username, String userId, List<String> roles, long expirationTime, String tokenType) {
         Map<String, Object> claims = new HashMap<>();
         claims.put("userId", userId);
         claims.put("tokenType", tokenType);
+        claims.put("roles", roles);
 
         Date now = new Date();
         Date expiryDate = new Date(now.getTime() + expirationTime);
 
         try {
             return Jwts.builder()
-                    .claims(claims)
-                    .subject(username)
-                    .issuedAt(now)
-                    .expiration(expiryDate)
-                    .signWith(getSigningKey())
-                    .compact();
+                .claims(claims)
+                .subject(username)
+                .issuedAt(now)
+                .expiration(expiryDate)
+                .signWith(getSigningKey())
+                .compact();
         } catch (Exception e) {
             log.error("Error generating JWT token: {}", e.getMessage());
             throw new RuntimeException("Failed to generate JWT token", e);
@@ -235,6 +238,24 @@ public class JwtUtils {
         } catch (JwtException | IllegalArgumentException e) {
             log.error("Error extracting claims from token: {}", e.getMessage());
             return null;
+        }
+    }
+    /**
+     * Extract roles from the JWT token
+     *
+     * @param token JWT token
+     * @return List of roles
+     */
+    @SuppressWarnings("unchecked")
+    public List<String> extractRoles(String token) {
+        try {
+            Claims claims = getAllClaims(token);
+            List<String> roles = claims.get("roles", List.class);
+
+            return roles != null ? roles : new java.util.ArrayList<>();
+        } catch (Exception e) {
+            log.error("Error extracting roles from token: {}", e.getMessage());
+            return new java.util.ArrayList<>();
         }
     }
 

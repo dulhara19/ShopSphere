@@ -13,18 +13,12 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+
 import java.util.Date;
-
+import java.util.List;
 import java.util.UUID;
+import java.util.stream.Collectors;
 
-/**
- * AuthService - Handles authentication and authorization logic.
- *
- * Responsibilities:
- * - User registration with email validation and password hashing
- * - Password encoding and validation
- * - User credential verification
- */
 @Service
 @RequiredArgsConstructor
 @Slf4j
@@ -34,25 +28,10 @@ public class AuthService {
     private final BCryptPasswordEncoder bCryptPasswordEncoder;
     private final JwtUtils jwtUtils;
 
-    /**
-     * Register a new user in the system.
-     *
-     * Flow:
-     * 1. Check if email already exists
-     * 2. Encode the password using BCrypt
-     * 3. Create a new User entity with encoded password
-     * 4. Save to database
-     * 5. Return the created user
-     *
-     * @param registerRequest the registration request containing user details
-     * @return the created User entity
-     * @throws UserAlreadyExistsException if email already exists
-     */
     @Transactional
     public User registerUser(RegisterRequest registerRequest) {
         log.info("Attempting to register user with email: {}", registerRequest.getEmail());
 
-        // Step 1: Check if email already exists
         if (userRepository.existsByEmail(registerRequest.getEmail())) {
             log.warn("Registration failed: Email {} already exists", registerRequest.getEmail());
             throw new UserAlreadyExistsException(
@@ -60,14 +39,12 @@ public class AuthService {
             );
         }
 
-        // Step 2: Encode password using BCrypt
         String encodedPassword = bCryptPasswordEncoder.encode(registerRequest.getPassword());
 
-        // Step 3 & 4: Create and save new user
         User user = User.builder()
             .id(UUID.randomUUID())
             .email(registerRequest.getEmail())
-            .username(registerRequest.getEmail()) // Using email as username
+            .username(registerRequest.getEmail())
             .firstName(registerRequest.getFirstName())
             .lastName(registerRequest.getLastName())
             .passwordHash(encodedPassword)
@@ -81,21 +58,7 @@ public class AuthService {
 
         return savedUser;
     }
-    /**
-     * Authenticate a user and return JWT tokens.
-     *
-     * Flow:
-     * 1. Find user by email
-     * 2. Verify password matches hashed password
-     * 3. Generate access token (15 min expiration)
-     * 4. Generate refresh token (7 days expiration)
-     * 5. Return user details with tokens
-     *
-     * @param loginRequest the login request containing email and password
-     * @return LoginResponse with JWT tokens and user details
-     * @throws UserNotFoundException if user not found
-     * @throws RuntimeException if password verification fails
-     */
+
     @Transactional(readOnly = true)
     public LoginResponse login(LoginRequest loginRequest) {
         log.info("Attempting login for email: {}", loginRequest.getEmail());
@@ -115,8 +78,13 @@ public class AuthService {
             throw new RuntimeException("Invalid email or password");
         }
 
+        // 🔥 Step 2.5:
+        List<String> roleNames = user.getRoles().stream()
+            .map(Enum::name)
+            .collect(Collectors.toList());
+
         // Step 3 & 4: Generate JWT tokens
-        String accessToken = jwtUtils.generateAccessToken(user.getEmail(), user.getId().toString());
+        String accessToken = jwtUtils.generateAccessToken(user.getEmail(), user.getId().toString(), roleNames);
         String refreshToken = jwtUtils.generateRefreshToken(user.getEmail(), user.getId().toString());
 
         Date accessTokenExpiration = jwtUtils.getExpirationDate(accessToken);
@@ -138,5 +106,3 @@ public class AuthService {
             .build();
     }
 }
-
-

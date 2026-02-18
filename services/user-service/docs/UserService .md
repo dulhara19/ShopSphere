@@ -33,10 +33,10 @@
 ## 👤 Phase 3: Profile & Role Management (Epic 1.2 & 1.3)
 **Goal:** Manage user data and Role-Based Access Control (RBAC).
 
-- [ ] **3.1 Profile APIs**
+- [x] **3.1 Profile APIs**
     - `GET /api/users/me` (Profile retrieval).
     - `PUT /api/users/{id}` (Update Name, Phone, Address).
-- [ ] **3.2 Admin Features**
+- [x] **3.2 Admin Features**
     - `GET /api/admin/users` (Paginated list).
     - `PUT /api/admin/users/{id}/role` (Role update logic).
 - [ ] **3.3 Access Control**
