@@ -1,84 +1,97 @@
 package com.shopsphere.recommendation.controller;
 
+import com.shopsphere.recommendation.dto.AddToCartRequest;
+import com.shopsphere.recommendation.dto.ProductViewRequest;
+import com.shopsphere.recommendation.dto.PurchaseRequest;
+import com.shopsphere.recommendation.dto.SearchQueryRequest;
 import com.shopsphere.recommendation.model.RecommendationEvent;
 import com.shopsphere.recommendation.repository.EventTrackingRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
-import java.util.List;
-import java.util.Map;
-import java.time.Instant;
 
+import jakarta.validation.Valid;
+import java.time.Instant;
+import java.util.List;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 @RestController
 @RequestMapping("/api/events")
 public class EventTrackingController {
 
+    private static final Logger logger = LoggerFactory.getLogger(EventTrackingController.class);
+
     @Autowired
     private EventTrackingRepository repository;
 
     @PostMapping("/product-view")
-    public RecommendationEvent productView(@RequestBody Map<String, Object> payload) {
+    public RecommendationEvent productView(@Valid @RequestBody ProductViewRequest request) {
+        logger.info("Tracking PRODUCT_VIEW: productId={}, userId={}, sessionId={}",
+            request.getProductId(), request.getUserId(), request.getSessionId());
+
         RecommendationEvent event = RecommendationEvent.productView(
-            (String) payload.get("productId"),
-            (String) payload.get("userId"),
-            (String) payload.get("sessionId"),
-            (Map<String, Object>) payload.get("metadata")
+            request.getProductId(),
+            request.getUserId(),
+            request.getSessionId(),
+            request.getMetadata()
         );
         return repository.save(event);
     }
 
     @PostMapping("/search-query")
-    public RecommendationEvent searchQuery(@RequestBody Map<String, Object> payload) {
+    public RecommendationEvent searchQuery(@Valid @RequestBody SearchQueryRequest request) {
+        logger.info("Tracking SEARCH_QUERY: searchTerm={}, userId={}, sessionId={}",
+            request.getSearchTerm(), request.getUserId(), request.getSessionId());
+
         RecommendationEvent event = RecommendationEvent.searchQuery(
-            (String) payload.get("userId"),
-            (String) payload.get("sessionId"),
-            (String) payload.get("searchTerm"),
-            (Map<String, Object>) payload.get("metadata")
+            request.getUserId(),
+            request.getSessionId(),
+            request.getSearchTerm(),
+            request.getMetadata()
         );
         return repository.save(event);
     }
 
     @PostMapping("/add-to-cart")
-    public RecommendationEvent addToCart(@RequestBody Map<String, Object> payload) {
-        Map<String, Object> metadata = (Map<String, Object>) payload.get("metadata");
-        Integer quantity = metadata != null ? (Integer) metadata.get("quantity") : null;
+    public RecommendationEvent addToCart(@Valid @RequestBody AddToCartRequest request) {
+        logger.info("Tracking ADD_TO_CART: productId={}, userId={}, sessionId={}, quantity={}",
+            request.getProductId(), request.getUserId(), request.getSessionId(), request.getQuantity());
 
         RecommendationEvent event = RecommendationEvent.addToCart(
-            (String) payload.get("productId"),
-            (String) payload.get("userId"),
-            (String) payload.get("sessionId"),
-            quantity,
-            null
+            request.getProductId(),
+            request.getUserId(),
+            request.getSessionId(),
+            request.getQuantity(),
+            request.getMetadata()
         );
         return repository.save(event);
     }
-
-    //1.1.4
 
     @PostMapping("/purchase")
-    public RecommendationEvent purchase(@RequestBody Map<String, Object> payload) {
+    public RecommendationEvent purchase(@Valid @RequestBody PurchaseRequest request) {
+        logger.info("Tracking PURCHASE: orderId={}, userId={}, sessionId={}",
+            request.getOrderId(), request.getUserId(), request.getSessionId());
+
         RecommendationEvent event = RecommendationEvent.purchase(
-            (String) payload.get("orderId"),
-            (String) payload.get("userId"),
-            (String) payload.get("sessionId"),
-            (Map<String, Object>) payload.get("metadata")
+            request.getOrderId(),
+            request.getUserId(),
+            request.getSessionId(),
+            request.getMetadata()
         );
         return repository.save(event);
     }
 
-    //1.1.5 Event Ingestion API
-
+    // Optional generic endpoints remain unchanged
     @PostMapping("/track")
     public RecommendationEvent trackEvent(@RequestBody RecommendationEvent event) {
-        // Save with current timestamp
         event.setTimestamp(Instant.now());
         return repository.save(event);
     }
+
     @PostMapping("/track/batch")
     public List<RecommendationEvent> trackEventsBatch(@RequestBody List<RecommendationEvent> events) {
-        // Set timestamp for each event
         events.forEach(e -> e.setTimestamp(Instant.now()));
         return repository.saveAll(events);
     }
-
 }
