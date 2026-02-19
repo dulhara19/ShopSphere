@@ -78,6 +78,7 @@ public class SecurityConfig {
             .authorizeHttpRequests(auth -> auth
                 // Allow all authentication endpoints without authentication
                 .requestMatchers("/api/auth/**").permitAll()
+                .requestMatchers("/api/internal/**").permitAll()
                 .requestMatchers("/auth/**").permitAll()
 
                 // Allow actuator endpoints for monitoring

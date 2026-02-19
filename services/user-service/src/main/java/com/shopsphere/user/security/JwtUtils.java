@@ -13,6 +13,9 @@ import java.nio.charset.StandardCharsets;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
+import com.shopsphere.user.dto.UserInternalDto;
+import java.util.UUID;
+import java.util.ArrayList;
 
 /**
  * JWT Utility Class
@@ -259,6 +262,83 @@ public class JwtUtils {
         }
     }
 
+    /**
+     * Validate the provided JWT and extract internal user details.
+     * Throws JwtException (from io.jsonwebtoken) if token invalid/expired.
+     *
+     * Expected claims (created by this service):
+     * - "userId" (String UUID)
+     * - "email" (String) or subject
+     * - "firstName" (String) optional
+     * - "lastName" (String) optional
+     * - "roles" (List<String> or comma-separated String)
+     *
+     * @param token JWT string (may include "Bearer " prefix)
+     * @return UserInternalDto containing the extracted information
+     * @throws JwtException if token is invalid/expired
+     */
+    @SuppressWarnings("unchecked")
+    public UserInternalDto validateTokenAndGetUserInternalDto(String token) throws JwtException {
+        if (token == null || token.trim().isEmpty()) {
+            throw new JwtException("Token is empty");
+        }
+
+        token = token.trim();
+        if (token.toLowerCase().startsWith("bearer ")) {
+            token = token.substring(7).trim();
+        }
+
+        try {
+            Claims claims = Jwts.parser()
+                    .verifyWith(getSigningKey())
+                    .build()
+                    .parseSignedClaims(token)
+                    .getPayload();
+
+            String userIdStr = claims.get("userId", String.class);
+            UUID userId = null;
+            if (userIdStr != null && !userIdStr.isBlank()) {
+                userId = UUID.fromString(userIdStr);
+            }
+
+            String email = claims.get("email", String.class);
+            if ((email == null || email.isBlank()) && claims.getSubject() != null) {
+                email = claims.getSubject();
+            }
+
+            String firstName = claims.get("firstName", String.class);
+            String lastName = claims.get("lastName", String.class);
+
+            List<String> roles = new ArrayList<>();
+            Object rolesObj = claims.get("roles");
+            if (rolesObj instanceof List<?>) {
+                for (Object r : (List<?>) rolesObj) {
+                    if (r != null) roles.add(r.toString());
+                }
+            } else if (rolesObj instanceof String) {
+                String rolesStr = (String) rolesObj;
+                if (!rolesStr.isBlank()) {
+                    for (String s : rolesStr.split(",")) {
+                        if (!s.trim().isEmpty()) roles.add(s.trim());
+                    }
+                }
+            }
+
+            return UserInternalDto.builder()
+                    .id(userId)
+                    .email(email)
+                    .firstName(firstName)
+                    .lastName(lastName)
+                    .roles(roles)
+                    .build();
+
+        } catch (JwtException e) {
+            log.warn("Invalid or expired JWT token: {}", e.getMessage());
+            throw e; // propagate so callers can return 401
+        } catch (Exception e) {
+            log.error("Unexpected error parsing JWT token: {}", e.getMessage());
+            throw new JwtException("Failed to parse token", e);
+        }
+    }
+
 }
-
-

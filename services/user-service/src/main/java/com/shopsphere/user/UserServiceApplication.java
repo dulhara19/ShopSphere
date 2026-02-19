@@ -13,6 +13,7 @@ import org.springframework.scheduling.annotation.EnableAsync;
  * - User Profile Management
  * - Role-Based Access Control (RBAC)
  * - Inter-service Communication
+ * * Phase 4.3: Event Publishing Integrated
  */
 @SpringBootApplication
 @EnableCaching
@@ -24,4 +25,3 @@ public class UserServiceApplication {
     }
 
 }
-

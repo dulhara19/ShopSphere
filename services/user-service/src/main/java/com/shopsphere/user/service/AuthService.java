@@ -3,6 +3,7 @@ package com.shopsphere.user.service;
 import com.shopsphere.user.dto.LoginRequest;
 import com.shopsphere.user.dto.LoginResponse;
 import com.shopsphere.user.dto.RegisterRequest;
+import com.shopsphere.user.dto.UserInternalDto;
 import com.shopsphere.user.exception.UserAlreadyExistsException;
 import com.shopsphere.user.exception.UserNotFoundException;
 import com.shopsphere.user.model.User;
@@ -27,6 +28,7 @@ public class AuthService {
     private final UserRepository userRepository;
     private final BCryptPasswordEncoder bCryptPasswordEncoder;
     private final JwtUtils jwtUtils;
+    private final UserEventPublisher userEventPublisher;
 
     @Transactional
     public User registerUser(RegisterRequest registerRequest) {
@@ -55,6 +57,23 @@ public class AuthService {
 
         User savedUser = userRepository.save(user);
         log.info("User successfully registered with email: {}", savedUser.getEmail());
+
+        // Phase 4.3: Publish user.created event
+        try {
+            UserInternalDto userDto = UserInternalDto.builder()
+                .id(savedUser.getId())
+                .email(savedUser.getEmail())
+                .firstName(savedUser.getFirstName())
+                .lastName(savedUser.getLastName())
+                .roles(savedUser.getRoles().stream()
+                    .map(Enum::name)
+                    .collect(Collectors.toList()))
+                .build();
+            userEventPublisher.publishUserCreatedEvent(userDto);
+        } catch (Exception e) {
+            log.error("Failed to publish user.created event, but user was saved: {}", e.getMessage());
+            // Do not fail the registration if event publishing fails
+        }
 
         return savedUser;
     }

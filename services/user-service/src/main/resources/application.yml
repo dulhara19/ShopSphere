@@ -46,6 +46,24 @@ spring:
           max-idle: 5
           min-idle: 2
 
+  # RabbitMQ Configuration (Phase 4.3: Event Publishing)
+  rabbitmq:
+    host: localhost
+    port: 5672
+    username: guest
+    password: guest
+    requested-heartbeat: 30s # 👈 කනෙක්ෂන් එක දිගටම තබා ගැනීමට
+    template:
+      retry:
+        enabled: true
+        max-attempts: 3
+    listener:
+      simple:
+        retry:
+          enabled: true
+          initial-interval: 3s
+          max-attempts: 3
+
   # Security Configuration
   security:
     filter:
@@ -92,4 +110,3 @@ management:
     export:
       prometheus:
         enabled: true
-
