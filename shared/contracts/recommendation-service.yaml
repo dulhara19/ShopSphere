@@ -1,0 +1,499 @@
+openapi: 3.0.3
+info:
+  title: Recommendation Service API
+  description: |
+    Recommendation Service provides personalized product recommendations for ShopSphere.
+  version: 1.0.0
+  contact:
+    name: Team Member 8
+    email: team8@shopsphere.com
+
+servers:
+  - url: http://localhost:3008
+    description: Local development
+  - url: https://api.shopsphere.com
+    description: Production
+
+tags:
+  - name: Events
+    description: User behavior tracking
+  - name: Recommendations
+    description: Product recommendations
+  - name: Trending
+    description: Trending products
+  - name: Search
+    description: Search suggestions
+
+paths:
+  # ==================== EVENTS ====================
+  /api/events/track:
+    post:
+      tags:
+        - Events
+      summary: Track event
+      description: Track a user behavior event
+      operationId: trackEvent
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TrackEventRequest'
+      responses:
+        '200':
+          description: Event tracked
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MessageResponse'
+
+  /api/events/batch:
+    post:
+      tags:
+        - Events
+      summary: Track batch events
+      description: Track multiple events at once
+      operationId: trackBatchEvents
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/BatchEventsRequest'
+      responses:
+        '200':
+          description: Events tracked
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MessageResponse'
+
+  # ==================== RECOMMENDATIONS ====================
+  /api/recommendations/recently-viewed:
+    get:
+      tags:
+        - Recommendations
+      summary: Get recently viewed
+      description: Get user's recently viewed products
+      operationId: getRecentlyViewed
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            default: 10
+            maximum: 50
+      responses:
+        '200':
+          description: Products retrieved
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProductListResponse'
+
+    delete:
+      tags:
+        - Recommendations
+      summary: Clear recently viewed
+      description: Clear recently viewed history
+      operationId: clearRecentlyViewed
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: History cleared
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MessageResponse'
+
+  /api/recommendations/for-you:
+    get:
+      tags:
+        - Recommendations
+      summary: Get personalized recommendations
+      description: Get personalized product recommendations
+      operationId: getForYou
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            default: 20
+            maximum: 50
+      responses:
+        '200':
+          description: Recommendations retrieved
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProductListResponse'
+
+  /api/recommendations/homepage:
+    get:
+      tags:
+        - Recommendations
+      summary: Get homepage recommendations
+      description: Get recommendations for homepage display
+      operationId: getHomepageRecommendations
+      parameters:
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            default: 20
+      responses:
+        '200':
+          description: Recommendations retrieved
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HomepageRecommendationsResponse'
+
+  /api/recommendations/similar/{productId}:
+    get:
+      tags:
+        - Recommendations
+      summary: Get similar products
+      description: Get products similar to specified product
+      operationId: getSimilarProducts
+      parameters:
+        - name: productId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            default: 8
+            maximum: 20
+      responses:
+        '200':
+          description: Similar products retrieved
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProductListResponse'
+
+  /api/recommendations/also-bought/{productId}:
+    get:
+      tags:
+        - Recommendations
+      summary: Get frequently bought together
+      description: Get products frequently bought with specified product
+      operationId: getAlsoBought
+      parameters:
+        - name: productId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            default: 5
+            maximum: 10
+      responses:
+        '200':
+          description: Products retrieved
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProductListResponse'
+
+  /api/recommendations/bundle/{productId}:
+    get:
+      tags:
+        - Recommendations
+      summary: Get bundle suggestions
+      description: Get suggested product bundles
+      operationId: getBundleSuggestions
+      parameters:
+        - name: productId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Bundle suggestions retrieved
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BundleResponse'
+
+  # ==================== TRENDING ====================
+  /api/recommendations/trending:
+    get:
+      tags:
+        - Trending
+      summary: Get trending products
+      description: Get globally trending products
+      operationId: getTrending
+      parameters:
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            default: 20
+            maximum: 50
+      responses:
+        '200':
+          description: Trending products retrieved
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProductListResponse'
+
+  /api/recommendations/trending/category/{categoryId}:
+    get:
+      tags:
+        - Trending
+      summary: Get category trending
+      description: Get trending products in a category
+      operationId: getCategoryTrending
+      parameters:
+        - name: categoryId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            default: 20
+      responses:
+        '200':
+          description: Trending products retrieved
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProductListResponse'
+
+  # ==================== SEARCH ====================
+  /api/recommendations/search/autocomplete:
+    get:
+      tags:
+        - Search
+      summary: Search autocomplete
+      description: Get search term suggestions
+      operationId: getAutocomplete
+      parameters:
+        - name: q
+          in: query
+          required: true
+          schema:
+            type: string
+            minLength: 1
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            default: 10
+      responses:
+        '200':
+          description: Suggestions retrieved
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AutocompleteResponse'
+
+  /api/recommendations/search/alternatives:
+    get:
+      tags:
+        - Search
+      summary: Search alternatives
+      description: Get alternative search suggestions for zero results
+      operationId: getAlternatives
+      parameters:
+        - name: q
+          in: query
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Alternatives retrieved
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SearchAlternativesResponse'
+
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+
+  schemas:
+    # ==================== REQUEST SCHEMAS ====================
+    TrackEventRequest:
+      type: object
+      required:
+        - eventType
+      properties:
+        eventType:
+          $ref: '#/components/schemas/EventType'
+        productId:
+          type: string
+          format: uuid
+        userId:
+          type: string
+          format: uuid
+        sessionId:
+          type: string
+        searchQuery:
+          type: string
+        metadata:
+          type: object
+          additionalProperties: true
+
+    BatchEventsRequest:
+      type: object
+      required:
+        - events
+      properties:
+        events:
+          type: array
+          items:
+            $ref: '#/components/schemas/TrackEventRequest'
+          maxItems: 100
+
+    # ==================== RESPONSE SCHEMAS ====================
+    ProductRecommendation:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        name:
+          type: string
+        price:
+          type: number
+          format: double
+        imageUrl:
+          type: string
+          format: uri
+        rating:
+          type: number
+          format: double
+        reviewCount:
+          type: integer
+        score:
+          type: number
+          format: double
+          description: Recommendation score
+
+    ProductListResponse:
+      type: object
+      properties:
+        products:
+          type: array
+          items:
+            $ref: '#/components/schemas/ProductRecommendation'
+
+    HomepageRecommendationsResponse:
+      type: object
+      properties:
+        forYou:
+          type: array
+          items:
+            $ref: '#/components/schemas/ProductRecommendation'
+        trending:
+          type: array
+          items:
+            $ref: '#/components/schemas/ProductRecommendation'
+        recentlyViewed:
+          type: array
+          items:
+            $ref: '#/components/schemas/ProductRecommendation'
+        newArrivals:
+          type: array
+          items:
+            $ref: '#/components/schemas/ProductRecommendation'
+
+    BundleResponse:
+      type: object
+      properties:
+        mainProduct:
+          $ref: '#/components/schemas/ProductRecommendation'
+        bundleProducts:
+          type: array
+          items:
+            $ref: '#/components/schemas/ProductRecommendation'
+        bundlePrice:
+          type: number
+          format: double
+        savings:
+          type: number
+          format: double
+
+    AutocompleteResponse:
+      type: object
+      properties:
+        suggestions:
+          type: array
+          items:
+            type: object
+            properties:
+              text:
+                type: string
+              type:
+                type: string
+                enum: [SEARCH_TERM, PRODUCT, CATEGORY, BRAND]
+              productId:
+                type: string
+                format: uuid
+              imageUrl:
+                type: string
+                format: uri
+
+    SearchAlternativesResponse:
+      type: object
+      properties:
+        didYouMean:
+          type: string
+        relatedSearches:
+          type: array
+          items:
+            type: string
+        popularInCategory:
+          type: array
+          items:
+            $ref: '#/components/schemas/ProductRecommendation'
+
+    MessageResponse:
+      type: object
+      properties:
+        message:
+          type: string
+        timestamp:
+          type: string
+          format: date-time
+
+    # ==================== ENUMS ====================
+    EventType:
+      type: string
+      enum:
+        - PRODUCT_VIEW
+        - PRODUCT_CLICK
+        - SEARCH_QUERY
+        - SEARCH_CLICK
+        - ADD_TO_CART
+        - REMOVE_FROM_CART
+        - PURCHASE
+        - WISHLIST_ADD
+        - REVIEW_VIEW

@@ -1,10 +1,7 @@
-# Keep all brainstorming, planning, and workflow tracking local
-_bmad/
-_bmad-output/
-bmad/
-.bmad/
-*.bmad
-BMAD/
+# Keep brainstorming local (but track BMAD methodology files)
+# _bmad/          # TRACKED - BMAD methodology
+# _bmad-output/   # TRACKED - Master orchestration files
+# .claude/        # TRACKED - Claude commands
 brainstorm/
 planning/
 methodology/
@@ -15,9 +12,6 @@ methodology/
 # Cursor IDE
 .cursor/
 .cursor-tutor/
-
-# Claude AI
-.claude/
 
 # VSCode
 .vscode/

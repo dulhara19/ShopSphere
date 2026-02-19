@@ -1,0 +1,78 @@
+server:
+  port: 3004
+
+spring:
+  application:
+    name: order-service
+
+  datasource:
+    url: jdbc:postgresql://localhost:5432/shopsphere_orders
+    username: ${DB_USERNAME:postgres}
+    password: ${DB_PASSWORD:postgres}
+    driver-class-name: org.postgresql.Driver
+
+  jpa:
+    hibernate:
+      ddl-auto: update
+    show-sql: false
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.PostgreSQLDialect
+        format_sql: true
+
+  data:
+    redis:
+      host: ${REDIS_HOST:localhost}
+      port: ${REDIS_PORT:6379}
+      password: ${REDIS_PASSWORD:}
+      timeout: 2000ms
+
+  rabbitmq:
+    host: ${RABBITMQ_HOST:localhost}
+    port: ${RABBITMQ_PORT:5672}
+    username: ${RABBITMQ_USERNAME:guest}
+    password: ${RABBITMQ_PASSWORD:guest}
+    virtual-host: /
+
+app:
+  jwt:
+    secret: ${JWT_SECRET:your-256-bit-secret-key-for-jwt-token-signing-min-32-chars}
+    expiration: 86400000
+
+  service:
+    secret: ${SERVICE_SECRET:internal-service-secret-key}
+
+  cart:
+    guest-ttl-hours: 72
+    max-items: 50
+
+  rabbitmq:
+    exchange: shopsphere.orders
+    queues:
+      order-created: order.created
+      order-confirmed: order.confirmed
+      order-shipped: order.shipped
+      order-delivered: order.delivered
+      order-cancelled: order.cancelled
+      cart-updated: cart.updated
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics
+  endpoint:
+    health:
+      show-details: when_authorized
+
+springdoc:
+  api-docs:
+    path: /api-docs
+  swagger-ui:
+    path: /swagger-ui.html
+
+logging:
+  level:
+    com.shopsphere.order: DEBUG
+    org.springframework.security: INFO
+    org.hibernate.SQL: DEBUG

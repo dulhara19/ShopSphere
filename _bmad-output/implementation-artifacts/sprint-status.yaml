@@ -1,0 +1,130 @@
+# generated: 2026-02-14
+# project: DEA2 - Order Service
+# project_key: NOKEY
+# tracking_system: file-system
+# story_location: _bmad-output/implementation-artifacts
+
+# STATUS DEFINITIONS:
+# ==================
+# Epic Status:
+#   - backlog: Epic not yet started
+#   - in-progress: Epic actively being worked on
+#   - done: All stories in epic completed
+#
+# Story Status:
+#   - backlog: Story only exists in epic file
+#   - ready-for-dev: Story file created, ready for development
+#   - in-progress: Developer actively working on implementation
+#   - review: Implementation complete, ready for review
+#   - done: Story completed
+#
+# Retrospective Status:
+#   - optional: Can be completed but not required
+#   - done: Retrospective has been completed
+#
+# WORKFLOW NOTES:
+# ===============
+# - Phase 1 MVP implemented, pending code review
+# - Phase 2 features not started
+
+generated: 2026-02-14
+project: DEA2 - Order Service
+project_key: NOKEY
+tracking_system: file-system
+story_location: _bmad-output/implementation-artifacts
+
+development_status:
+  # ============================================
+  # PHASE 1 - MVP (Complete - Code Review Passed)
+  # ============================================
+
+  # Epic 1.1: Shopping Cart Management
+  epic-1-1: done
+  1-1-1-add-item-to-cart: done
+  1-1-2-get-users-cart: done
+  1-1-3-update-cart-item-quantity: done
+  1-1-4-remove-item-from-cart: done
+  1-1-5-clear-cart: done
+  1-1-6-cart-persistence: done
+  epic-1-1-retrospective: optional
+
+  # Epic 1.2: Checkout Process
+  epic-1-2: done
+  1-2-1-validate-cart-for-checkout: done
+  1-2-2-calculate-order-totals: done
+  1-2-3-reserve-inventory: done
+  1-2-4-create-order: done
+  1-2-5-initiate-payment: done
+  1-2-6-complete-checkout: done
+  epic-1-2-retrospective: optional
+
+  # Epic 1.3: Order Management
+  epic-1-3: done
+  1-3-1-get-order-by-id: done
+  1-3-2-list-users-orders: done
+  1-3-3-get-order-status: done
+  1-3-4-cancel-order-customer: done
+  1-3-5-admin-list-all-orders: done
+  epic-1-3-retrospective: optional
+
+  # Epic 1.4: Order Status Management
+  epic-1-4: done
+  1-4-1-update-order-status-internal: done
+  1-4-2-mark-as-processing: done
+  1-4-3-mark-as-shipped: done
+  1-4-4-mark-as-delivered: done
+  1-4-5-status-transition-rules: done
+  epic-1-4-retrospective: optional
+
+  # Epic 1.5: Internal Service Communication
+  epic-1-5: done
+  1-5-1-get-order-for-payment: done
+  1-5-2-get-order-for-shipping: done
+  1-5-3-order-events-publishing: done
+  epic-1-5-retrospective: optional
+
+  # ============================================
+  # PHASE 2 - Enhanced Features (Not Started)
+  # ============================================
+
+  # Epic 2.1: Order Cancellation & Refunds
+  epic-2-1: backlog
+  2-1-1-request-cancellation: backlog
+  2-1-2-process-cancellation: backlog
+  2-1-3-partial-cancellation: backlog
+  2-1-4-admin-force-cancel: backlog
+  epic-2-1-retrospective: optional
+
+  # Epic 2.2: Returns & Exchanges
+  epic-2-2: backlog
+  2-2-1-request-return: backlog
+  2-2-2-return-status-tracking: backlog
+  2-2-3-process-return: backlog
+  2-2-4-exchange-request: backlog
+  2-2-5-return-analytics: backlog
+  epic-2-2-retrospective: optional
+
+  # Epic 2.3: Discount & Coupon System
+  epic-2-3: backlog
+  2-3-1-create-coupon-admin: backlog
+  2-3-2-apply-coupon-to-cart: backlog
+  2-3-3-remove-coupon: backlog
+  2-3-4-coupon-usage-tracking: backlog
+  2-3-5-auto-apply-promotions: backlog
+  epic-2-3-retrospective: optional
+
+  # Epic 2.4: Group Buying
+  epic-2-4: backlog
+  2-4-1-create-group-buy: backlog
+  2-4-2-join-group-buy: backlog
+  2-4-3-group-buy-success: backlog
+  2-4-4-group-buy-failure: backlog
+  2-4-5-share-group-buy: backlog
+  epic-2-4-retrospective: optional
+
+  # Epic 2.5: Order Notes & Communication
+  epic-2-5: backlog
+  2-5-1-add-order-notes-customer: backlog
+  2-5-2-internal-notes-seller-admin: backlog
+  2-5-3-order-messaging: backlog
+  epic-2-5-retrospective: optional

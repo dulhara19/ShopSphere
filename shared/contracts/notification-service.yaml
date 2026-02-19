@@ -1,0 +1,944 @@
+openapi: 3.0.3
+info:
+  title: Notification Service API
+  description: |
+    Notification Service handles email, SMS, and push notifications for ShopSphere.
+  version: 1.0.0
+  contact:
+    name: Team Member 9
+    email: team9@shopsphere.com
+
+servers:
+  - url: http://localhost:3009
+    description: Local development
+  - url: https://api.shopsphere.com
+    description: Production
+
+tags:
+  - name: Preferences
+    description: User notification preferences
+  - name: Notifications
+    description: Notification management
+  - name: Templates
+    description: Notification templates (admin)
+  - name: Devices
+    description: Push notification device management
+  - name: Internal
+    description: Internal service-to-service APIs
+
+paths:
+  # ==================== PREFERENCES ====================
+  /api/notifications/preferences:
+    get:
+      tags:
+        - Preferences
+      summary: Get notification preferences
+      description: Get user's notification preferences
+      operationId: getPreferences
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Preferences retrieved
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/NotificationPreferences'
+
+    put:
+      tags:
+        - Preferences
+      summary: Update notification preferences
+      description: Update user's notification preferences
+      operationId: updatePreferences
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdatePreferencesRequest'
+      responses:
+        '200':
+          description: Preferences updated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/NotificationPreferences'
+
+  /api/notifications/preferences/email:
+    put:
+      tags:
+        - Preferences
+      summary: Update email preferences
+      description: Update email notification preferences
+      operationId: updateEmailPreferences
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/EmailPreferences'
+      responses:
+        '200':
+          description: Email preferences updated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/NotificationPreferences'
+
+  /api/notifications/preferences/sms:
+    put:
+      tags:
+        - Preferences
+      summary: Update SMS preferences
+      description: Update SMS notification preferences
+      operationId: updateSmsPreferences
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SmsPreferences'
+      responses:
+        '200':
+          description: SMS preferences updated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/NotificationPreferences'
+
+  /api/notifications/preferences/push:
+    put:
+      tags:
+        - Preferences
+      summary: Update push preferences
+      description: Update push notification preferences
+      operationId: updatePushPreferences
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PushPreferences'
+      responses:
+        '200':
+          description: Push preferences updated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/NotificationPreferences'
+
+  # ==================== NOTIFICATIONS ====================
+  /api/notifications:
+    get:
+      tags:
+        - Notifications
+      summary: List notifications
+      description: Get user's notification history
+      operationId: listNotifications
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: page
+          in: query
+          schema:
+            type: integer
+            default: 0
+        - name: size
+          in: query
+          schema:
+            type: integer
+            default: 20
+        - name: channel
+          in: query
+          schema:
+            $ref: '#/components/schemas/NotificationChannel'
+        - name: read
+          in: query
+          schema:
+            type: boolean
+      responses:
+        '200':
+          description: Notifications retrieved
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/NotificationListResponse'
+
+  /api/notifications/unread-count:
+    get:
+      tags:
+        - Notifications
+      summary: Get unread count
+      description: Get count of unread notifications
+      operationId: getUnreadCount
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Count retrieved
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  count:
+                    type: integer
+
+  /api/notifications/{id}:
+    get:
+      tags:
+        - Notifications
+      summary: Get notification
+      description: Get notification details
+      operationId: getNotification
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Notification retrieved
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/NotificationResponse'
+        '404':
+          description: Notification not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+    delete:
+      tags:
+        - Notifications
+      summary: Delete notification
+      description: Delete a notification
+      operationId: deleteNotification
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Notification deleted
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MessageResponse'
+
+  /api/notifications/{id}/read:
+    put:
+      tags:
+        - Notifications
+      summary: Mark as read
+      description: Mark notification as read
+      operationId: markAsRead
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Marked as read
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/NotificationResponse'
+
+  /api/notifications/mark-all-read:
+    put:
+      tags:
+        - Notifications
+      summary: Mark all as read
+      description: Mark all notifications as read
+      operationId: markAllAsRead
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: All marked as read
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MessageResponse'
+
+  # ==================== DEVICES ====================
+  /api/notifications/devices:
+    get:
+      tags:
+        - Devices
+      summary: List devices
+      description: Get registered push notification devices
+      operationId: listDevices
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Devices retrieved
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/DeviceResponse'
+
+    post:
+      tags:
+        - Devices
+      summary: Register device
+      description: Register device for push notifications
+      operationId: registerDevice
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RegisterDeviceRequest'
+      responses:
+        '201':
+          description: Device registered
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DeviceResponse'
+
+  /api/notifications/devices/{id}:
+    delete:
+      tags:
+        - Devices
+      summary: Unregister device
+      description: Remove device registration
+      operationId: unregisterDevice
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Device unregistered
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MessageResponse'
+
+  # ==================== TEMPLATES (ADMIN) ====================
+  /api/admin/notifications/templates:
+    get:
+      tags:
+        - Templates
+      summary: List templates
+      description: Get all notification templates
+      operationId: listTemplates
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: type
+          in: query
+          schema:
+            $ref: '#/components/schemas/NotificationType'
+        - name: channel
+          in: query
+          schema:
+            $ref: '#/components/schemas/NotificationChannel'
+      responses:
+        '200':
+          description: Templates retrieved
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/TemplateResponse'
+
+    post:
+      tags:
+        - Templates
+      summary: Create template
+      description: Create a new notification template
+      operationId: createTemplate
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateTemplateRequest'
+      responses:
+        '201':
+          description: Template created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TemplateResponse'
+
+  /api/admin/notifications/templates/{id}:
+    get:
+      tags:
+        - Templates
+      summary: Get template
+      description: Get template details
+      operationId: getTemplate
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Template retrieved
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TemplateResponse'
+
+    put:
+      tags:
+        - Templates
+      summary: Update template
+      description: Update a notification template
+      operationId: updateTemplate
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateTemplateRequest'
+      responses:
+        '200':
+          description: Template updated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TemplateResponse'
+
+    delete:
+      tags:
+        - Templates
+      summary: Delete template
+      description: Delete a notification template
+      operationId: deleteTemplate
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Template deleted
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MessageResponse'
+
+  /api/admin/notifications/templates/{id}/preview:
+    post:
+      tags:
+        - Templates
+      summary: Preview template
+      description: Preview rendered template with sample data
+      operationId: previewTemplate
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              additionalProperties: true
+      responses:
+        '200':
+          description: Preview generated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TemplatePreviewResponse'
+
+  # ==================== INTERNAL ====================
+  /internal/notifications/send:
+    post:
+      tags:
+        - Internal
+      summary: Send notification
+      description: Internal endpoint to send notification
+      operationId: sendNotification
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SendNotificationRequest'
+      responses:
+        '200':
+          description: Notification sent
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SendNotificationResponse'
+
+  /internal/notifications/send-bulk:
+    post:
+      tags:
+        - Internal
+      summary: Send bulk notifications
+      description: Internal endpoint to send bulk notifications
+      operationId: sendBulkNotifications
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SendBulkNotificationRequest'
+      responses:
+        '200':
+          description: Notifications queued
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  queued:
+                    type: integer
+                  failed:
+                    type: integer
+
+  /internal/notifications/user/{userId}/preferences:
+    get:
+      tags:
+        - Internal
+      summary: Get user preferences
+      description: Internal endpoint to check user notification preferences
+      operationId: getInternalUserPreferences
+      parameters:
+        - name: userId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Preferences retrieved
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/NotificationPreferences'
+
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+
+  schemas:
+    # ==================== REQUEST SCHEMAS ====================
+    UpdatePreferencesRequest:
+      type: object
+      properties:
+        email:
+          $ref: '#/components/schemas/EmailPreferences'
+        sms:
+          $ref: '#/components/schemas/SmsPreferences'
+        push:
+          $ref: '#/components/schemas/PushPreferences'
+
+    EmailPreferences:
+      type: object
+      properties:
+        enabled:
+          type: boolean
+          default: true
+        orderUpdates:
+          type: boolean
+          default: true
+        shippingUpdates:
+          type: boolean
+          default: true
+        promotions:
+          type: boolean
+          default: false
+        newsletter:
+          type: boolean
+          default: false
+        priceAlerts:
+          type: boolean
+          default: true
+        reviewReminders:
+          type: boolean
+          default: true
+
+    SmsPreferences:
+      type: object
+      properties:
+        enabled:
+          type: boolean
+          default: false
+        orderUpdates:
+          type: boolean
+          default: true
+        shippingUpdates:
+          type: boolean
+          default: true
+        promotions:
+          type: boolean
+          default: false
+        securityAlerts:
+          type: boolean
+          default: true
+
+    PushPreferences:
+      type: object
+      properties:
+        enabled:
+          type: boolean
+          default: true
+        orderUpdates:
+          type: boolean
+          default: true
+        shippingUpdates:
+          type: boolean
+          default: true
+        promotions:
+          type: boolean
+          default: false
+        priceDrops:
+          type: boolean
+          default: true
+        backInStock:
+          type: boolean
+          default: true
+
+    RegisterDeviceRequest:
+      type: object
+      required:
+        - token
+        - platform
+      properties:
+        token:
+          type: string
+          description: FCM/APNs token
+        platform:
+          type: string
+          enum: [IOS, ANDROID, WEB]
+        deviceName:
+          type: string
+
+    CreateTemplateRequest:
+      type: object
+      required:
+        - name
+        - type
+        - channel
+        - subject
+        - body
+      properties:
+        name:
+          type: string
+        type:
+          $ref: '#/components/schemas/NotificationType'
+        channel:
+          $ref: '#/components/schemas/NotificationChannel'
+        subject:
+          type: string
+        body:
+          type: string
+          description: Template body with placeholders
+        htmlBody:
+          type: string
+          description: HTML version for email
+
+    UpdateTemplateRequest:
+      type: object
+      properties:
+        name:
+          type: string
+        subject:
+          type: string
+        body:
+          type: string
+        htmlBody:
+          type: string
+        active:
+          type: boolean
+
+    SendNotificationRequest:
+      type: object
+      required:
+        - userId
+        - type
+      properties:
+        userId:
+          type: string
+          format: uuid
+        type:
+          $ref: '#/components/schemas/NotificationType'
+        channels:
+          type: array
+          items:
+            $ref: '#/components/schemas/NotificationChannel'
+        data:
+          type: object
+          additionalProperties: true
+          description: Template variables
+
+    SendBulkNotificationRequest:
+      type: object
+      required:
+        - userIds
+        - type
+      properties:
+        userIds:
+          type: array
+          items:
+            type: string
+            format: uuid
+          maxItems: 1000
+        type:
+          $ref: '#/components/schemas/NotificationType'
+        channels:
+          type: array
+          items:
+            $ref: '#/components/schemas/NotificationChannel'
+        data:
+          type: object
+          additionalProperties: true
+
+    # ==================== RESPONSE SCHEMAS ====================
+    NotificationPreferences:
+      type: object
+      properties:
+        userId:
+          type: string
+          format: uuid
+        email:
+          $ref: '#/components/schemas/EmailPreferences'
+        sms:
+          $ref: '#/components/schemas/SmsPreferences'
+        push:
+          $ref: '#/components/schemas/PushPreferences'
+        updatedAt:
+          type: string
+          format: date-time
+
+    NotificationResponse:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        type:
+          $ref: '#/components/schemas/NotificationType'
+        channel:
+          $ref: '#/components/schemas/NotificationChannel'
+        title:
+          type: string
+        body:
+          type: string
+        data:
+          type: object
+          additionalProperties: true
+        read:
+          type: boolean
+        readAt:
+          type: string
+          format: date-time
+        createdAt:
+          type: string
+          format: date-time
+
+    NotificationListResponse:
+      type: object
+      properties:
+        content:
+          type: array
+          items:
+            $ref: '#/components/schemas/NotificationResponse'
+        page:
+          type: integer
+        size:
+          type: integer
+        totalElements:
+          type: integer
+        totalPages:
+          type: integer
+
+    DeviceResponse:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        platform:
+          type: string
+          enum: [IOS, ANDROID, WEB]
+        deviceName:
+          type: string
+        lastUsed:
+          type: string
+          format: date-time
+        createdAt:
+          type: string
+          format: date-time
+
+    TemplateResponse:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        name:
+          type: string
+        type:
+          $ref: '#/components/schemas/NotificationType'
+        channel:
+          $ref: '#/components/schemas/NotificationChannel'
+        subject:
+          type: string
+        body:
+          type: string
+        htmlBody:
+          type: string
+        active:
+          type: boolean
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+
+    TemplatePreviewResponse:
+      type: object
+      properties:
+        subject:
+          type: string
+        body:
+          type: string
+        htmlBody:
+          type: string
+
+    SendNotificationResponse:
+      type: object
+      properties:
+        notificationId:
+          type: string
+          format: uuid
+        channels:
+          type: array
+          items:
+            type: object
+            properties:
+              channel:
+                $ref: '#/components/schemas/NotificationChannel'
+              status:
+                type: string
+                enum: [SENT, QUEUED, SKIPPED, FAILED]
+              reason:
+                type: string
+
+    MessageResponse:
+      type: object
+      properties:
+        message:
+          type: string
+        timestamp:
+          type: string
+          format: date-time
+
+    ErrorResponse:
+      type: object
+      properties:
+        error:
+          type: string
+        message:
+          type: string
+        timestamp:
+          type: string
+          format: date-time
+        path:
+          type: string
+
+    # ==================== ENUMS ====================
+    NotificationChannel:
+      type: string
+      enum:
+        - EMAIL
+        - SMS
+        - PUSH
+
+    NotificationType:
+      type: string
+      enum:
+        - ORDER_CONFIRMED
+        - ORDER_SHIPPED
+        - ORDER_DELIVERED
+        - ORDER_CANCELLED
+        - PAYMENT_RECEIVED
+        - PAYMENT_FAILED
+        - REFUND_PROCESSED
+        - SHIPPING_UPDATE
+        - PRICE_DROP
+        - BACK_IN_STOCK
+        - REVIEW_REMINDER
+        - PROMOTION
+        - SECURITY_ALERT
+        - WELCOME
+        - PASSWORD_RESET
