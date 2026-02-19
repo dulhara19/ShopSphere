@@ -1,6 +1,7 @@
 package com.shopsphere.user.service;
 
 import com.shopsphere.user.config.RabbitMQConfig;
+import com.shopsphere.user.dto.PasswordResetEventDto;
 import com.shopsphere.user.dto.UserInternalDto;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -81,5 +82,23 @@ public class UserEventPublisher {
             log.error("Error publishing user.deleted event for user {}: {}", userDto.getEmail(), e.getMessage(), e);
         }
     }
-}
 
+    /**
+     * Publish a password reset event
+     *
+     * @param eventDto PasswordResetEventDto containing token details
+     */
+    public void publishPasswordResetEvent(PasswordResetEventDto eventDto) {
+        try {
+            log.info("Publishing user.password.reset event for email: {}", eventDto.getEmail());
+            rabbitTemplate.convertAndSend(
+                RabbitMQConfig.USER_EXCHANGE,
+                RabbitMQConfig.USER_PASSWORD_RESET_ROUTING_KEY,
+                eventDto
+            );
+            log.debug("Password reset event published successfully for email: {}", eventDto.getEmail());
+        } catch (Exception e) {
+            log.error("Error publishing user.password.reset event for email {}: {}", eventDto.getEmail(), e.getMessage(), e);
+        }
+    }
+}

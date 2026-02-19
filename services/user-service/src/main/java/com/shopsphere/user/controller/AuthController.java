@@ -4,8 +4,12 @@ import com.shopsphere.user.dto.RegisterRequest;
 import com.shopsphere.user.dto.RegisterResponse;
 import com.shopsphere.user.dto.LoginRequest;
 import com.shopsphere.user.dto.LoginResponse;
+import com.shopsphere.user.dto.ForgotPasswordRequest;
+import com.shopsphere.user.dto.ForgotPasswordResponse;
+import com.shopsphere.user.dto.ResetPasswordRequest;
 import com.shopsphere.user.model.User;
 import com.shopsphere.user.service.AuthService;
+import com.shopsphere.user.service.PasswordResetService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
@@ -28,6 +32,7 @@ import jakarta.validation.Valid;
 public class AuthController {
 
     private final AuthService authService;
+    private final PasswordResetService passwordResetService;
 
     /**
      * Register a new user.
@@ -105,9 +110,38 @@ public class AuthController {
             throw e;
         }
     }
+
+    /**
+     * Request a password reset token. The token is sent via RabbitMQ and not returned in the response.
+     *
+     * Endpoint: POST /api/auth/forgot-password
+     *
+     * @param request forgot password request
+     * @return 202 Accepted on success
+     */
+    @PostMapping("/forgot-password")
+    public ResponseEntity<ForgotPasswordResponse> forgotPassword(@Valid @RequestBody ForgotPasswordRequest request) {
+        log.info("Received forgot-password request for email: {}", request.getEmail());
+        passwordResetService.generatePasswordResetToken(request.getEmail());
+
+        ForgotPasswordResponse response = ForgotPasswordResponse.builder()
+            .message("If the email exists, a reset code has been sent")
+            .build();
+        return ResponseEntity.accepted().body(response);
+    }
+
+    /**
+     * Reset user password using a valid reset code.
+     *
+     * Endpoint: POST /api/auth/reset-password
+     *
+     * @param request reset password request
+     * @return 204 No Content on success
+     */
+    @PostMapping("/reset-password")
+    public ResponseEntity<Void> resetPassword(@Valid @RequestBody ResetPasswordRequest request) {
+        log.info("Received reset-password request for email: {}", request.getEmail());
+        passwordResetService.resetPassword(request.getEmail(), request.getCode(), request.getNewPassword());
+        return ResponseEntity.noContent().build();
+    }
 }
-
-
-
-
-

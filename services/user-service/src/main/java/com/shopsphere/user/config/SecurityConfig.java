@@ -1,6 +1,8 @@
 package com.shopsphere.user.config;
 
+import com.shopsphere.user.security.CustomOAuth2UserService;
 import com.shopsphere.user.security.JwtAuthenticationFilter;
+import com.shopsphere.user.security.OAuth2AuthenticationSuccessHandler;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -10,19 +12,14 @@ import org.springframework.security.config.annotation.web.configuration.EnableWe
 import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
 import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
+import org.springframework.security.oauth2.client.userinfo.OAuth2UserRequest;
+import org.springframework.security.oauth2.client.userinfo.OAuth2UserService; // 👈 මේක අනිවාර්යයෙන්ම ඕනේ
+import org.springframework.security.oauth2.core.user.OAuth2User;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 
 /**
  * Spring Security Configuration
- *
- * Responsibilities:
- * - Configure JWT authentication filter
- * - Set up authorization rules
- * - Configure session management (stateless)
- * - Disable CSRF for API endpoints
- * - Configure HTTP security
- * - Enable method-level security with @PreAuthorize
  */
 @Configuration
 @EnableWebSecurity
@@ -31,66 +28,41 @@ import org.springframework.security.web.authentication.UsernamePasswordAuthentic
 public class SecurityConfig {
 
     private final JwtAuthenticationFilter jwtAuthenticationFilter;
+    private final CustomOAuth2UserService customOAuth2UserService;
+    private final OAuth2AuthenticationSuccessHandler oAuth2AuthenticationSuccessHandler;
 
-    /**
-     * Create BCryptPasswordEncoder bean for password hashing
-     *
-     * @return BCryptPasswordEncoder instance
-     */
-    @Bean
-    public BCryptPasswordEncoder passwordEncoder() {
-        return new BCryptPasswordEncoder();
-    }
-
-    /**
-     * Configure Spring Security filter chain
-     *
-     * Configuration:
-     * 1. Disable CSRF for stateless API
-     * 2. Add JWT filter before UsernamePasswordAuthenticationFilter
-     * 3. Set session management to STATELESS
-     * 4. Permit all requests to /api/auth/** (registration, login, etc.)
-     * 5. Require authentication for all other API endpoints
-     * 6. Allow actuator endpoints for monitoring
-     *
-     * @param http HttpSecurity builder
-     * @return SecurityFilterChain configured filter chain
-     * @throws Exception if configuration fails
-     */
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         http
-            // Disable CSRF for stateless API (using JWT instead)
             .csrf(AbstractHttpConfigurer::disable)
 
-            // Add JWT authentication filter before UsernamePasswordAuthenticationFilter
             .addFilterBefore(
                 jwtAuthenticationFilter,
                 UsernamePasswordAuthenticationFilter.class
             )
 
-            // Configure session management to STATELESS (no session cookies)
             .sessionManagement(session -> session
-                .sessionCreationPolicy(SessionCreationPolicy.STATELESS)
+                .sessionCreationPolicy(SessionCreationPolicy.IF_REQUIRED)
             )
 
-            // Configure authorization rules
             .authorizeHttpRequests(auth -> auth
-                // Allow all authentication endpoints without authentication
                 .requestMatchers("/api/auth/**").permitAll()
                 .requestMatchers("/api/internal/**").permitAll()
                 .requestMatchers("/auth/**").permitAll()
-
-                // Allow actuator endpoints for monitoring
+                .requestMatchers("/oauth2/**").permitAll()
+                .requestMatchers("/login/oauth2/**").permitAll()
                 .requestMatchers("/actuator/**").permitAll()
-                .requestMatchers("/actuator/health").permitAll()
-                .requestMatchers("/actuator/info").permitAll()
-
-                // Require authentication for all other endpoints
                 .anyRequest().authenticated()
             )
 
-            // Enable HTTP Basic authentication for development/testing
+            .oauth2Login(oauth2 -> oauth2
+                .userInfoEndpoint(userInfo -> userInfo
+                    // මෙතනදී සරලව Cast කිරීම සිදු කර ඇත
+                    .userService((OAuth2UserService<OAuth2UserRequest, OAuth2User>) customOAuth2UserService)
+                )
+                .successHandler(oAuth2AuthenticationSuccessHandler)
+            )
+
             .httpBasic(AbstractHttpConfigurer::disable);
 
         return http.build();

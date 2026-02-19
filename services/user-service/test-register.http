@@ -87,3 +87,52 @@ Content-Type: application/json
 GET http://localhost:3001/api/admin/users
 Authorization: Bearer eyJhbGciOiJIUzM4NCJ9.eyJyb2xlcyI6WyJDVVNUT01FUiJdLCJ0b2tlblR5cGUiOiJhY2Nlc3MiLCJ1c2VySWQiOiJlZDFmNjY4NS04MzMzLTRmYmMtOTNjOS03NWUyMDYyOWM5Y2UiLCJzdWIiOiJrYW1hbEBleGFtcGxlLmNvbSIsImlhdCI6MTc3MTQ0MDY3NiwiZXhwIjoxNzcxNDQxNTc2fQ.Jq7XZwK7_rJ4SQMgVCb8d1seuIM8MM4o65ISTdVK3EWp7Prr_yA_GKjc-rI01iNc
 
+### Request Password Reset
+POST http://localhost:3001/api/auth/forgot-password
+Content-Type: application/json
+
+{
+    "email": "rajapakshadilshan9999@gmail.com"
+}
+
+### Request Password Reset
+POST http://localhost:3001/api/auth/forgot-password
+Content-Type: application/json
+
+{
+"email": "rajapakshadilshan9999@gmail.com"
+}
+
+### Reset Password
+POST http://localhost:3001/api/auth/reset-password
+Content-Type: application/json
+
+{
+    "token": "442127",
+    "newPassword": "Shopsphere@2026"
+}
+### Reset Password
+POST http://localhost:3001/api/auth/reset-password
+Content-Type: application/json
+
+{
+    "email": "rajapakshadilshan9999@gmail.com",
+    "code": "442127",
+    "password": "Shopsphere@2026"
+}
+
+### Reset Password
+POST http://localhost:3001/api/auth/reset-password
+Content-Type: application/json
+
+{
+    "email": "rajapakshadilshan9999@gmail.com",
+    "code": "442127",
+    "newPassword": "Shopsphere@2026"
+}
+
+
+
+
+
+

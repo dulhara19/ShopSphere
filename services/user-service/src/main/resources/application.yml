@@ -52,7 +52,7 @@ spring:
     port: 5672
     username: guest
     password: guest
-    requested-heartbeat: 30s # 👈 කනෙක්ෂන් එක දිගටම තබා ගැනීමට
+    requested-heartbeat: 30s
     template:
       retry:
         enabled: true
@@ -64,10 +64,23 @@ spring:
           initial-interval: 3s
           max-attempts: 3
 
-  # Security Configuration
+  # Security & OAuth2 Configuration (Phase 5.1)
   security:
     filter:
       order: 5
+    oauth2:
+      client:
+        registration:
+          google:
+            client-id: 456028357968-bvd8hlkghi79veltgr5lns84bfk33g5c.apps.googleusercontent.com
+            client-secret: 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
+            scope:
+              - email
+              - profile
+            redirect-uri: "{baseUrl}/login/oauth2/code/google"
+        provider:
+          google:
+            user-name-attribute: email
 
 server:
   port: 3001
@@ -79,8 +92,8 @@ server:
 # JWT Configuration
 jwt:
   secret: ${JWT_SECRET:shopsphere-dev-secret-key-minimum-32-characters-long-2026}
-  expiration: 900000 # 15 minutes in milliseconds
-  refresh-expiration: 604800000 # 7 days in milliseconds
+  expiration: 900000 # 15 minutes
+  refresh-expiration: 604800000 # 7 days
 
 # Logging Configuration
 logging:
@@ -91,7 +104,6 @@ logging:
     org.springframework.boot.actuate: INFO
   pattern:
     console: "%d{yyyy-MM-dd HH:mm:ss} - %msg%n"
-    file: "%d{yyyy-MM-dd HH:mm:ss} [%thread] %-5level %logger{36} - %msg%n"
   file:
     name: logs/user-service.log
     max-size: 10MB
@@ -103,10 +115,3 @@ management:
     web:
       exposure:
         include: health,info,metrics,prometheus
-  endpoint:
-    health:
-      show-details: when-authorized
-  metrics:
-    export:
-      prometheus:
-        enabled: true
