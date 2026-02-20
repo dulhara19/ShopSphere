@@ -101,9 +101,11 @@ public class UserServiceImpl implements UserService {
 
         return UserInternalDto.builder()
             .id(user.getId())
+            .username(user.getUsername())
             .email(user.getEmail())
             .firstName(user.getFirstName())
             .lastName(user.getLastName())
+            .phone(user.getPhone())
             .roles(user.getRoles().stream()
                 .map(Enum::name)
                 .collect(Collectors.toList()))

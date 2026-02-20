@@ -13,8 +13,10 @@ import java.util.UUID;
 @NoArgsConstructor // Serialization වලට මේක වැදගත්
 public class UserInternalDto {
     private UUID id;
+    private String username;
     private String email;
     private String firstName;
     private String lastName;
+    private String phone;
     private List<String> roles;
 }

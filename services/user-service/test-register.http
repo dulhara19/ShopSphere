@@ -132,7 +132,47 @@ Content-Type: application/json
 }
 
 
+### Register a new user to test Auditing
+POST http://localhost:3001/api/auth/register
+Content-Type: application/json
+
+{
+    "username": "audit_test_user",
+    "email": "audit@shopsphere.com",
+    "password": "Password@123",
+    "firstName": "Audit",
+    "lastName": "Test"
+}
+
+### 1. Forgot Password Request
+POST http://localhost:3001/api/auth/forgot-password
+Content-Type: application/json
+
+{
+    "email": "audit@shopsphere.com"
+}
+
+### 2. Reset Password Request
+POST http://localhost:3001/api/auth/reset-password
+Content-Type: application/json
+
+{
+    "email": "audit@shopsphere.com",
+    "code": "737905",
+    "newPassword": "NewAuditPassword@2026"
+}
+### Login to get Token
+POST http://localhost:3001/api/auth/login
+Content-Type: application/json
+
+{
+    "email": "audit@shopsphere.com",
+    "password": "Password@123"
+}
+### Test Internal Validation
+POST http://localhost:3001/internal/auth/validate?token=eyJhbGciOiJIUzM4NCJ9.eyJyb2xlcyI6WyJDVVNUT01FUiJdLCJ0b2tlblR5cGUiOiJhY2Nlc3MiLCJ1c2VySWQiOiJkNmEwZGI1Yy03YzU4LTRiYTAtODA3ZS1kYmVkOTRhMzU4OTIiLCJzdWIiOiJhdWRpdEBzaG9wc3BoZXJlLmNvbSIsImlhdCI6MTc3MTYwNDc2MiwiZXhwIjoxNzcxNjA1NjYyfQ._GbNuDavxskwEzpV7kBgkUmKs7WuY93IHWik9M3xl7DDg3Z5cqkKhJlu-p62Hl7S
 
 
-
-
+### Phase 4.2 Test - Get User by ID (Internal)
+GET http://localhost:3001/internal/users/d96bcd61-aca1-4caa-9f45-2daf8193838c
+Accept: application/json
