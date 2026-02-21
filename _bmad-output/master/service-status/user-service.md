@@ -153,10 +153,11 @@ _No reviews conducted yet_
 
 ## Action Items for Team Member 1
 
-1. [ ] Create `services/user-service/docs/EPICS.md` with detailed stories
-2. [ ] Create `shared/contracts/user-service.yaml` using template
+1. [x] Create `services/user-service/docs/EPICS.md` with detailed stories - **DONE**
+2. [x] Create `shared/contracts/user-service.yaml` using template - **DONE**
 3. [ ] Create `shared/event-schemas/user-events.json` using template
-4. [ ] Get contracts approved by Team Lead before implementation
+4. [ ] Implement Epic 1.1 endpoints (address previous PR feedback)
+5. [ ] Include unit tests (80% coverage target)
 
 ---
 
@@ -166,3 +167,4 @@ _No reviews conducted yet_
 |------|--------|-----|
 | 2026-02-14 | Status file created | Lead |
 | 2026-02-17 | Phase 1 PR reviewed - CHANGES REQUESTED | Master Agent |
+| 2026-02-20 | EPICS.md PR Review - APPROVED | Master Agent |

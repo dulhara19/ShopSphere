@@ -3,9 +3,9 @@ service: shipping-service
 owner: Team Member 6
 port: 3006
 branch: service/shipping-service
-lastUpdated: 2026-02-14
-lastReviewedPR: null
-mvpStatus: NOT_STARTED
+lastUpdated: 2026-02-20
+lastReviewedPR: service/shipping-service-2026-02-20
+mvpStatus: EPICS_DEFINED
 integrationStatus: PENDING
 frontendStatus: NOT_INTEGRATED
 environment: null
@@ -29,9 +29,11 @@ environment: null
 
 | Metric | Value |
 |--------|-------|
-| MVP Progress | 0/4 Epics Complete |
-| EPICS.md Created | **NO - ACTION REQUIRED** |
-| Contract Created | **NO - ACTION REQUIRED** |
+| MVP Progress | 0/2 Epics Complete |
+| EPICS.md Created | **YES** |
+| Contract Created | **YES** |
+| Event Schema | **NO - ACTION REQUIRED** |
+| PR Status | **APPROVED** (EPICS.md) |
 
 ---
 
@@ -76,10 +78,11 @@ environment: null
 
 ## Action Items for Team Member 6
 
-1. [ ] Create `services/shipping-service/docs/EPICS.md`
-2. [ ] Create `shared/contracts/shipping-service.yaml`
+1. [x] Create `services/shipping-service/docs/EPICS.md` - **DONE**
+2. [x] Create `shared/contracts/shipping-service.yaml` - **DONE**
 3. [ ] Create `shared/event-schemas/shipping-events.json`
-4. [ ] Get approval from Team Lead
+4. [ ] Begin Epic 1.1 (Address Management & Validation) implementation
+5. [ ] Include unit tests (80% coverage target)
 
 ---
 
@@ -88,3 +91,4 @@ environment: null
 | Date | Change | By |
 |------|--------|-----|
 | 2026-02-14 | Status file created | Lead |
+| 2026-02-20 | EPICS.md PR Review - APPROVED | Master Agent |
