@@ -40,7 +40,7 @@ public class EmailController {
         return Map.of("emailId", log.getId(), "status", log.getStatus());
     }
 
-    // ── Epic 1.1.4 — Get email delivery status ──
+    // ── Epic 1.1.4 — Get email delivery status done or fail ──
     @GetMapping("/{id}/status")
     public EmailLog getStatus(@PathVariable String id) {
         EmailLog log = emailService.getEmailStatus(id);
