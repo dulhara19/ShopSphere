@@ -19,47 +19,52 @@ import java.util.List;
 public class EventService {
 
     private final EventRepository eventRepository;
+    private final RealTimeAnalyticsService realTimeAnalyticsService;
 
     @Transactional
     public Event trackEvent(EventDTO eventDTO) {
         Event event = Event.builder()
-            .eventType(eventDTO.getEventType())
-            .eventTimestamp(eventDTO.getTimestamp() != null ? eventDTO.getTimestamp() : LocalDateTime.now())
-            .userId(eventDTO.getUserId())
-            .productId(eventDTO.getProductId())
-            .orderId(eventDTO.getOrderId())
-            .categoryId(eventDTO.getCategoryId())
-            .sessionId(eventDTO.getSessionId())
-            .properties(eventDTO.getProperties() != null ? eventDTO.getProperties().toString() : null)
-            .source(eventDTO.getSource())
-            .version(eventDTO.getVersion())
-            .build();
+                .eventType(eventDTO.getEventType())
+                .eventTimestamp(eventDTO.getTimestamp() != null ? eventDTO.getTimestamp() : LocalDateTime.now())
+                .userId(eventDTO.getUserId())
+                .productId(eventDTO.getProductId())
+                .orderId(eventDTO.getOrderId())
+                .categoryId(eventDTO.getCategoryId())
+                .sessionId(eventDTO.getSessionId())
+                .properties(eventDTO.getProperties() != null ? eventDTO.getProperties().toString() : null)
+                .source(eventDTO.getSource())
+                .version(eventDTO.getVersion())
+                .build();
 
         Event savedEvent = eventRepository.save(event);
         log.info("Event tracked: {} for user: {}", eventDTO.getEventType(), eventDTO.getUserId());
+
+        // Broadcast the event to real-time clients
+        realTimeAnalyticsService.broadcastEvent(savedEvent);
+
         return savedEvent;
     }
 
     @Transactional
     public List<Event> trackBatchEvents(BatchEventDTO batchEventDTO) {
         List<Event> events = batchEventDTO.getEvents().stream()
-            .map(eventDTO -> {
-                eventDTO.setSource(batchEventDTO.getSource());
-                return EventDTO.builder()
-                    .eventType(eventDTO.getEventType())
-                    .timestamp(eventDTO.getTimestamp())
-                    .userId(eventDTO.getUserId())
-                    .productId(eventDTO.getProductId())
-                    .orderId(eventDTO.getOrderId())
-                    .categoryId(eventDTO.getCategoryId())
-                    .sessionId(eventDTO.getSessionId())
-                    .properties(eventDTO.getProperties())
-                    .source(batchEventDTO.getSource())
-                    .version(eventDTO.getVersion())
-                    .build();
-            })
-            .map(this::convertToEntity)
-            .toList();
+                .map(eventDTO -> {
+                    eventDTO.setSource(batchEventDTO.getSource());
+                    return EventDTO.builder()
+                            .eventType(eventDTO.getEventType())
+                            .timestamp(eventDTO.getTimestamp())
+                            .userId(eventDTO.getUserId())
+                            .productId(eventDTO.getProductId())
+                            .orderId(eventDTO.getOrderId())
+                            .categoryId(eventDTO.getCategoryId())
+                            .sessionId(eventDTO.getSessionId())
+                            .properties(eventDTO.getProperties())
+                            .source(batchEventDTO.getSource())
+                            .version(eventDTO.getVersion())
+                            .build();
+                })
+                .map(this::convertToEntity)
+                .toList();
 
         List<Event> savedEvents = eventRepository.saveAll(events);
         log.info("Batch events tracked: {} events", savedEvents.size());
@@ -110,16 +115,16 @@ public class EventService {
 
     private Event convertToEntity(EventDTO eventDTO) {
         return Event.builder()
-            .eventType(eventDTO.getEventType())
-            .eventTimestamp(eventDTO.getTimestamp() != null ? eventDTO.getTimestamp() : LocalDateTime.now())
-            .userId(eventDTO.getUserId())
-            .productId(eventDTO.getProductId())
-            .orderId(eventDTO.getOrderId())
-            .categoryId(eventDTO.getCategoryId())
-            .sessionId(eventDTO.getSessionId())
-            .properties(eventDTO.getProperties() != null ? eventDTO.getProperties().toString() : null)
-            .source(eventDTO.getSource())
-            .version(eventDTO.getVersion())
-            .build();
+                .eventType(eventDTO.getEventType())
+                .eventTimestamp(eventDTO.getTimestamp() != null ? eventDTO.getTimestamp() : LocalDateTime.now())
+                .userId(eventDTO.getUserId())
+                .productId(eventDTO.getProductId())
+                .orderId(eventDTO.getOrderId())
+                .categoryId(eventDTO.getCategoryId())
+                .sessionId(eventDTO.getSessionId())
+                .properties(eventDTO.getProperties() != null ? eventDTO.getProperties().toString() : null)
+                .source(eventDTO.getSource())
+                .version(eventDTO.getVersion())
+                .build();
     }
 }
