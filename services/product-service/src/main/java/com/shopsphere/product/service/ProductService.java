@@ -15,7 +15,7 @@ public class ProductService {
     @Autowired
     private ProductRepository productRepository;
 
-    // 1.1.1: Create Product
+    // 1.1.1: Create Product (Seller)
     public Product createProduct(Product product) {
         product.setSku("SKU-" + UUID.randomUUID().toString().substring(0, 8).toUpperCase());
         product.setStatus("ACTIVE");
@@ -32,24 +32,29 @@ public class ProductService {
 
     // 1.1.3: Update Product (Seller/Admin)
     public Product updateProduct(String id, Product productDetails) {
-     
+       
         Product existingProduct = getProductById(id);
 
-      
+       
         existingProduct.setName(productDetails.getName());
         existingProduct.setDescription(productDetails.getDescription());
         existingProduct.setPrice(productDetails.getPrice());
         existingProduct.setCategoryId(productDetails.getCategoryId());
         
-        
         if (productDetails.getStatus() != null) {
             existingProduct.setStatus(productDetails.getStatus());
         }
 
-       
         existingProduct.setUpdatedAt(LocalDateTime.now());
-
-      
         return productRepository.save(existingProduct);
+    }
+
+    // 1.1.4: Delete Product (Soft Delete)
+    public void deleteProduct(String id) {
+       
+        Product existingProduct = getProductById(id);
+        existingProduct.setStatus("DELETED");
+        existingProduct.setUpdatedAt(LocalDateTime.now());
+        productRepository.save(existingProduct);
     }
 }
