@@ -1,3 +1,4 @@
+// Product.java
 package com.shopsphere.product.model;
 
 import lombok.AllArgsConstructor;
@@ -20,9 +21,20 @@ public class Product {
     private String description;
     private Double price;
     private String categoryId;
+    
+    // Category details include karanna me field eka dammu
+    private Category category; 
+    
     private String sku; 
     private List<String> images;
     private String status; 
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
+}
+
+// Category.java (Simple DTO ekak widihata)
+@Data
+class Category {
+    private String id;
+    private String name;
 }

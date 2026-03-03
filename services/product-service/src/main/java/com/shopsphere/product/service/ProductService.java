@@ -1,5 +1,6 @@
 package com.shopsphere.product.service;
 
+import com.shopsphere.product.exception.ProductNotFoundException;
 import com.shopsphere.product.model.Product;
 import com.shopsphere.product.repository.ProductRepository;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -15,18 +16,16 @@ public class ProductService {
     private ProductRepository productRepository;
 
     public Product createProduct(Product product) {
-        
         product.setSku("SKU-" + UUID.randomUUID().toString().substring(0, 8).toUpperCase());
-        
         product.setStatus("ACTIVE");
         product.setCreatedAt(LocalDateTime.now());
         product.setUpdatedAt(LocalDateTime.now());
-        
         return productRepository.save(product);
     }
 
     public Product getProductById(String id) {
+     
         return productRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Product not found with id: " + id));
+                .orElseThrow(() -> new ProductNotFoundException("Product not found with id: " + id));
     }
 }
