@@ -1,5 +1,6 @@
 package com.shopsphere.product.controller;
 
+import com.shopsphere.product.dto.CategoryDetailResponseDTO;
 import com.shopsphere.product.dto.CategoryResponseDTO;
 import com.shopsphere.product.model.Category;
 import com.shopsphere.product.service.CategoryService;
@@ -33,5 +34,15 @@ public class CategoryController {
     public ResponseEntity<List<CategoryResponseDTO>> getAllCategories() {
         List<CategoryResponseDTO> categories = categoryService.getAllCategoriesHierarchy();
         return ResponseEntity.ok(categories);
+    }
+
+    /**
+     * 1.2.3: Get category by ID
+     * URL: GET /api/categories/{id}
+     */
+    @GetMapping("/{id}")
+    public ResponseEntity<CategoryDetailResponseDTO> getCategoryById(@PathVariable String id) {
+        CategoryDetailResponseDTO categoryDetail = categoryService.getCategoryById(id);
+        return ResponseEntity.ok(categoryDetail);
     }
 }

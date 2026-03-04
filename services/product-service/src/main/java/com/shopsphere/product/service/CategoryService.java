@@ -1,5 +1,6 @@
 package com.shopsphere.product.service;
 
+import com.shopsphere.product.dto.CategoryDetailResponseDTO;
 import com.shopsphere.product.dto.CategoryResponseDTO;
 import com.shopsphere.product.model.Category;
 import com.shopsphere.product.repository.CategoryRepository;
@@ -31,17 +32,58 @@ public class CategoryService {
 
     /**
      * Story 1.2.2: List all categories with hierarchy and product counts
-     * @return List of CategoryResponseDTO with parent-child structure
      */
     public List<CategoryResponseDTO> getAllCategoriesHierarchy() {
-      
         List<Category> allCategories = categoryRepository.findAll();
-        
         
         return allCategories.stream()
                 .filter(c -> c.getParentCategoryId() == null)
                 .map(c -> convertToDTO(c, allCategories))
                 .collect(Collectors.toList());
+    }
+
+    /**
+     * Story 1.2.3: Get category by ID with parent and subcategories details
+     * @param id The Category ID
+     * @return Detailed DTO with hierarchy info
+     */
+    public CategoryDetailResponseDTO getCategoryById(String id) {
+    
+        Category category = categoryRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Category not found with id: " + id));
+
+        CategoryDetailResponseDTO dto = new CategoryDetailResponseDTO();
+        dto.setId(category.getId());
+        dto.setName(category.getName());
+        dto.setDescription(category.getDescription());
+        dto.setIconUrl(category.getIconUrl());
+        dto.setProductCount(productRepository.countByCategoryId(category.getId()));
+
+       
+        if (category.getParentCategoryId() != null) {
+            categoryRepository.findById(category.getParentCategoryId()).ifPresent(parent -> {
+                CategoryResponseDTO parentDto = new CategoryResponseDTO();
+                parentDto.setId(parent.getId());
+                parentDto.setName(parent.getName());
+                dto.setParentCategory(parentDto);
+            });
+        }
+
+      
+        List<Category> allCategories = categoryRepository.findAll();
+        List<CategoryResponseDTO> subcategories = allCategories.stream()
+                .filter(c -> category.getId().equals(c.getParentCategoryId()))
+                .map(c -> {
+                    CategoryResponseDTO sDto = new CategoryResponseDTO();
+                    sDto.setId(c.getId());
+                    sDto.setName(c.getName());
+                    sDto.setProductCount(productRepository.countByCategoryId(c.getId()));
+                    return sDto;
+                })
+                .collect(Collectors.toList());
+
+        dto.setSubcategories(subcategories);
+        return dto;
     }
 
     
@@ -51,11 +93,8 @@ public class CategoryService {
         dto.setName(category.getName());
         dto.setDescription(category.getDescription());
         dto.setIconUrl(category.getIconUrl());
-        
-      
         dto.setProductCount(productRepository.countByCategoryId(category.getId()));
 
-       
         List<CategoryResponseDTO> subcategories = allCategories.stream()
                 .filter(c -> category.getId().equals(c.getParentCategoryId()))
                 .map(c -> convertToDTO(c, allCategories))
