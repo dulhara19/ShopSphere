@@ -32,7 +32,20 @@ public interface ProductRepository extends MongoRepository<Product, String> {
 
     /**
      * Story 1.3.2: Filter products by a list of category IDs and status
-     * This is used to fetch products belonging to a category and all its subcategories.
+     * Used for fetching products within a category and its subcategories.
      */
     Page<Product> findByCategoryIdInAndStatus(List<String> categoryIds, String status, Pageable pageable);
+
+    /**
+     * Story 1.3.3: Filter products by status and price range
+     * Fetches products where price is between minPrice and maxPrice.
+     */
+    Page<Product> findByStatusAndPriceBetween(String status, Double minPrice, Double maxPrice, Pageable pageable);
+
+    /**
+     * Story 1.3.3: Filter products by category list, status, and price range
+     * Supports complex filtering where the user selects both a category and a price range.
+     */
+    Page<Product> findByCategoryIdInAndStatusAndPriceBetween(
+            List<String> categoryIds, String status, Double minPrice, Double maxPrice, Pageable pageable);
 }

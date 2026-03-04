@@ -88,30 +88,34 @@ public class ProductService {
     }
 
     /**
-     * Story 1.3.1: List products with pagination and sorting
+     * Story 1.3.1, 1.3.2 & 1.3.3: Integrated Search & Filtering
+     * Handles pagination, sorting, category filtering (with subcategories), and price range.
      */
-    public Page<Product> getAllActiveProducts(int page, int size, String sortBy, String direction) {
-        Sort sort = direction.equalsIgnoreCase("asc") ? Sort.by(sortBy).ascending() : Sort.by(sortBy).descending();
-        Pageable pageable = PageRequest.of(page, size, sort);
-        return productRepository.findByStatus("ACTIVE", pageable);
-    }
-
-    /**
-     * Story 1.3.2: Filter products by category and its subcategories
-     */
-    public Page<Product> getProductsByCategory(String categoryId, int page, int size, String sortBy, String direction) {
-        Sort sort = direction.equalsIgnoreCase("asc") ? Sort.by(sortBy).ascending() : Sort.by(sortBy).descending();
-        Pageable pageable = PageRequest.of(page, size, sort);
-
-        // Fetch all subcategory IDs recursively
-        List<String> allCategoryIds = new ArrayList<>();
-        allCategoryIds.add(categoryId);
+    public Page<Product> searchProducts(String categoryId, Double minPrice, Double maxPrice, 
+                                        int page, int size, String sortBy, String direction) {
         
-        List<Category> allCategories = categoryRepository.findAll();
-        findChildCategoryIds(categoryId, allCategories, allCategoryIds);
+        Sort sort = direction.equalsIgnoreCase("asc") ? Sort.by(sortBy).ascending() : Sort.by(sortBy).descending();
+        Pageable pageable = PageRequest.of(page, size, sort);
 
-        // Fetch ACTIVE products belonging to any of the collected category IDs
-        return productRepository.findByCategoryIdInAndStatus(allCategoryIds, "ACTIVE", pageable);
+        // Story 1.3.3: Handle null price range with default values
+        Double min = (minPrice != null) ? minPrice : 0.0;
+        Double max = (maxPrice != null) ? maxPrice : Double.MAX_VALUE;
+
+        if (categoryId != null && !categoryId.isEmpty()) {
+            // Story 1.3.2: Fetch all subcategory IDs recursively
+            List<String> allCategoryIds = new ArrayList<>();
+            allCategoryIds.add(categoryId);
+            
+            List<Category> allCategories = categoryRepository.findAll();
+            findChildCategoryIds(categoryId, allCategories, allCategoryIds);
+
+            // Filter by Category List AND Price Range
+            return productRepository.findByCategoryIdInAndStatusAndPriceBetween(
+                    allCategoryIds, "ACTIVE", min, max, pageable);
+        }
+
+        // Story 1.3.3: Filter by Price Range and ACTIVE status only
+        return productRepository.findByStatusAndPriceBetween("ACTIVE", min, max, pageable);
     }
 
     /**
