@@ -68,23 +68,29 @@ public class ProductController {
     }
 
     /**
-     * Story 1.3.1, 1.3.2 & 1.3.3: List products with pagination, category and price filtering
-     * URL Example: GET /api/products?categoryId=electronics&minPrice=100&maxPrice=500&page=0&size=20
-     * Acceptance Criteria: Default 20 items per page, Sort by createdAt, price, name.
+     * Story 1.3.1 - 1.3.5: Unified Product Search & Listing
+     * URL Example: GET /api/products?search=macbook&categoryId=electronics&minPrice=1000&maxPrice=5000&page=0&size=20&sortBy=price&direction=asc
+     * * Handles:
+     * - Text search (name and description)
+     * - Category filtering (including subcategories)
+     * - Price range filtering
+     * - Pagination (Default 20 items per page)
+     * - Dynamic sorting (by price, name, date)
      */
     @GetMapping
     public ResponseEntity<Page<Product>> listAllProducts(
-            @RequestParam(required = false) String categoryId,
-            @RequestParam(required = false) Double minPrice,
-            @RequestParam(required = false) Double maxPrice,
-            @RequestParam(defaultValue = "0") int page,
-            @RequestParam(defaultValue = "20") int size,
-            @RequestParam(defaultValue = "createdAt") String sortBy,
-            @RequestParam(defaultValue = "desc") String direction) {
+            @RequestParam(required = false) String search, // 1.3.4: Text keyword search
+            @RequestParam(required = false) String categoryId, // 1.3.2: Category filter
+            @RequestParam(required = false) Double minPrice, // 1.3.3: Price range min
+            @RequestParam(required = false) Double maxPrice, // 1.3.3: Price range max
+            @RequestParam(defaultValue = "0") int page, // 1.3.1: Pagination page
+            @RequestParam(defaultValue = "20") int size, // 1.3.1: Pagination size
+            @RequestParam(defaultValue = "createdAt") String sortBy, // 1.3.5: Sorting field
+            @RequestParam(defaultValue = "desc") String direction) { // 1.3.5: Sorting direction
         
-        // Use the integrated search method from ProductService to handle all filters
+        // Pass all parameters to the service layer for processing
         Page<Product> products = productService.searchProducts(
-                categoryId, minPrice, maxPrice, page, size, sortBy, direction);
+                search, categoryId, minPrice, maxPrice, page, size, sortBy, direction);
         
         return ResponseEntity.ok(products);
     }

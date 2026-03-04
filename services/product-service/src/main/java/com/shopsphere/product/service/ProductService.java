@@ -88,15 +88,18 @@ public class ProductService {
     }
 
     /**
-     * Story 1.3.1, 1.3.2 & 1.3.3: Integrated Search & Filtering
-     * Handles pagination, sorting, category filtering (with subcategories), and price range.
+     * Story 1.3.1 - 1.3.4: Final Integrated Search Service
+     * Handles pagination, sorting, text search, category hierarchy, and price range filters.
      */
-    public Page<Product> searchProducts(String categoryId, Double minPrice, Double maxPrice, 
+    public Page<Product> searchProducts(String search, String categoryId, Double minPrice, Double maxPrice, 
                                         int page, int size, String sortBy, String direction) {
         
         Sort sort = direction.equalsIgnoreCase("asc") ? Sort.by(sortBy).ascending() : Sort.by(sortBy).descending();
         Pageable pageable = PageRequest.of(page, size, sort);
 
+        // Story 1.3.4: Default search keyword if not provided (match all)
+        String keyword = (search != null && !search.isEmpty()) ? search : "";
+        
         // Story 1.3.3: Handle null price range with default values
         Double min = (minPrice != null) ? minPrice : 0.0;
         Double max = (maxPrice != null) ? maxPrice : Double.MAX_VALUE;
@@ -109,13 +112,12 @@ public class ProductService {
             List<Category> allCategories = categoryRepository.findAll();
             findChildCategoryIds(categoryId, allCategories, allCategoryIds);
 
-            // Filter by Category List AND Price Range
-            return productRepository.findByCategoryIdInAndStatusAndPriceBetween(
-                    allCategoryIds, "ACTIVE", min, max, pageable);
+            // Execute complex search with Category context
+            return productRepository.searchProductsWithCategory(keyword, allCategoryIds, min, max, pageable);
         }
 
-        // Story 1.3.3: Filter by Price Range and ACTIVE status only
-        return productRepository.findByStatusAndPriceBetween("ACTIVE", min, max, pageable);
+        // Execute global search without specific Category filter
+        return productRepository.searchProductsGlobal(keyword, min, max, pageable);
     }
 
     /**
