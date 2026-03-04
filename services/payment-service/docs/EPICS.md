@@ -111,6 +111,8 @@ PUT    /api/payment-methods/{id}/default
 | 1.4.3 | Refund status tracking | - PENDING, PROCESSING, SUCCEEDED, FAILED |
 | 1.4.4 | Refund webhook handling | - Handle refund.succeeded event<br>- Handle refund.failed event |
 
+> **Note:** `/api/refunds/{refundId}` is provided alongside the payment-scoped path. Transactions listing now merges both payments and refunds per user.
+
 **API Endpoints:**
 ```
 POST /api/payments/{id}/refund

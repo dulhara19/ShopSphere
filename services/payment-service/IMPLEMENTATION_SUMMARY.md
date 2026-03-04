@@ -39,6 +39,7 @@ A complete Spring Boot microservice for payment processing with Stripe integrati
   - `processRefund()` - Full and partial refunds
   - `calculateTotalRefunded()` - Prevent over-refund
   - `handleRefundWebhookEvent()` - Webhook event handling
+  - `getUserRefunds()` - Query refunds by user for transaction history
 - **RefundController.java**: Refund REST endpoints
 - **Refund.java**: Entity model with RefundReason and RefundStatus enums
 - Refund reasons: CUSTOMER_REQUEST, DUPLICATE, FRAUDULENT, OTHER
@@ -46,7 +47,7 @@ A complete Spring Boot microservice for payment processing with Stripe integrati
 
 #### Epic 1.5: Transaction History ✅
 - **TransactionController.java**:
-  - `GET /api/transactions` - List user transactions with pagination
+  - `GET /api/transactions` - List user transactions with pagination; merges both payments and refunds
   - `GET /api/transactions/{id}` - Transaction details
   - `GET /api/admin/transactions` - Admin view
   - `GET /api/transactions/export` - CSV export endpoint

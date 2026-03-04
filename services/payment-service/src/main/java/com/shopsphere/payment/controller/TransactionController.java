@@ -2,13 +2,17 @@ package com.shopsphere.payment.controller;
 
 import com.shopsphere.payment.dto.TransactionResponse;
 import com.shopsphere.payment.dto.PaymentStatusResponse;
+import com.shopsphere.payment.dto.RefundResponse;
 import com.shopsphere.payment.model.Payment;
 import com.shopsphere.payment.service.PaymentService;
+import com.shopsphere.payment.service.RefundService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
+import java.util.List;
 import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.ResponseEntity;
@@ -29,6 +33,9 @@ public class TransactionController {
     @Autowired
     private PaymentService paymentService;
 
+    @Autowired
+    private RefundService refundService;
+
     /**
      * List user transactions
      * Story 1.5.1: List user transactions with pagination
@@ -42,23 +49,45 @@ public class TransactionController {
             @RequestParam(defaultValue = "20") int size) {
         log.info("Fetching transactions for user: {}", userId);
         Pageable pageable = PageRequest.of(page, size);
+
+        // fetch payments and refunds separately then merge
         Page<Payment> payments = paymentService.getPaymentHistory(userId, pageable);
+        Page<RefundResponse> refunds = refundService.getUserRefunds(userId, pageable);
 
-        Page<TransactionResponse> transactions = payments.map(payment ->
-            TransactionResponse.builder()
-                .transactionId(payment.getId())
-                .orderId(payment.getOrderId())
-                .userId(payment.getUserId())
-                .amount(payment.getAmount())
-                .currency(payment.getCurrency())
+        // convert to transaction responses
+        List<TransactionResponse> combined = new java.util.ArrayList<>();
+        payments.forEach(p -> combined.add(TransactionResponse.builder()
+                .transactionId(p.getId())
+                .orderId(p.getOrderId())
+                .userId(p.getUserId())
+                .amount(p.getAmount())
+                .currency(p.getCurrency())
                 .type("PAYMENT")
-                .status(payment.getStatus().toString())
-                .description(payment.getMetadata())
-                .createdAt(payment.getCreatedAt())
-                .build()
-        );
+                .status(p.getStatus().toString())
+                .description(p.getMetadata())
+                .createdAt(p.getCreatedAt())
+                .build()));
+        refunds.forEach(r -> combined.add(TransactionResponse.builder()
+                .transactionId(r.getRefundId())
+                .orderId(null)
+                .userId(userId)
+                .amount(r.getAmount().negate()) // refunds negative value to indicate money back
+                .currency(null)
+                .type("REFUND")
+                .status(r.getStatus())
+                .description(r.getReason())
+                .createdAt(r.getCreatedAt())
+                .build()));
 
-        return ResponseEntity.ok(transactions);
+        // sort by date desc
+        combined.sort((a, b) -> b.getCreatedAt().compareTo(a.getCreatedAt()));
+
+        int start = (int) pageable.getOffset();
+        int end = Math.min(start + pageable.getPageSize(), combined.size());
+        List<TransactionResponse> pageList = combined.subList(start, end);
+        Page<TransactionResponse> resultPage = new PageImpl<>(pageList, pageable, combined.size());
+
+        return ResponseEntity.ok(resultPage);
     }
 
     /**
@@ -70,20 +99,32 @@ public class TransactionController {
     @Operation(summary = "Get transaction details", description = "Retrieve full details of a specific transaction")
     public ResponseEntity<TransactionResponse> getTransaction(@PathVariable String id) {
         log.info("Fetching transaction: {}", id);
-        PaymentStatusResponse paymentStatus = paymentService.getPaymentStatus(id);
-
-        // Map PaymentStatusResponse to TransactionResponse
-        TransactionResponse transaction = TransactionResponse.builder()
-            .transactionId(paymentStatus.getPaymentId())
-            .orderId(paymentStatus.getOrderId())
-            .amount(paymentStatus.getAmount())
-            .currency(paymentStatus.getCurrency())
-            .type("PAYMENT")
-            .status(paymentStatus.getStatus())
-            .createdAt(paymentStatus.getCreatedAt())
-            .build();
-
-        return ResponseEntity.ok(transaction);
+        try {
+            PaymentStatusResponse paymentStatus = paymentService.getPaymentStatus(id);
+            TransactionResponse transaction = TransactionResponse.builder()
+                .transactionId(paymentStatus.getPaymentId())
+                .orderId(paymentStatus.getOrderId())
+                .amount(paymentStatus.getAmount())
+                .currency(paymentStatus.getCurrency())
+                .type("PAYMENT")
+                .status(paymentStatus.getStatus())
+                .createdAt(paymentStatus.getCreatedAt())
+                .build();
+            return ResponseEntity.ok(transaction);
+        } catch (com.shopsphere.payment.exception.PaymentNotFoundException e) {
+            // try refund lookup
+            RefundResponse refund = refundService.getRefund(id);
+            TransactionResponse transaction = TransactionResponse.builder()
+                .transactionId(refund.getRefundId())
+                .orderId(null)
+                .amount(refund.getAmount().negate())
+                .currency(null)
+                .type("REFUND")
+                .status(refund.getStatus())
+                .createdAt(refund.getCreatedAt())
+                .build();
+            return ResponseEntity.ok(transaction);
+        }
     }
 
     /**

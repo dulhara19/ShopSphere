@@ -5,6 +5,8 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 
 import java.util.List;
 import java.util.Optional;
@@ -46,4 +48,11 @@ public interface RefundRepository extends JpaRepository<Refund, String> {
      * Count refunds for a payment
      */
     long countByPaymentId(String paymentId);
+
+    /**
+     * Find all refunds for a user by joining with payment table
+     */
+    @Query("SELECT r FROM Refund r JOIN com.shopsphere.payment.model.Payment p ON r.paymentId = p.id " +
+           "WHERE p.userId = :userId")
+    Page<Refund> findByUserId(@Param("userId") String userId, Pageable pageable);
 }

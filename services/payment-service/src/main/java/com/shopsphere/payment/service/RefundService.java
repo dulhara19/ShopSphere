@@ -25,8 +25,9 @@ import java.util.List;
 /**
  * Refund Service
  *
- * Business logic for refund processing.
- * Implements Epic 1.4 requirements.
+ * Business logic for refund processing and lookup.
+ * Implements Epic 1.4 (refund operations) and contributes to
+ * Epic 1.5 transaction history by providing user refund queries.
  */
 @Service
 @Slf4j
@@ -196,6 +197,35 @@ public class RefundService {
     }
 
     /**
+     * Get all refunds belonging to a user (used by transaction history)
+     * Story 1.5.1: Transaction history should include refunds
+     */
+    public Page<RefundResponse> getUserRefunds(String userId, Pageable pageable) {
+        Page<Refund> refunds = refundRepository.findByUserId(userId, pageable);
+        return refunds.map(refund -> RefundResponse.builder()
+            .refundId(refund.getId())
+            .paymentId(refund.getPaymentId())
+            .amount(refund.getAmount())
+            .reason(refund.getReason().toString())
+            .status(refund.getStatus().toString())
+            .failureReason(refund.getFailureReason())
+            .createdAt(refund.getCreatedAt())
+            .build());
+    }
+
+    /**
+     * Notify order service about a completed refund (optional enhancement)
+     */
+    private void notifyOrderServiceOfRefund(Refund refund) {
+        try {
+            // in a real implementation you would make a REST call to the order service
+            log.info("Notifying Order Service about refund {} for payment {}", refund.getId(), refund.getPaymentId());
+        } catch (Exception e) {
+            log.error("Error notifying Order Service about refund: {}", refund.getId(), e);
+        }
+    }
+
+    /**
      * Publish RefundCompletedEvent
      * Story 1.6.3: Publish payment events
      */
@@ -214,6 +244,8 @@ public class RefundService {
 
             applicationContext.publishEvent(event);
             log.info("RefundCompletedEvent published for refund: {}", refund.getId());
+            // also notify order service asynchronously
+            notifyOrderServiceOfRefund(refund);
         } catch (Exception e) {
             log.error("Error publishing RefundCompletedEvent: {}", refund.getId(), e);
         }

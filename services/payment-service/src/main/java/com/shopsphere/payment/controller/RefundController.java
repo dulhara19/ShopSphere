@@ -21,7 +21,7 @@ import org.springframework.web.bind.annotation.*;
  * Implements Epic 1.4 API endpoints.
  */
 @RestController
-@RequestMapping("/api/payments")
+@RequestMapping("/api")
 @Tag(name = "Refunds", description = "Refund processing endpoints")
 @Slf4j
 public class RefundController {
@@ -46,13 +46,16 @@ public class RefundController {
     }
 
     /**
-     * Get refund details
+     * Get refund details by payment path (legacy) or top-level
      * Story 1.4.3: Refund status tracking
+     * GET /api/payments/{id}/refunds/{refundId}
      * GET /api/refunds/{refundId}
      */
-    @GetMapping("/{id}/refunds/{refundId}")
+    @GetMapping({"/{id}/refunds/{refundId}", "/refunds/{refundId}"})
     @Operation(summary = "Get refund details", description = "Retrieve details of a specific refund")
-    public ResponseEntity<RefundResponse> getRefund(@PathVariable String refundId) {
+    public ResponseEntity<RefundResponse> getRefund(@PathVariable(required = false) String id,
+                                                    @PathVariable String refundId) {
+        // ignore payment id if provided
         log.info("Fetching refund: {}", refundId);
         RefundResponse response = refundService.getRefund(refundId);
         return ResponseEntity.ok(response);
