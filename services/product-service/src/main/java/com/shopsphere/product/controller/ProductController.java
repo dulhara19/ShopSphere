@@ -174,11 +174,20 @@ public class ProductController {
 
     /**
      * Story 1.5.1: Get product detail for internal microservices
-     * URL Example: GET /api/products/internal/{id}
      */
     @GetMapping("/internal/{id}")
     public ResponseEntity<ProductInternalResponseDTO> getProductInternal(@PathVariable String id) {
         ProductInternalResponseDTO response = productService.getProductInternal(id);
+        return ResponseEntity.ok(response);
+    }
+
+    /**
+     * Story 1.5.2: Batch get products (Internal use)
+     * Useful for Cart and Order services to fetch details for a list of IDs.
+     */
+    @PostMapping("/batch")
+    public ResponseEntity<List<ProductInternalResponseDTO>> getProductsBatch(@RequestBody List<String> ids) {
+        List<ProductInternalResponseDTO> response = productService.getProductsByIds(ids);
         return ResponseEntity.ok(response);
     }
 }

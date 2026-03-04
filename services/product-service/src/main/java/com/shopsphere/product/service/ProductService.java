@@ -138,6 +138,27 @@ public class ProductService {
     }
 
     /**
+     * Story 1.5.2: Batch get products by a list of IDs
+     * Efficiently retrieves multiple product summaries for Cart/Order processing.
+     */
+    public List<ProductInternalResponseDTO> getProductsByIds(List<String> ids) {
+        Iterable<Product> products = productRepository.findAllById(ids);
+        List<ProductInternalResponseDTO> responseList = new ArrayList<>();
+        
+        products.forEach(product -> {
+            responseList.add(ProductInternalResponseDTO.builder()
+                    .id(product.getId())
+                    .name(product.getName())
+                    .price(product.getPrice())
+                    .status(product.getStatus())
+                    .isAvailable("ACTIVE".equalsIgnoreCase(product.getStatus()))
+                    .build());
+        });
+        
+        return responseList;
+    }
+
+    /**
      * Helper method to recursively find all subcategory IDs
      */
     private void findChildCategoryIds(String parentId, List<Category> allCats, List<String> resultIds) {
