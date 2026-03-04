@@ -1,0 +1,43 @@
+# .gitignore
+
+# Maven
+target/
+pom.xml.tag
+pom.xml.releaseBackup
+pom.xml.versionsBackup
+pom.xml.next
+release.properties
+dependency-reduced-pom.xml
+
+# IDE
+.idea/
+.vscode/
+*.iml
+*.iws
+*.ipr
+.classpath
+.project
+.settings/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Build
+build/
+dist/
+.gradle/
+
+# Spring
+.springBeans
+
+# Logs
+*.log
+logs/
+
+# IDE specific
+.code-workspace
+*.code-workspace

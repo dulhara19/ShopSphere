@@ -1,0 +1,32 @@
+# .dockerignore
+
+# Build artifacts
+target/
+*.jar
+*.war
+
+# Maven
+*.pom
+.m2/
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+*.iml
+
+# Git
+.git/
+.gitignore
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Documentation
+README.md
+docs/
+
+# Scripts
+scripts/
