@@ -127,4 +127,25 @@ public class ProductController {
         Product updatedProduct = productService.updateProduct(id, product);
         return ResponseEntity.ok(updatedProduct);
     }
+
+    /**
+     * Story 1.4.2: Set primary image for a product
+     * Validates if the image URL exists in the product's image list.
+     */
+    @PatchMapping("/{id}/primary-image")
+    public ResponseEntity<Product> setPrimaryImage(
+            @PathVariable String id,
+            @RequestParam String imageUrl) {
+        
+        Product product = productService.getProductById(id);
+        
+        // Validate if the image URL belongs to this product
+        if (product.getImages() == null || !product.getImages().contains(imageUrl)) {
+            throw new RuntimeException("Image URL not found in product's gallery.");
+        }
+
+        product.setPrimaryImage(imageUrl);
+        Product updatedProduct = productService.updateProduct(id, product);
+        return ResponseEntity.ok(updatedProduct);
+    }
 }
