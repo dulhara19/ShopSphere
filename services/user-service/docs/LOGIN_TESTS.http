@@ -1,0 +1,130 @@
+### Test 1: Successful Login
+POST http://localhost:3001/api/auth/login
+Content-Type: application/json
+
+{
+  "email": "john.doe@example.com",
+  "password": "SecurePass123"
+}
+
+###
+
+### Test 2: Login with Different User
+POST http://localhost:3001/api/auth/login
+Content-Type: application/json
+
+{
+  "email": "jane.smith@example.com",
+  "password": "AnotherSecure456"
+}
+
+###
+
+### Test 3: Invalid Email - User Not Found (HTTP 404)
+POST http://localhost:3001/api/auth/login
+Content-Type: application/json
+
+{
+  "email": "notfound@example.com",
+  "password": "SecurePass123"
+}
+
+###
+
+### Test 4: Invalid Password (HTTP 500)
+POST http://localhost:3001/api/auth/login
+Content-Type: application/json
+
+{
+  "email": "john.doe@example.com",
+  "password": "WrongPassword"
+}
+
+###
+
+### Test 5: Invalid Email Format (HTTP 400)
+POST http://localhost:3001/api/auth/login
+Content-Type: application/json
+
+{
+  "email": "not-an-email",
+  "password": "SecurePass123"
+}
+
+###
+
+### Test 6: Missing Email Field (HTTP 400)
+POST http://localhost:3001/api/auth/login
+Content-Type: application/json
+
+{
+  "password": "SecurePass123"
+}
+
+###
+
+### Test 7: Missing Password Field (HTTP 400)
+POST http://localhost:3001/api/auth/login
+Content-Type: application/json
+
+{
+  "email": "john.doe@example.com"
+}
+
+###
+
+### Test 8: Empty Email (HTTP 400)
+POST http://localhost:3001/api/auth/login
+Content-Type: application/json
+
+{
+  "email": "",
+  "password": "SecurePass123"
+}
+
+###
+
+### Test 9: Empty Password (HTTP 400)
+POST http://localhost:3001/api/auth/login
+Content-Type: application/json
+
+{
+  "email": "john.doe@example.com",
+  "password": ""
+}
+
+###
+
+### Test 10: Multiple Login Attempts (Success)
+POST http://localhost:3001/api/auth/login
+Content-Type: application/json
+
+{
+  "email": "john.doe@example.com",
+  "password": "SecurePass123"
+}
+
+###
+
+### Test 11: Multiple Login Attempts (Success - Second)
+POST http://localhost:3001/api/auth/login
+Content-Type: application/json
+
+{
+  "email": "john.doe@example.com",
+  "password": "SecurePass123"
+}
+
+###
+
+### Test 12: Verify Token Response Structure
+POST http://localhost:3001/api/auth/login
+Content-Type: application/json
+
+{
+  "email": "john.doe@example.com",
+  "password": "SecurePass123"
+}
+
+###
+
