@@ -12,12 +12,15 @@ import com.shopsphere.inventory.model.StockMovementLog;
 import com.shopsphere.inventory.service.InventoryService;
 import com.shopsphere.inventory.service.LowStockService;
 import com.shopsphere.inventory.service.ReservationService;
+import com.shopsphere.inventory.service.StockStreamService;
 import com.shopsphere.inventory.service.StockHistoryService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.http.MediaType;
 import org.springframework.format.annotation.DateTimeFormat;
+import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
 import org.springframework.web.bind.annotation.*;
 
 import javax.validation.Valid;
@@ -37,6 +40,7 @@ public class InventoryController {
     private final ReservationService reservationService;
     private final LowStockService lowStockService;
     private final StockHistoryService stockHistoryService;
+    private final StockStreamService stockStreamService;
     private final ObjectMapper objectMapper;
 
     // ==================== Epic 1.1: Basic Inventory Management ====================
@@ -270,5 +274,25 @@ public class InventoryController {
         log.info("POST /inventory/{}/adjustment - Applying stock adjustment", productId);
         InventoryDTO updated = stockHistoryService.adjustStock(productId, request);
         return ResponseEntity.ok(updated);
+    }
+
+    @GetMapping(value = "/audit-report", produces = "text/csv")
+    public ResponseEntity<String> getAuditReport(
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime from,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime to,
+            @RequestParam(required = false) StockMovementLog.ChangeType changeType) {
+        String csv = stockHistoryService.exportAuditReport(from, to, changeType);
+        return ResponseEntity.ok()
+                .contentType(MediaType.valueOf("text/csv"))
+                .body(csv);
+    }
+
+    /**
+     * Epic 2.5.1: Real-time stock sync stream (SSE)
+     */
+    @GetMapping(value = "/stream", produces = "text/event-stream")
+    public SseEmitter stockStream() {
+        log.info("GET /inventory/stream - Subscribing to stock stream");
+        return stockStreamService.subscribe();
     }
 }

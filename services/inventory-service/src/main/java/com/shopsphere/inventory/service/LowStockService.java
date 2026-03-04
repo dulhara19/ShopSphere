@@ -61,9 +61,11 @@ public class LowStockService {
         // Update status if needed
         Inventory.StockStatus previousStatus = inventory.getStatus();
         inventory.updateStatus();
+        boolean statusChanged = previousStatus != inventory.getStatus();
 
-        if (inventory.getStatus() == Inventory.StockStatus.LOW_STOCK ||
-            inventory.getStatus() == Inventory.StockStatus.OUT_OF_STOCK) {
+        if (statusChanged &&
+                (inventory.getStatus() == Inventory.StockStatus.LOW_STOCK ||
+                 inventory.getStatus() == Inventory.StockStatus.OUT_OF_STOCK)) {
 
             inventoryRepository.save(inventory);
 

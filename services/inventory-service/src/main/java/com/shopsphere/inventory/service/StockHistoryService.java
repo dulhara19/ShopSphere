@@ -64,6 +64,29 @@ public class StockHistoryService {
                 .collect(Collectors.toList());
     }
 
+    @Transactional(readOnly = true)
+    public String exportAuditReport(LocalDateTime from, LocalDateTime to, StockMovementLog.ChangeType changeType) {
+        StringBuilder csv = new StringBuilder();
+        csv.append("id,product_id,change_type,quantity_before,quantity_after,quantity_change,reason,user_id,reference_id,created_at\n");
+
+        stockMovementLogRepository.findAll().stream()
+                .filter(log -> from == null || !log.getCreatedAt().isBefore(from))
+                .filter(log -> to == null || !log.getCreatedAt().isAfter(to))
+                .filter(log -> changeType == null || log.getChangeType() == changeType)
+                .forEach(log -> csv.append(log.getId()).append(",")
+                        .append(log.getProductId()).append(",")
+                        .append(log.getChangeType()).append(",")
+                        .append(log.getQuantityBefore()).append(",")
+                        .append(log.getQuantityAfter()).append(",")
+                        .append(log.getQuantityChange()).append(",")
+                        .append(escapeCsv(log.getReason())).append(",")
+                        .append(log.getUserId()).append(",")
+                        .append(log.getReferenceId()).append(",")
+                        .append(log.getCreatedAt()).append("\n"));
+
+        return csv.toString();
+    }
+
     @Transactional
     public InventoryDTO adjustStock(UUID productId, InventoryAdjustmentRequest request) {
         Inventory inventory = inventoryRepository.findByProductId(productId)
@@ -93,5 +116,13 @@ public class StockHistoryService {
         eventService.publishStockUpdatedEvent(updated);
         log.info("Stock adjusted for product {} from {} to {}", productId, before, after);
         return InventoryDTO.fromEntity(updated);
+    }
+
+    private String escapeCsv(String value) {
+        if (value == null) {
+            return "";
+        }
+        String escaped = value.replace("\"", "\"\"");
+        return "\"" + escaped + "\"";
     }
 }

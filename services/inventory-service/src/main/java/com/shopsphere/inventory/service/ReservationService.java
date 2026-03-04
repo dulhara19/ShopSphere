@@ -19,6 +19,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Objects;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
@@ -68,7 +69,7 @@ public class ReservationService {
         inventory.setReservedQuantity(inventory.getReservedQuantity() + request.getQuantity());
         inventoryRepository.save(inventory);
 
-        StockReservation saved = reservationRepository.save(reservation);
+        StockReservation saved = Objects.requireNonNull(reservationRepository.save(reservation), "reservation");
         stockHistoryService.logMovement(
                 request.getProductId(),
                 StockMovementLog.ChangeType.RESERVE,
@@ -92,6 +93,7 @@ public class ReservationService {
 
         StockReservation reservation = reservationRepository.findById(reservationId)
                 .orElseThrow(() -> new ReservationNotFoundException(reservationId.toString()));
+        Objects.requireNonNull(reservation.getProductId(), "reservation.productId");
 
         Inventory inventory = inventoryRepository.findByProductId(reservation.getProductId())
                 .orElseThrow(() -> new ProductNotFoundException(reservation.getProductId().toString()));
@@ -133,6 +135,7 @@ public class ReservationService {
 
         StockReservation reservation = reservationRepository.findById(reservationId)
                 .orElseThrow(() -> new ReservationNotFoundException(reservationId.toString()));
+        Objects.requireNonNull(reservation.getProductId(), "reservation.productId");
 
         Inventory inventory = inventoryRepository.findByProductId(reservation.getProductId())
                 .orElseThrow(() -> new ProductNotFoundException(reservation.getProductId().toString()));
@@ -179,7 +182,7 @@ public class ReservationService {
      * Epic 1.2.5: Reservation expiry job - Auto-release expired reservations
      * Scheduled to run every 5 minutes
      */
-    @Scheduled(fixedRateString = "${inventory.reservation.cleanup-interval-minutes:5}m", initialDelay = 60000)
+    @Scheduled(fixedRateString = "#{${inventory.reservation.cleanup-interval-minutes:5} * 60000}", initialDelay = 60000)
     @Transactional
     public void releaseExpiredReservations() {
         log.info("Running scheduled job to release expired reservations");

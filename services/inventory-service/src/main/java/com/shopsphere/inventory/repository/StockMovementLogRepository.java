@@ -25,4 +25,14 @@ public interface StockMovementLogRepository extends JpaRepository<StockMovementL
             @Param("to") LocalDateTime to,
             @Param("changeType") StockMovementLog.ChangeType changeType
     );
+
+    List<StockMovementLog> findByProductId(UUID productId);
+
+    List<StockMovementLog> findByProductIdAndChangeTypeAndCreatedAtAfter(
+            UUID productId,
+            StockMovementLog.ChangeType changeType,
+            LocalDateTime createdAt
+    );
+
+    List<StockMovementLog> findByCreatedAtAfter(LocalDateTime createdAt);
 }

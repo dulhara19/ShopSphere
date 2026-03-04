@@ -16,6 +16,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
+import java.util.Objects;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
@@ -192,7 +193,7 @@ public class InventoryService {
         Inventory inventory = inventoryRepository.findByProductId(productId)
                 .orElseThrow(() -> new ProductNotFoundException(productId.toString()));
 
-        inventoryRepository.delete(inventory);
+        inventoryRepository.delete(Objects.requireNonNull(inventory, "inventory"));
         log.info("Inventory deleted for product: {}", productId);
     }
 
