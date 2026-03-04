@@ -45,4 +45,14 @@ public class CategoryController {
         CategoryDetailResponseDTO categoryDetail = categoryService.getCategoryById(id);
         return ResponseEntity.ok(categoryDetail);
     }
+
+    /**
+     * 1.2.4: Update category (Admin)
+     * URL: PUT /api/categories/{id}
+     */
+    @PutMapping("/{id}")
+    public ResponseEntity<Category> updateCategory(@PathVariable String id, @RequestBody Category category) {
+        Category updatedCategory = categoryService.updateCategory(id, category);
+        return ResponseEntity.ok(updatedCategory);
+    }
 }

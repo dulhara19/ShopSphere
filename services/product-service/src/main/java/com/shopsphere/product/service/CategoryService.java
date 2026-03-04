@@ -44,11 +44,8 @@ public class CategoryService {
 
     /**
      * Story 1.2.3: Get category by ID with parent and subcategories details
-     * @param id The Category ID
-     * @return Detailed DTO with hierarchy info
      */
     public CategoryDetailResponseDTO getCategoryById(String id) {
-    
         Category category = categoryRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Category not found with id: " + id));
 
@@ -59,7 +56,6 @@ public class CategoryService {
         dto.setIconUrl(category.getIconUrl());
         dto.setProductCount(productRepository.countByCategoryId(category.getId()));
 
-       
         if (category.getParentCategoryId() != null) {
             categoryRepository.findById(category.getParentCategoryId()).ifPresent(parent -> {
                 CategoryResponseDTO parentDto = new CategoryResponseDTO();
@@ -69,7 +65,6 @@ public class CategoryService {
             });
         }
 
-      
         List<Category> allCategories = categoryRepository.findAll();
         List<CategoryResponseDTO> subcategories = allCategories.stream()
                 .filter(c -> category.getId().equals(c.getParentCategoryId()))
@@ -84,6 +79,33 @@ public class CategoryService {
 
         dto.setSubcategories(subcategories);
         return dto;
+    }
+
+    /**
+     * Story 1.2.4: Update category (Admin)
+    
+     */
+    public Category updateCategory(String id, Category categoryDetails) {
+      
+        Category existingCategory = categoryRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Category not found with id: " + id));
+
+        
+        if (categoryDetails.getName() != null && 
+            !existingCategory.getName().equals(categoryDetails.getName()) && 
+            categoryRepository.existsByName(categoryDetails.getName())) {
+            throw new RuntimeException("Category name already exists: " + categoryDetails.getName());
+        }
+
+      
+        if (categoryDetails.getName() != null) existingCategory.setName(categoryDetails.getName());
+        if (categoryDetails.getDescription() != null) existingCategory.setDescription(categoryDetails.getDescription());
+        if (categoryDetails.getIconUrl() != null) existingCategory.setIconUrl(categoryDetails.getIconUrl());
+        
+
+        existingCategory.setParentCategoryId(categoryDetails.getParentCategoryId());
+
+        return categoryRepository.save(existingCategory);
     }
 
     
