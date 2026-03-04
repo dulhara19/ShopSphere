@@ -148,4 +148,35 @@ public class ProductController {
         Product updatedProduct = productService.updateProduct(id, product);
         return ResponseEntity.ok(updatedProduct);
     }
+
+    /**
+     * Story 1.4.3: Delete product image from gallery and storage
+     * If the deleted image was the primary image, it resets the primary image.
+     */
+    @DeleteMapping("/{id}/images")
+    public ResponseEntity<Product> deleteProductImage(
+            @PathVariable String id,
+            @RequestParam String imageUrl) {
+        
+        Product product = productService.getProductById(id);
+        List<String> images = product.getImages();
+
+        // Check if image exists in the list
+        if (images == null || !images.contains(imageUrl)) {
+            throw new RuntimeException("Image URL not found in product gallery.");
+        }
+
+        // Remove from list and delete physical file via ImageService
+        images.remove(imageUrl);
+        imageService.deleteImage(imageUrl);
+
+        // Handle Primary Image reset if the deleted one was primary
+        if (imageUrl.equals(product.getPrimaryImage())) {
+            product.setPrimaryImage(images.isEmpty() ? null : images.get(0));
+        }
+
+        product.setImages(images);
+        Product updatedProduct = productService.updateProduct(id, product);
+        return ResponseEntity.ok(updatedProduct);
+    }
 }

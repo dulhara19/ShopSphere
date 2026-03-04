@@ -44,4 +44,21 @@ public class ImageService {
 
         return "/uploads/products/" + fileName; // Return the relative path/URL
     }
+
+    /**
+     * Story 1.4.3: Delete physical file from storage
+     */
+    public void deleteImage(String imageUrl) {
+        try {
+            // Remove leading slash if present to get correct path (e.g., /uploads/products/xyz.jpg -> uploads/products/xyz.jpg)
+            String filePath = imageUrl.startsWith("/") ? imageUrl.substring(1) : imageUrl;
+            Path path = Paths.get(filePath);
+            
+            if (Files.exists(path)) {
+                Files.delete(path);
+            }
+        } catch (IOException e) {
+            throw new RuntimeException("Could not delete the file: " + e.getMessage());
+        }
+    }
 }
