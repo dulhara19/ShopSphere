@@ -1,5 +1,6 @@
 package com.shopsphere.product.controller;
 
+import com.shopsphere.product.dto.ProductInternalResponseDTO;
 import com.shopsphere.product.model.Product;
 import com.shopsphere.product.service.ProductService;
 import com.shopsphere.product.service.ImageService;
@@ -97,7 +98,6 @@ public class ProductController {
 
     /**
      * Story 1.4.1: Upload multiple images for a product
-     * Validates max 10 images and file types via ImageService.
      */
     @PostMapping("/{id}/images")
     public ResponseEntity<Product> uploadProductImages(
@@ -106,7 +106,6 @@ public class ProductController {
         
         Product product = productService.getProductById(id);
         
-        // Acceptance Criteria: Max 10 images per product
         List<String> currentImages = product.getImages() != null ? product.getImages() : new ArrayList<>();
         if (currentImages.size() + files.length > 10) {
             throw new RuntimeException("Maximum 10 images allowed per product.");
@@ -119,7 +118,6 @@ public class ProductController {
 
         product.setImages(currentImages);
         
-        // Story 1.4.2: Automatically set the first image as primary if none exists
         if (product.getPrimaryImage() == null && !currentImages.isEmpty()) {
             product.setPrimaryImage(currentImages.get(0));
         }
@@ -130,7 +128,6 @@ public class ProductController {
 
     /**
      * Story 1.4.2: Set primary image for a product
-     * Validates if the image URL exists in the product's image list.
      */
     @PatchMapping("/{id}/primary-image")
     public ResponseEntity<Product> setPrimaryImage(
@@ -139,7 +136,6 @@ public class ProductController {
         
         Product product = productService.getProductById(id);
         
-        // Validate if the image URL belongs to this product
         if (product.getImages() == null || !product.getImages().contains(imageUrl)) {
             throw new RuntimeException("Image URL not found in product's gallery.");
         }
@@ -151,7 +147,6 @@ public class ProductController {
 
     /**
      * Story 1.4.3: Delete product image from gallery and storage
-     * If the deleted image was the primary image, it resets the primary image.
      */
     @DeleteMapping("/{id}/images")
     public ResponseEntity<Product> deleteProductImage(
@@ -161,16 +156,13 @@ public class ProductController {
         Product product = productService.getProductById(id);
         List<String> images = product.getImages();
 
-        // Check if image exists in the list
         if (images == null || !images.contains(imageUrl)) {
             throw new RuntimeException("Image URL not found in product gallery.");
         }
 
-        // Remove from list and delete physical file via ImageService
         images.remove(imageUrl);
         imageService.deleteImage(imageUrl);
 
-        // Handle Primary Image reset if the deleted one was primary
         if (imageUrl.equals(product.getPrimaryImage())) {
             product.setPrimaryImage(images.isEmpty() ? null : images.get(0));
         }
@@ -178,5 +170,15 @@ public class ProductController {
         product.setImages(images);
         Product updatedProduct = productService.updateProduct(id, product);
         return ResponseEntity.ok(updatedProduct);
+    }
+
+    /**
+     * Story 1.5.1: Get product detail for internal microservices
+     * URL Example: GET /api/products/internal/{id}
+     */
+    @GetMapping("/internal/{id}")
+    public ResponseEntity<ProductInternalResponseDTO> getProductInternal(@PathVariable String id) {
+        ProductInternalResponseDTO response = productService.getProductInternal(id);
+        return ResponseEntity.ok(response);
     }
 }

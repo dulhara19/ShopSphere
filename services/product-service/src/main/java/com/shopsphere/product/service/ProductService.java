@@ -1,5 +1,6 @@
 package com.shopsphere.product.service;
 
+import com.shopsphere.product.dto.ProductInternalResponseDTO;
 import com.shopsphere.product.exception.ProductNotFoundException;
 import com.shopsphere.product.model.Category;
 import com.shopsphere.product.model.Product;
@@ -118,6 +119,22 @@ public class ProductService {
 
         // Execute global search without specific Category filter
         return productRepository.searchProductsGlobal(keyword, min, max, pageable);
+    }
+
+    /**
+     * Story 1.5.1: Get product by ID for internal services (Order, Cart)
+     * Provides essential details like price and availability for inter-service communication.
+     */
+    public ProductInternalResponseDTO getProductInternal(String id) {
+        Product product = getProductById(id);
+        
+        return ProductInternalResponseDTO.builder()
+                .id(product.getId())
+                .name(product.getName())
+                .price(product.getPrice())
+                .status(product.getStatus())
+                .isAvailable("ACTIVE".equalsIgnoreCase(product.getStatus()))
+                .build();
     }
 
     /**
