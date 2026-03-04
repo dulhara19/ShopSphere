@@ -83,29 +83,42 @@ public class CategoryService {
 
     /**
      * Story 1.2.4: Update category (Admin)
-    
      */
     public Category updateCategory(String id, Category categoryDetails) {
-      
         Category existingCategory = categoryRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Category not found with id: " + id));
 
-        
         if (categoryDetails.getName() != null && 
             !existingCategory.getName().equals(categoryDetails.getName()) && 
             categoryRepository.existsByName(categoryDetails.getName())) {
             throw new RuntimeException("Category name already exists: " + categoryDetails.getName());
         }
 
-      
         if (categoryDetails.getName() != null) existingCategory.setName(categoryDetails.getName());
         if (categoryDetails.getDescription() != null) existingCategory.setDescription(categoryDetails.getDescription());
         if (categoryDetails.getIconUrl() != null) existingCategory.setIconUrl(categoryDetails.getIconUrl());
         
-
         existingCategory.setParentCategoryId(categoryDetails.getParentCategoryId());
 
         return categoryRepository.save(existingCategory);
+    }
+
+    /**
+     * Story 1.2.5: Delete category (Admin)
+     */
+    public void deleteCategory(String id) {
+       
+        if (!categoryRepository.existsById(id)) {
+            throw new RuntimeException("Category not found with id: " + id);
+        }
+
+  
+        long productCount = productRepository.countByCategoryId(id);
+        if (productCount > 0) {
+            throw new RuntimeException("Cannot delete category. It contains " + productCount + " products. Please reassign or delete products first.");
+        }
+
+        categoryRepository.deleteById(id);
     }
 
     

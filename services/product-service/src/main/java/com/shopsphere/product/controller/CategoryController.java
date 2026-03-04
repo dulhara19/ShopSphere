@@ -55,4 +55,14 @@ public class CategoryController {
         Category updatedCategory = categoryService.updateCategory(id, category);
         return ResponseEntity.ok(updatedCategory);
     }
+
+    /**
+     * 1.2.5: Delete category (Admin)
+     * URL: DELETE /api/categories/{id}
+     */
+    @DeleteMapping("/{id}")
+    public ResponseEntity<Void> deleteCategory(@PathVariable String id) {
+        categoryService.deleteCategory(id);
+        return ResponseEntity.noContent().build(); 
+    }
 }
