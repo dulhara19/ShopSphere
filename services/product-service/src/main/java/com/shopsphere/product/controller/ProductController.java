@@ -43,7 +43,9 @@ public class ProductController {
         return ResponseEntity.noContent().build(); 
     }
 
-   
+    /**
+     * 1.1.5: List seller's products (Paginated with Status Filter)
+     */
     @GetMapping("/seller/me")
     public ResponseEntity<Page<Product>> getMyProducts(
             @RequestHeader("X-Seller-Id") String sellerId, 
@@ -53,6 +55,22 @@ public class ProductController {
             @RequestParam(defaultValue = "createdAt") String sortBy) {
         
         Page<Product> products = productService.getSellerProducts(sellerId, status, page, size, sortBy);
+        return ResponseEntity.ok(products);
+    }
+
+    /**
+     * Story 1.3.1: List products with pagination for Customers
+     * Acceptance Criteria: Default 20 items per page, Sort by createdAt, price, name.
+     * URL: GET /api/products
+     */
+    @GetMapping
+    public ResponseEntity<Page<Product>> listAllProducts(
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "20") int size,
+            @RequestParam(defaultValue = "createdAt") String sortBy,
+            @RequestParam(defaultValue = "desc") String direction) {
+        
+        Page<Product> products = productService.getAllActiveProducts(page, size, sortBy, direction);
         return ResponseEntity.ok(products);
     }
 }

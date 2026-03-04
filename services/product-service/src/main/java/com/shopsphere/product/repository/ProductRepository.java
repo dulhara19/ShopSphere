@@ -21,7 +21,11 @@ public interface ProductRepository extends MongoRepository<Product, String> {
 
     /**
      * Story 1.2.2: Get the total number of products in a specific category
-     * Category list එක පෙන්වන විට එක් එක් category එකට අදාළ product count එක පෙන්වීමට මෙය භාවිතා කරයි
      */
     long countByCategoryId(String categoryId);
+
+    /**
+     * Story 1.3.1: Active status 
+     */
+    Page<Product> findByStatus(String status, Pageable pageable);
 }
