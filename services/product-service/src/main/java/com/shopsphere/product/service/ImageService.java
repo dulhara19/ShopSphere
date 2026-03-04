@@ -1,0 +1,69 @@
+package com.shopsphere.product.service;
+
+import net.coobird.thumbnailator.Thumbnails;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.stereotype.Service;
+import org.springframework.util.StringUtils;
+import org.springframework.web.multipart.MultipartFile;
+
+import java.io.File;
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.util.Arrays;
+import java.util.List;
+import java.util.UUID;
+
+@Service
+public class ImageService {
+
+    @Value("${file.upload-dir}")
+    private String uploadDir;
+
+    private static final List<String> ALLOWED_EXTENSIONS = Arrays.asList("jpg", "jpeg", "png", "webp");
+
+    public String uploadImage(MultipartFile file) throws IOException {
+        // 1. Validate File Type (Acceptance Criteria 1.4.1)
+        String extension = StringUtils.getFilenameExtension(file.getOriginalFilename());
+        if (extension == null || !ALLOWED_EXTENSIONS.contains(extension.toLowerCase())) {
+            throw new RuntimeException("Invalid file type. Only JPG, PNG and WEBP are allowed.");
+        }
+
+        // 2. Create Directory if not exists
+        Path uploadPath = Paths.get(uploadDir);
+        if (!Files.exists(uploadPath)) {
+            Files.createDirectories(uploadPath);
+        }
+
+        // 3. Generate Unique Filename
+        String fileName = UUID.randomUUID().toString() + "." + extension;
+        File destinationFile = new File(uploadDir + "/" + fileName);
+
+        // 4. Story 1.4.4: Image Optimization & Compression
+        // Resize to max 800x800 maintaining aspect ratio and 80% quality compression
+        Thumbnails.of(file.getInputStream())
+                .size(800, 800)
+                .outputQuality(0.8)
+                .toFile(destinationFile);
+
+        return "/uploads/products/" + fileName; // Return the relative path/URL
+    }
+
+    /**
+     * Story 1.4.3: Delete physical file from storage
+     */
+    public void deleteImage(String imageUrl) {
+        try {
+            // Remove leading slash if present to get correct path
+            String filePath = imageUrl.startsWith("/") ? imageUrl.substring(1) : imageUrl;
+            Path path = Paths.get(filePath);
+            
+            if (Files.exists(path)) {
+                Files.delete(path);
+            }
+        } catch (IOException e) {
+            throw new RuntimeException("Could not delete the file: " + e.getMessage());
+        }
+    }
+}
