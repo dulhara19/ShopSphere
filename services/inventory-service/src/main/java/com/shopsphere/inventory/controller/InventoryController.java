@@ -4,16 +4,28 @@ import com.shopsphere.inventory.dto.InventoryDTO;
 import com.shopsphere.inventory.dto.ReservationDTO;
 import com.shopsphere.inventory.dto.request.*;
 import com.shopsphere.inventory.dto.response.AvailabilityCheckResponse;
+import com.shopsphere.inventory.dto.response.BulkUpdateResponse;
+import com.shopsphere.inventory.dto.response.StockHistoryResponse;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.shopsphere.inventory.model.StockMovementLog;
 import com.shopsphere.inventory.service.InventoryService;
 import com.shopsphere.inventory.service.LowStockService;
 import com.shopsphere.inventory.service.ReservationService;
+import com.shopsphere.inventory.service.StockStreamService;
+import com.shopsphere.inventory.service.StockHistoryService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.http.MediaType;
+import org.springframework.format.annotation.DateTimeFormat;
+import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
 import org.springframework.web.bind.annotation.*;
 
 import javax.validation.Valid;
+import javax.validation.constraints.NotEmpty;
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.UUID;
 import java.util.stream.Collectors;
@@ -27,6 +39,9 @@ public class InventoryController {
     private final InventoryService inventoryService;
     private final ReservationService reservationService;
     private final LowStockService lowStockService;
+    private final StockHistoryService stockHistoryService;
+    private final StockStreamService stockStreamService;
+    private final ObjectMapper objectMapper;
 
     // ==================== Epic 1.1: Basic Inventory Management ====================
 
@@ -66,10 +81,13 @@ public class InventoryController {
      * Epic 1.1.4: Bulk stock update
      */
     @PostMapping("/bulk-update")
-    public ResponseEntity<Void> bulkUpdateStock(@Valid @RequestBody List<UpdateInventoryRequest> updates) {
+    public ResponseEntity<BulkUpdateResponse> bulkUpdateStock(
+            @RequestBody @NotEmpty(message = "Bulk update payload cannot be empty")
+            List<@Valid BulkUpdateInventoryRequest> updates) {
         log.info("POST /inventory/bulk-update - Updating {} products", updates.size());
-        // TODO: Implement bulk update with product ID in request
-        return ResponseEntity.accepted().build();
+        BulkUpdateResponse response = inventoryService.bulkUpdateStock(updates);
+        HttpStatus status = response.getFailureCount() > 0 ? HttpStatus.MULTI_STATUS : HttpStatus.OK;
+        return ResponseEntity.status(status).body(response);
     }
 
     /**
@@ -118,34 +136,62 @@ public class InventoryController {
      * Epic 1.2.4: Check availability for single product or batch
      */
     @PostMapping("/check-availability")
-    public ResponseEntity<?> checkAvailability(@Valid @RequestBody Object request) {
+    public ResponseEntity<?> checkAvailability(@RequestBody JsonNode requestBody) {
         log.info("POST /inventory/check-availability - Checking availability");
 
-        // Handle both single and batch requests
-        if (request instanceof CheckAvailabilityRequest) {
-            CheckAvailabilityRequest singleRequest = (CheckAvailabilityRequest) request;
-            boolean available = reservationService.checkAvailability(
-                    singleRequest.getProductId(),
-                    singleRequest.getQuantity()
-            );
-
-            InventoryDTO inventory = inventoryService.getStockLevel(singleRequest.getProductId());
-            AvailabilityCheckResponse response = AvailabilityCheckResponse.builder()
-                    .productId(singleRequest.getProductId())
-                    .requestedQuantity(singleRequest.getQuantity())
-                    .availableQuantity(inventory.getAvailableQuantity())
-                    .available(available)
-                    .message(available ? "Available" : "Insufficient stock")
-                    .build();
-
-            return ResponseEntity.ok(response);
-        } else if (request instanceof List) {
-            List<?> items = (List<?>) request;
-            // Implement batch checking if needed
-            return ResponseEntity.ok(items);
+        if (requestBody == null || requestBody.isNull() || requestBody.isMissingNode()) {
+            throw new IllegalArgumentException("Request body is required");
         }
 
-        return ResponseEntity.badRequest().build();
+        if (requestBody.isArray()) {
+            if (requestBody.size() == 0) {
+                throw new IllegalArgumentException("Batch request cannot be empty");
+            }
+
+            List<CheckAvailabilityRequest> requests = objectMapper.convertValue(
+                    requestBody,
+                    objectMapper.getTypeFactory().constructCollectionType(List.class, CheckAvailabilityRequest.class)
+            );
+
+            List<AvailabilityCheckResponse> responses = requests.stream()
+                    .peek(this::validateCheckAvailabilityRequest)
+                    .map(this::buildAvailabilityResponse)
+                    .collect(Collectors.toList());
+
+            return ResponseEntity.ok(responses);
+        }
+
+        CheckAvailabilityRequest request = objectMapper.convertValue(requestBody, CheckAvailabilityRequest.class);
+        validateCheckAvailabilityRequest(request);
+        return ResponseEntity.ok(buildAvailabilityResponse(request));
+    }
+
+    private void validateCheckAvailabilityRequest(CheckAvailabilityRequest request) {
+        if (request.getProductId() == null) {
+            throw new IllegalArgumentException("Product ID is required");
+        }
+        if (request.getQuantity() == null) {
+            throw new IllegalArgumentException("Quantity is required");
+        }
+        if (request.getQuantity() < 1) {
+            throw new IllegalArgumentException("Quantity must be at least 1");
+        }
+    }
+
+    private AvailabilityCheckResponse buildAvailabilityResponse(CheckAvailabilityRequest request) {
+        boolean available = reservationService.checkAvailability(
+                request.getProductId(),
+                request.getQuantity()
+        );
+
+        InventoryDTO inventory = inventoryService.getStockLevel(request.getProductId());
+        return AvailabilityCheckResponse.builder()
+                .productId(request.getProductId())
+                .requestedQuantity(request.getQuantity())
+                .availableQuantity(inventory.getAvailableQuantity())
+                .available(available)
+                .message(available ? "Available" : "Insufficient stock")
+                .build();
     }
 
     // ==================== Epic 1.3: Low Stock Alerts ====================
@@ -202,5 +248,51 @@ public class InventoryController {
         log.info("GET /inventory/order/{}/reservations - Getting reservations", orderId);
         List<ReservationDTO> reservations = reservationService.getReservationsByOrder(orderId);
         return ResponseEntity.ok(reservations);
+    }
+
+    /**
+     * Epic 2.2.2: Get stock history by product
+     */
+    @GetMapping("/{productId}/history")
+    public ResponseEntity<List<StockHistoryResponse>> getStockHistory(
+            @PathVariable UUID productId,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime from,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime to,
+            @RequestParam(required = false) StockMovementLog.ChangeType changeType) {
+        log.info("GET /inventory/{}/history - Fetching stock history", productId);
+        List<StockHistoryResponse> history = stockHistoryService.getHistory(productId, from, to, changeType);
+        return ResponseEntity.ok(history);
+    }
+
+    /**
+     * Epic 2.2.3: Stock adjustment endpoint
+     */
+    @PostMapping("/{productId}/adjustment")
+    public ResponseEntity<InventoryDTO> adjustInventory(
+            @PathVariable UUID productId,
+            @Valid @RequestBody InventoryAdjustmentRequest request) {
+        log.info("POST /inventory/{}/adjustment - Applying stock adjustment", productId);
+        InventoryDTO updated = stockHistoryService.adjustStock(productId, request);
+        return ResponseEntity.ok(updated);
+    }
+
+    @GetMapping(value = "/audit-report", produces = "text/csv")
+    public ResponseEntity<String> getAuditReport(
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime from,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime to,
+            @RequestParam(required = false) StockMovementLog.ChangeType changeType) {
+        String csv = stockHistoryService.exportAuditReport(from, to, changeType);
+        return ResponseEntity.ok()
+                .contentType(MediaType.valueOf("text/csv"))
+                .body(csv);
+    }
+
+    /**
+     * Epic 2.5.1: Real-time stock sync stream (SSE)
+     */
+    @GetMapping(value = "/stream", produces = "text/event-stream")
+    public SseEmitter stockStream() {
+        log.info("GET /inventory/stream - Subscribing to stock stream");
+        return stockStreamService.subscribe();
     }
 }

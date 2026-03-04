@@ -14,26 +14,17 @@ import java.util.UUID;
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-public class CheckAvailabilityRequest {
+public class BulkUpdateInventoryRequest {
 
     @NotNull(message = "Product ID is required")
     @JsonProperty("product_id")
     private UUID productId;
 
     @NotNull(message = "Quantity is required")
-    @Min(value = 1, message = "Quantity must be at least 1")
+    @Min(value = 0, message = "Quantity must be non-negative")
     private Long quantity;
 
-    @Data
-    @NoArgsConstructor
-    @AllArgsConstructor
-    public static class Item {
-        @NotNull(message = "Product ID is required")
-        @JsonProperty("product_id")
-        private UUID productId;
-
-        @NotNull(message = "Quantity is required")
-        @Min(value = 1, message = "Quantity must be at least 1")
-        private Long quantity;
-    }
+    @Min(value = 0, message = "Low stock threshold must be non-negative")
+    @JsonProperty("low_stock_threshold")
+    private Long lowStockThreshold;
 }

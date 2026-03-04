@@ -1,0 +1,133 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Inventory Service Test UI</title>
+  <link rel="stylesheet" href="./styles.css">
+</head>
+<body>
+  <div class="wrap">
+    <header class="panel">
+      <h1>Inventory Service Test UI</h1>
+      <p>Use this page to quickly test backend endpoints.</p>
+      <div class="row">
+        <label for="baseUrl">Base URL</label>
+        <input id="baseUrl" type="text" value="/api">
+      </div>
+    </header>
+
+    <section class="panel">
+      <h2>Health & Quick</h2>
+      <div class="grid-3">
+        <button id="btnHealth" type="button">Health</button>
+        <button id="btnLowStock" type="button">Low Stock</button>
+        <button id="btnWarehouses" type="button">Warehouses</button>
+      </div>
+    </section>
+
+    <section class="panel">
+      <h2>Inventory</h2>
+      <div class="grid-3">
+        <div>
+          <label for="productId">Product ID</label>
+          <input id="productId" type="text" placeholder="uuid">
+        </div>
+        <div>
+          <label for="quantity">Quantity</label>
+          <input id="quantity" type="number" value="10">
+        </div>
+        <div>
+          <label for="threshold">Threshold</label>
+          <input id="threshold" type="number" value="5">
+        </div>
+      </div>
+      <div class="grid-4">
+        <button id="btnCreateInventory" type="button">Create</button>
+        <button id="btnGetInventory" type="button">Get</button>
+        <button id="btnUpdateInventory" type="button">Update</button>
+        <button id="btnDeleteInventory" type="button">Delete</button>
+      </div>
+    </section>
+
+    <section class="panel">
+      <h2>Reservation</h2>
+      <div class="grid-2">
+        <div>
+          <label for="orderId">Order ID</label>
+          <input id="orderId" type="text" placeholder="uuid (optional)">
+        </div>
+        <div>
+          <label for="reservationId">Reservation ID</label>
+          <input id="reservationId" type="text" placeholder="uuid">
+        </div>
+      </div>
+      <div class="grid-4">
+        <button id="btnReserve" type="button">Reserve</button>
+        <button id="btnConfirm" type="button">Confirm</button>
+        <button id="btnRelease" type="button">Release</button>
+        <button id="btnCheckAvailability" type="button">Check Availability</button>
+      </div>
+    </section>
+
+    <section class="panel">
+      <h2>Warehouse</h2>
+      <div class="grid-4">
+        <div>
+          <label for="warehouseCode">Code</label>
+          <input id="warehouseCode" type="text" value="WH-001">
+        </div>
+        <div>
+          <label for="warehouseName">Name</label>
+          <input id="warehouseName" type="text" value="Main Warehouse">
+        </div>
+        <div>
+          <label for="warehouseId">Warehouse ID</label>
+          <input id="warehouseId" type="text" placeholder="uuid">
+        </div>
+        <div>
+          <label for="toWarehouseId">To Warehouse ID</label>
+          <input id="toWarehouseId" type="text" placeholder="uuid">
+        </div>
+      </div>
+      <div class="grid-4">
+        <button id="btnCreateWarehouse" type="button">Create Warehouse</button>
+        <button id="btnAssignWarehouse" type="button">Assign Stock</button>
+        <button id="btnWarehouseStock" type="button">Get Product Warehouses</button>
+        <button id="btnTransfer" type="button">Transfer</button>
+      </div>
+    </section>
+
+    <section class="panel">
+      <h2>Analytics & History</h2>
+      <div class="grid-4">
+        <button id="btnTurnover" type="button">Turnover</button>
+        <button id="btnDaysRemaining" type="button">Days Remaining</button>
+        <button id="btnForecasts" type="button">Forecasts</button>
+        <button id="btnHistory" type="button">History</button>
+      </div>
+      <div class="grid-3">
+        <button id="btnAuditCsv" type="button">Audit CSV</button>
+        <button id="btnExportCsv" type="button">Inventory Export CSV</button>
+        <button id="btnRegisterWebhook" type="button">Register Webhook</button>
+      </div>
+    </section>
+
+    <section class="panel">
+      <h2>Realtime Stream (SSE)</h2>
+      <div class="grid-2">
+        <button id="btnConnectStream" type="button">Connect Stream</button>
+        <button id="btnStopStream" type="button">Stop Stream</button>
+      </div>
+      <pre id="streamLog" class="log"></pre>
+    </section>
+
+    <section class="panel">
+      <h2>Response</h2>
+      <pre id="output" class="log"></pre>
+    </section>
+  </div>
+
+  <script src="./app.js"></script>
+</body>
+</html>

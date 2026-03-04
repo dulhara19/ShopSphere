@@ -8,7 +8,31 @@ This document outlines the epic breakdown for the Inventory Service, divided int
 
 **Owner:** Team Member 3
 **Port:** 3003
-**Tech Stack:** Spring Boot, Spring Data JPA, PostgreSQL, Redis
+**Tech Stack:** Spring Boot, Spring Data JPA, PostgreSQL, Redis, Kafka, H2 (tests), OpenAPI/Swagger, JaCoCo
+
+---
+
+## Implementation Status (Current Branch)
+
+Last updated: 2026-03-05
+
+### Phase 1
+- [x] Epic 1.1 Basic Inventory Management
+- [x] Epic 1.2 Stock Reservation System
+- [x] Epic 1.3 Low Stock Alerts
+- [x] Epic 1.4 Internal Service Communication
+
+### Phase 2
+- [x] Epic 2.1 Multi-Warehouse Support
+- [x] Epic 2.2 Stock History & Audit Trail
+- [x] Epic 2.3 Inventory Analytics
+- [x] Epic 2.4 Restock Predictions (baseline rules/forecast endpoints)
+- [x] Epic 2.5 Inventory Sync & Integration (SSE stream + import/export + webhooks)
+
+### Open Gaps / Partial Areas
+- [ ] Epic 2.1.4 Nearest warehouse selection by shipping address
+- [ ] Epic 2.2.5 Stock reconciliation (expected vs actual mismatch flow)
+- [ ] Epic 2.4 Full ML forecasting pipeline (currently heuristic/baseline)
 
 ---
 
@@ -244,10 +268,10 @@ POST /api/inventory/webhooks
 ## Definition of Done (DoD)
 
 Each story is considered done when:
-- [ ] Code implemented and follows coding standards
-- [ ] Unit tests written (minimum 80% coverage)
-- [ ] Integration tests for API endpoints
-- [ ] API documented in OpenAPI/Swagger
+- [x] Code implemented and follows coding standards
+- [x] Unit tests written (minimum 80% coverage) - JaCoCo coverage gate passes for controller package (`com.shopsphere.inventory.controller*`)
+- [x] Integration tests for API endpoints
+- [x] API documented in OpenAPI/Swagger
 - [ ] Code reviewed and approved
 - [ ] No critical/high security vulnerabilities
 - [ ] Deployed to dev environment

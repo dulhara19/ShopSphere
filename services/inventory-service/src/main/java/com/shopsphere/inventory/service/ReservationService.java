@@ -7,6 +7,7 @@ import com.shopsphere.inventory.exception.ProductNotFoundException;
 import com.shopsphere.inventory.exception.ReservationNotFoundException;
 import com.shopsphere.inventory.model.Inventory;
 import com.shopsphere.inventory.model.StockReservation;
+import com.shopsphere.inventory.model.StockMovementLog;
 import com.shopsphere.inventory.repository.InventoryRepository;
 import com.shopsphere.inventory.repository.StockReservationRepository;
 import lombok.RequiredArgsConstructor;
@@ -18,6 +19,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Objects;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
@@ -29,6 +31,7 @@ public class ReservationService {
     private final StockReservationRepository reservationRepository;
     private final InventoryRepository inventoryRepository;
     private final InventoryEventService eventService;
+    private final StockHistoryService stockHistoryService;
 
     @Value("${inventory.reservation.expiry-minutes:15}")
     private int expiryMinutes;
@@ -62,10 +65,20 @@ public class ReservationService {
                 .build();
 
         // Update inventory reserved quantity
+        long quantityBefore = inventory.getQuantity();
         inventory.setReservedQuantity(inventory.getReservedQuantity() + request.getQuantity());
         inventoryRepository.save(inventory);
 
-        StockReservation saved = reservationRepository.save(reservation);
+        StockReservation saved = Objects.requireNonNull(reservationRepository.save(reservation), "reservation");
+        stockHistoryService.logMovement(
+                request.getProductId(),
+                StockMovementLog.ChangeType.RESERVE,
+                quantityBefore,
+                quantityBefore,
+                "Stock reserved for checkout",
+                null,
+                saved.getId()
+        );
         log.info("Stock reserved for product: {}, reservation ID: {}", request.getProductId(), saved.getId());
 
         return ReservationDTO.fromEntity(saved);
@@ -80,11 +93,13 @@ public class ReservationService {
 
         StockReservation reservation = reservationRepository.findById(reservationId)
                 .orElseThrow(() -> new ReservationNotFoundException(reservationId.toString()));
+        Objects.requireNonNull(reservation.getProductId(), "reservation.productId");
 
         Inventory inventory = inventoryRepository.findByProductId(reservation.getProductId())
                 .orElseThrow(() -> new ProductNotFoundException(reservation.getProductId().toString()));
 
         // Convert reserved to sold
+        long quantityBefore = inventory.getQuantity();
         inventory.setQuantity(inventory.getQuantity() - reservation.getQuantity());
         inventory.setReservedQuantity(inventory.getReservedQuantity() - reservation.getQuantity());
         inventory.updateStatus();
@@ -96,6 +111,15 @@ public class ReservationService {
         reservation.setConfirmedAt(LocalDateTime.now());
         StockReservation updated = reservationRepository.save(reservation);
 
+        stockHistoryService.logMovement(
+                reservation.getProductId(),
+                StockMovementLog.ChangeType.SALE,
+                quantityBefore,
+                inventory.getQuantity(),
+                "Reservation confirmed and converted to sale",
+                null,
+                reservationId
+        );
         log.info("Reservation confirmed: {}", reservationId);
         eventService.publishStockUpdatedEvent(inventory);
 
@@ -111,11 +135,13 @@ public class ReservationService {
 
         StockReservation reservation = reservationRepository.findById(reservationId)
                 .orElseThrow(() -> new ReservationNotFoundException(reservationId.toString()));
+        Objects.requireNonNull(reservation.getProductId(), "reservation.productId");
 
         Inventory inventory = inventoryRepository.findByProductId(reservation.getProductId())
                 .orElseThrow(() -> new ProductNotFoundException(reservation.getProductId().toString()));
 
         // Return reserved to available
+        long quantityBefore = inventory.getQuantity();
         inventory.setReservedQuantity(inventory.getReservedQuantity() - reservation.getQuantity());
         inventory.updateStatus();
 
@@ -126,6 +152,15 @@ public class ReservationService {
         reservation.setReleasedAt(LocalDateTime.now());
         StockReservation updated = reservationRepository.save(reservation);
 
+        stockHistoryService.logMovement(
+                reservation.getProductId(),
+                StockMovementLog.ChangeType.RELEASE,
+                quantityBefore,
+                quantityBefore,
+                "Reservation released",
+                null,
+                reservationId
+        );
         log.info("Reservation released: {}", reservationId);
         eventService.publishStockUpdatedEvent(inventory);
 
@@ -147,7 +182,7 @@ public class ReservationService {
      * Epic 1.2.5: Reservation expiry job - Auto-release expired reservations
      * Scheduled to run every 5 minutes
      */
-    @Scheduled(fixedRateString = "${inventory.reservation.cleanup-interval-minutes:5}m", initialDelay = 60000)
+    @Scheduled(fixedRateString = "#{${inventory.reservation.cleanup-interval-minutes:5} * 60000}", initialDelay = 60000)
     @Transactional
     public void releaseExpiredReservations() {
         log.info("Running scheduled job to release expired reservations");

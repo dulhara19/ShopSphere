@@ -1,8 +1,11 @@
 package com.shopsphere.inventory.service;
 
 import com.shopsphere.inventory.dto.InventoryDTO;
+import com.shopsphere.inventory.dto.request.BulkUpdateInventoryRequest;
 import com.shopsphere.inventory.dto.request.CreateInventoryRequest;
 import com.shopsphere.inventory.dto.request.UpdateInventoryRequest;
+import com.shopsphere.inventory.dto.response.BulkUpdateItemResult;
+import com.shopsphere.inventory.dto.response.BulkUpdateResponse;
 import com.shopsphere.inventory.exception.InsufficientStockException;
 import com.shopsphere.inventory.exception.ProductNotFoundException;
 import com.shopsphere.inventory.model.Inventory;
@@ -13,6 +16,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
+import java.util.Objects;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
@@ -23,6 +27,7 @@ public class InventoryService {
 
     private final InventoryRepository inventoryRepository;
     private final InventoryEventService eventService;
+    private final StockHistoryService stockHistoryService;
 
     /**
      * Epic 1.1.1: Initialize inventory for product
@@ -46,6 +51,15 @@ public class InventoryService {
 
         inventory.updateStatus();
         Inventory saved = inventoryRepository.save(inventory);
+        stockHistoryService.logMovement(
+                saved.getProductId(),
+                com.shopsphere.inventory.model.StockMovementLog.ChangeType.RESTOCK,
+                0L,
+                saved.getQuantity(),
+                "Inventory initialized",
+                null,
+                null
+        );
 
         log.info("Inventory created for product: {} with quantity: {}", saved.getProductId(), saved.getQuantity());
         return InventoryDTO.fromEntity(saved);
@@ -79,6 +93,7 @@ public class InventoryService {
             throw new IllegalArgumentException("Quantity cannot be negative");
         }
 
+        long previousQuantity = inventory.getQuantity();
         inventory.setQuantity(request.getQuantity());
 
         if (request.getLowStockThreshold() != null) {
@@ -87,6 +102,15 @@ public class InventoryService {
 
         inventory.updateStatus();
         Inventory updated = inventoryRepository.save(inventory);
+        stockHistoryService.logMovement(
+                productId,
+                com.shopsphere.inventory.model.StockMovementLog.ChangeType.ADJUSTMENT,
+                previousQuantity,
+                updated.getQuantity(),
+                "Manual stock update",
+                null,
+                null
+        );
 
         log.info("Inventory updated for product: {} with new quantity: {}", productId, updated.getQuantity());
         eventService.publishStockUpdatedEvent(updated);
@@ -97,22 +121,66 @@ public class InventoryService {
     /**
      * Epic 1.1.4: Bulk stock update
      */
-    @Transactional
-    public List<InventoryDTO> bulkUpdateStock(List<UpdateInventoryRequest> updates) {
+    public BulkUpdateResponse bulkUpdateStock(List<BulkUpdateInventoryRequest> updates) {
         log.info("Performing bulk stock update for {} products", updates.size());
 
-        return updates.stream()
-                .map(update -> {
-                    try {
-                        // Note: This requires productId to be available
-                        // The actual implementation would need proper request structure
-                        return null;
-                    } catch (Exception e) {
-                        log.error("Error updating inventory", e);
-                        return null;
-                    }
-                })
+        List<BulkUpdateItemResult> results = updates.stream()
+                .map(this::processBulkUpdateItem)
                 .collect(Collectors.toList());
+
+        int successCount = (int) results.stream()
+                .filter(item -> Boolean.TRUE.equals(item.getSuccess()))
+                .count();
+
+        return BulkUpdateResponse.builder()
+                .total(results.size())
+                .successCount(successCount)
+                .failureCount(results.size() - successCount)
+                .results(results)
+                .build();
+    }
+
+    private BulkUpdateItemResult processBulkUpdateItem(BulkUpdateInventoryRequest update) {
+        try {
+            Inventory inventory = inventoryRepository.findByProductId(update.getProductId())
+                    .orElseThrow(() -> new ProductNotFoundException(update.getProductId().toString()));
+
+            if (update.getQuantity() < 0) {
+                throw new IllegalArgumentException("Quantity cannot be negative");
+            }
+
+            long previousQuantity = inventory.getQuantity();
+            inventory.setQuantity(update.getQuantity());
+            if (update.getLowStockThreshold() != null) {
+                inventory.setLowStockThreshold(update.getLowStockThreshold());
+            }
+
+            inventory.updateStatus();
+            Inventory saved = inventoryRepository.save(inventory);
+            eventService.publishStockUpdatedEvent(saved);
+            stockHistoryService.logMovement(
+                    saved.getProductId(),
+                    com.shopsphere.inventory.model.StockMovementLog.ChangeType.ADJUSTMENT,
+                    previousQuantity,
+                    saved.getQuantity(),
+                    "Bulk stock update",
+                    null,
+                    null
+            );
+
+            return BulkUpdateItemResult.builder()
+                    .productId(saved.getProductId())
+                    .success(true)
+                    .inventory(InventoryDTO.fromEntity(saved))
+                    .build();
+        } catch (Exception ex) {
+            log.error("Bulk update failed for product: {}", update.getProductId(), ex);
+            return BulkUpdateItemResult.builder()
+                    .productId(update.getProductId())
+                    .success(false)
+                    .error(ex.getMessage())
+                    .build();
+        }
     }
 
     /**
@@ -125,7 +193,7 @@ public class InventoryService {
         Inventory inventory = inventoryRepository.findByProductId(productId)
                 .orElseThrow(() -> new ProductNotFoundException(productId.toString()));
 
-        inventoryRepository.delete(inventory);
+        inventoryRepository.delete(Objects.requireNonNull(inventory, "inventory"));
         log.info("Inventory deleted for product: {}", productId);
     }
 
