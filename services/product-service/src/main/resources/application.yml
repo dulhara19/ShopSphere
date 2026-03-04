@@ -7,3 +7,14 @@ spring:
   data:
     mongodb:
       uri: mongodb://localhost:27017/productdb
+  
+  # Story 1.4.1: Configure file upload limits
+  servlet:
+    multipart:
+      enabled: true
+      max-file-size: 5MB
+      max-request-size: 50MB
+
+# Custom configuration for image storage
+file:
+  upload-dir: uploads/products

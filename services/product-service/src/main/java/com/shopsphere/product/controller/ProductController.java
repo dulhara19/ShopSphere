@@ -2,10 +2,16 @@ package com.shopsphere.product.controller;
 
 import com.shopsphere.product.model.Product;
 import com.shopsphere.product.service.ProductService;
+import com.shopsphere.product.service.ImageService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
+
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
 
 @CrossOrigin 
 @RestController
@@ -14,6 +20,9 @@ public class ProductController {
 
     @Autowired
     private ProductService productService;
+
+    @Autowired
+    private ImageService imageService;
 
     /**
      * Story 1.1.1: Create Product (Seller)
@@ -53,7 +62,6 @@ public class ProductController {
 
     /**
      * Story 1.1.5: List seller's products (Paginated with Status Filter)
-     * Used by sellers to manage their own catalog.
      */
     @GetMapping("/seller/me")
     public ResponseEntity<Page<Product>> getMyProducts(
@@ -69,29 +77,54 @@ public class ProductController {
 
     /**
      * Story 1.3.1 - 1.3.5: Unified Product Search & Listing
-     * URL Example: GET /api/products?search=macbook&categoryId=electronics&minPrice=1000&maxPrice=5000&page=0&size=20&sortBy=price&direction=asc
-     * * Handles:
-     * - Text search (name and description)
-     * - Category filtering (including subcategories)
-     * - Price range filtering
-     * - Pagination (Default 20 items per page)
-     * - Dynamic sorting (by price, name, date)
      */
     @GetMapping
     public ResponseEntity<Page<Product>> listAllProducts(
-            @RequestParam(required = false) String search, // 1.3.4: Text keyword search
-            @RequestParam(required = false) String categoryId, // 1.3.2: Category filter
-            @RequestParam(required = false) Double minPrice, // 1.3.3: Price range min
-            @RequestParam(required = false) Double maxPrice, // 1.3.3: Price range max
-            @RequestParam(defaultValue = "0") int page, // 1.3.1: Pagination page
-            @RequestParam(defaultValue = "20") int size, // 1.3.1: Pagination size
-            @RequestParam(defaultValue = "createdAt") String sortBy, // 1.3.5: Sorting field
-            @RequestParam(defaultValue = "desc") String direction) { // 1.3.5: Sorting direction
+            @RequestParam(required = false) String search,
+            @RequestParam(required = false) String categoryId,
+            @RequestParam(required = false) Double minPrice,
+            @RequestParam(required = false) Double maxPrice,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "20") int size,
+            @RequestParam(defaultValue = "createdAt") String sortBy,
+            @RequestParam(defaultValue = "desc") String direction) {
         
-        // Pass all parameters to the service layer for processing
         Page<Product> products = productService.searchProducts(
                 search, categoryId, minPrice, maxPrice, page, size, sortBy, direction);
         
         return ResponseEntity.ok(products);
+    }
+
+    /**
+     * Story 1.4.1: Upload multiple images for a product
+     * Validates max 10 images and file types via ImageService.
+     */
+    @PostMapping("/{id}/images")
+    public ResponseEntity<Product> uploadProductImages(
+            @PathVariable String id,
+            @RequestParam("files") MultipartFile[] files) throws IOException {
+        
+        Product product = productService.getProductById(id);
+        
+        // Acceptance Criteria: Max 10 images per product
+        List<String> currentImages = product.getImages() != null ? product.getImages() : new ArrayList<>();
+        if (currentImages.size() + files.length > 10) {
+            throw new RuntimeException("Maximum 10 images allowed per product.");
+        }
+
+        for (MultipartFile file : files) {
+            String imageUrl = imageService.uploadImage(file);
+            currentImages.add(imageUrl);
+        }
+
+        product.setImages(currentImages);
+        
+        // Story 1.4.2: Automatically set the first image as primary if none exists
+        if (product.getPrimaryImage() == null && !currentImages.isEmpty()) {
+            product.setPrimaryImage(currentImages.get(0));
+        }
+
+        Product updatedProduct = productService.updateProduct(id, product);
+        return ResponseEntity.ok(updatedProduct);
     }
 }
