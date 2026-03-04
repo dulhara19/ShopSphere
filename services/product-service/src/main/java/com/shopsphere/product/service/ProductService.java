@@ -1,6 +1,7 @@
 package com.shopsphere.product.service;
 
 import com.shopsphere.product.dto.ProductInternalResponseDTO;
+import com.shopsphere.product.dto.ProductValidationResponseDTO;
 import com.shopsphere.product.exception.ProductNotFoundException;
 import com.shopsphere.product.model.Category;
 import com.shopsphere.product.model.Product;
@@ -15,7 +16,9 @@ import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 
 @Service
@@ -156,6 +159,35 @@ public class ProductService {
         });
         
         return responseList;
+    }
+
+    /**
+     * Story 1.5.3: Validate if a list of products exist and are active.
+     * Returns validation result mapping each ID to its existence/availability status.
+     */
+    public ProductValidationResponseDTO validateProducts(List<String> ids) {
+        List<Product> products = (List<Product>) productRepository.findAllById(ids);
+        Map<String, Boolean> results = new HashMap<>();
+        
+        // Initialize all requested IDs as false
+        for (String id : ids) {
+            results.put(id, false);
+        }
+
+        // Set to true only if product is found and status is ACTIVE
+        for (Product product : products) {
+            if ("ACTIVE".equalsIgnoreCase(product.getStatus())) {
+                results.put(product.getId(), true);
+            }
+        }
+
+        // Check if all requested IDs are valid
+        boolean allValid = results.values().stream().allMatch(v -> v);
+
+        return ProductValidationResponseDTO.builder()
+                .allValid(allValid)
+                .results(results)
+                .build();
     }
 
     /**

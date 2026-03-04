@@ -1,6 +1,7 @@
 package com.shopsphere.product.controller;
 
 import com.shopsphere.product.dto.ProductInternalResponseDTO;
+import com.shopsphere.product.dto.ProductValidationResponseDTO;
 import com.shopsphere.product.model.Product;
 import com.shopsphere.product.service.ProductService;
 import com.shopsphere.product.service.ImageService;
@@ -183,11 +184,21 @@ public class ProductController {
 
     /**
      * Story 1.5.2: Batch get products (Internal use)
-     * Useful for Cart and Order services to fetch details for a list of IDs.
      */
     @PostMapping("/batch")
     public ResponseEntity<List<ProductInternalResponseDTO>> getProductsBatch(@RequestBody List<String> ids) {
         List<ProductInternalResponseDTO> response = productService.getProductsByIds(ids);
+        return ResponseEntity.ok(response);
+    }
+
+    /**
+     * Story 1.5.3: Validate product existence and status (Internal use)
+     * URL Example: POST /api/products/validate
+     * Body: ["id1", "id2"]
+     */
+    @PostMapping("/validate")
+    public ResponseEntity<ProductValidationResponseDTO> validateProducts(@RequestBody List<String> ids) {
+        ProductValidationResponseDTO response = productService.validateProducts(ids);
         return ResponseEntity.ok(response);
     }
 }
