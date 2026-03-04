@@ -15,28 +15,36 @@ public class ProductController {
     @Autowired
     private ProductService productService;
 
-    // 1.1.1: Create Product (Seller)
+    /**
+     * Story 1.1.1: Create Product (Seller)
+     */
     @PostMapping
     public ResponseEntity<Product> createProduct(@RequestBody Product product) {
         Product createdProduct = productService.createProduct(product);
         return ResponseEntity.ok(createdProduct);
     }
 
-    // 1.1.2: Get product by ID
+    /**
+     * Story 1.1.2: Get product by ID
+     */
     @GetMapping("/{id}")
     public ResponseEntity<Product> getProductById(@PathVariable String id) {
         Product product = productService.getProductById(id);
         return ResponseEntity.ok(product);
     }
 
-    // 1.1.3: Update product (Seller/Admin)
+    /**
+     * Story 1.1.3: Update product (Seller/Admin)
+     */
     @PutMapping("/{id}")
     public ResponseEntity<Product> updateProduct(@PathVariable String id, @RequestBody Product product) {
         Product updatedProduct = productService.updateProduct(id, product);
         return ResponseEntity.ok(updatedProduct);
     }
 
-    // 1.1.4: Delete Product (Soft Delete)
+    /**
+     * Story 1.1.4: Delete Product (Soft Delete)
+     */
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> deleteProduct(@PathVariable String id) {
         productService.deleteProduct(id);
@@ -44,7 +52,8 @@ public class ProductController {
     }
 
     /**
-     * 1.1.5: List seller's products (Paginated with Status Filter)
+     * Story 1.1.5: List seller's products (Paginated with Status Filter)
+     * Used by sellers to manage their own catalog.
      */
     @GetMapping("/seller/me")
     public ResponseEntity<Page<Product>> getMyProducts(
@@ -59,18 +68,28 @@ public class ProductController {
     }
 
     /**
-     * Story 1.3.1: List products with pagination for Customers
-     * Acceptance Criteria: Default 20 items per page, Sort by createdAt, price, name.
-     * URL: GET /api/products
+     * Story 1.3.1 & 1.3.2: List products with pagination and category filtering
+     * If categoryId is provided, it fetches products from that category and its subcategories.
+     * URL Example: GET /api/products?categoryId=electronics&page=0&size=20
      */
     @GetMapping
     public ResponseEntity<Page<Product>> listAllProducts(
+            @RequestParam(required = false) String categoryId,
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "20") int size,
             @RequestParam(defaultValue = "createdAt") String sortBy,
             @RequestParam(defaultValue = "desc") String direction) {
         
-        Page<Product> products = productService.getAllActiveProducts(page, size, sortBy, direction);
+        Page<Product> products;
+        
+        if (categoryId != null && !categoryId.isEmpty()) {
+            // Fetch products filtered by category and its subcategories
+            products = productService.getProductsByCategory(categoryId, page, size, sortBy, direction);
+        } else {
+            // Fetch all active products if no category is specified
+            products = productService.getAllActiveProducts(page, size, sortBy, direction);
+        }
+        
         return ResponseEntity.ok(products);
     }
 }

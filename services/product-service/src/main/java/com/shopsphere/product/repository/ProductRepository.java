@@ -5,6 +5,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.mongodb.repository.MongoRepository;
 import org.springframework.stereotype.Repository;
+import java.util.List;
 
 @Repository
 public interface ProductRepository extends MongoRepository<Product, String> {
@@ -25,7 +26,13 @@ public interface ProductRepository extends MongoRepository<Product, String> {
     long countByCategoryId(String categoryId);
 
     /**
-     * Story 1.3.1: Active status 
+     * Story 1.3.1: Get all products by status with pagination
      */
     Page<Product> findByStatus(String status, Pageable pageable);
+
+    /**
+     * Story 1.3.2: Filter products by a list of category IDs and status
+     * This is used to fetch products belonging to a category and all its subcategories.
+     */
+    Page<Product> findByCategoryIdInAndStatus(List<String> categoryIds, String status, Pageable pageable);
 }
