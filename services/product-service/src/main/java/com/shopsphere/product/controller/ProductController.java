@@ -3,6 +3,7 @@ package com.shopsphere.product.controller;
 import com.shopsphere.product.model.Product;
 import com.shopsphere.product.service.ProductService;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -35,9 +36,23 @@ public class ProductController {
         return ResponseEntity.ok(updatedProduct);
     }
 
+    // 1.1.4: Delete Product (Soft Delete)
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> deleteProduct(@PathVariable String id) {
         productService.deleteProduct(id);
         return ResponseEntity.noContent().build(); 
+    }
+
+   
+    @GetMapping("/seller/me")
+    public ResponseEntity<Page<Product>> getMyProducts(
+            @RequestHeader("X-Seller-Id") String sellerId, 
+            @RequestParam(required = false) String status,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "20") int size,
+            @RequestParam(defaultValue = "createdAt") String sortBy) {
+        
+        Page<Product> products = productService.getSellerProducts(sellerId, status, page, size, sortBy);
+        return ResponseEntity.ok(products);
     }
 }
