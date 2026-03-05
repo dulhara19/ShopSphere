@@ -28,6 +28,7 @@ import org.springframework.data.elasticsearch.core.query.Query;
 import org.springframework.scheduling.annotation.Async; // Added for Story 2.1.5
 import org.springframework.stereotype.Service;
 
+import co.elastic.clients.elasticsearch._types.FieldValue; // Added for Story 2.3.1
 import co.elastic.clients.elasticsearch._types.aggregations.Aggregation;
 import co.elastic.clients.elasticsearch._types.aggregations.StringTermsAggregate;
 import co.elastic.clients.elasticsearch._types.aggregations.StringTermsBucket;
@@ -195,20 +196,37 @@ public class ProductService {
     }
 
     /**
-     * Story 2.1.4: Faceted Search Implementation
-     * Updated to track search analytics (Story 2.1.5) and fix aggregation red lines
+     * Story 2.1.4 & 2.3.1: Faceted Search & Filter by Brand
+     * Updated to support multi-select brand filtering.
      */
     @SuppressWarnings("unchecked")
-    public ProductSearchResponseDTO searchWithFacets(String keyword, int page, int size) {
+    public ProductSearchResponseDTO searchWithFacets(String keyword, List<String> brands, int page, int size) {
         Pageable pageable = PageRequest.of(page, size);
 
         Query query = NativeQuery.builder()
-                .withQuery(q -> q
-                    .bool(b -> b
-                        .should(s -> s.match(m -> m.field("name").query(keyword).fuzziness("AUTO")))
-                        .should(s -> s.match(m -> m.field("description").query(keyword).fuzziness("AUTO")))
-                    )
-                )
+                .withQuery(q -> q.bool(b -> {
+                    // 1. Keyword Search
+                    if (keyword != null && !keyword.trim().isEmpty()) {
+                        b.must(m -> m.bool(b2 -> b2
+                            .should(s -> s.match(m2 -> m2.field("name").query(keyword).fuzziness("AUTO")))
+                            .should(s -> s.match(m2 -> m2.field("description").query(keyword).fuzziness("AUTO")))
+                        ));
+                    }
+
+                    // 2. Story 2.3.1: Filter by Brand (Multi-select support)
+                    if (brands != null && !brands.isEmpty()) {
+                        List<FieldValue> fieldValues = brands.stream()
+                                .map(FieldValue::of)
+                                .toList();
+                        
+                        b.filter(f -> f.terms(t -> t
+                                .field("brand")
+                                .terms(t2 -> t2.value(fieldValues))
+                        ));
+                    }
+                    
+                    return b;
+                }))
                 .withAggregation("category_counts", Aggregation.of(a -> a.terms(t -> t.field("categoryId"))))
                 .withAggregation("brand_counts", Aggregation.of(a -> a.terms(t -> t.field("brand"))))
                 .withPageable(pageable)
@@ -217,7 +235,7 @@ public class ProductService {
         SearchHits<Product> searchHits = elasticsearchOperations.search(query, Product.class);
         
         // Track the search request asynchronously
-        if(keyword != null && !keyword.isEmpty()){
+        if (keyword != null && !keyword.isEmpty()) {
             trackSearch(keyword, searchHits.getTotalHits());
         }
 
@@ -226,7 +244,6 @@ public class ProductService {
 
         // Extract aggregations correctly for Elasticsearch 8.x
         if (searchHits.hasAggregations()) {
-            // Processing Category Facets
             org.springframework.data.elasticsearch.client.elc.ElasticsearchAggregations aggregations = 
                 (org.springframework.data.elasticsearch.client.elc.ElasticsearchAggregations) searchHits.getAggregations();
             
@@ -240,7 +257,6 @@ public class ProductService {
                 }
             }
 
-            // Processing Brand Facets
             if (aggregations.aggregationsAsMap().containsKey("brand_counts")) {
                 co.elastic.clients.elasticsearch._types.aggregations.Aggregate aggregate = 
                     aggregations.aggregationsAsMap().get("brand_counts").aggregation().getAggregate();
@@ -252,7 +268,6 @@ public class ProductService {
             }
         }
 
-        // Convert SearchHits to Page safely
         SearchPage<Product> searchPage = SearchHitSupport.searchPageFor(searchHits, query.getPageable());
         Page<Product> productPage = (Page<Product>) SearchHitSupport.unwrapSearchHits(searchPage);
 

@@ -140,17 +140,18 @@ public class ProductController {
     }
 
     /**
-     * Story 2.1.4: Faceted Search API
+     * Story 2.1.4 & 2.3.1: Faceted Search & Brand Filter API
      * Returns products along with category and brand aggregations.
-     * URL: GET /api/products/search/facets?q=keyword
+     * URL Example: GET /api/products/search/facets?q=shirt&brands=Nike,Adidas
      */
     @GetMapping("/search/facets")
     public ResponseEntity<ProductSearchResponseDTO> searchWithFacets(
-            @RequestParam(name = "q") String keyword,
+            @RequestParam(name = "q", required = false) String keyword,
+            @RequestParam(required = false) List<String> brands,
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "20") int size) {
         
-        ProductSearchResponseDTO response = productService.searchWithFacets(keyword, page, size);
+        ProductSearchResponseDTO response = productService.searchWithFacets(keyword, brands, page, size);
         return ResponseEntity.ok(response);
     }
 
