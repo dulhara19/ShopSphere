@@ -2,16 +2,11 @@ package com.shopsphere.recommendation.service;
 
 import com.shopsphere.recommendation.model.TrendingProduct;
 import com.shopsphere.recommendation.model.RecommendationEvent;
-import com.shopsphere.recommendation.model.EventType;
 import com.shopsphere.recommendation.repository.TrendingProductRepository;
 import com.shopsphere.recommendation.repository.EventTrackingRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
-import org.springframework.data.mongodb.core.MongoTemplate;
-import org.springframework.data.mongodb.core.aggregation.Aggregation;
-import org.springframework.data.mongodb.core.aggregation.AggregationResults;
-import org.springframework.data.mongodb.core.query.Criteria;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 import org.slf4j.Logger;
@@ -34,7 +29,6 @@ public class TrendingProductService {
 
     private final TrendingProductRepository trendingProductRepository;
     private final EventTrackingRepository eventTrackingRepository;
-    private final MongoTemplate mongoTemplate;
 
     /**
      * Recalculate trending scores (scheduled every hour)
@@ -76,22 +70,21 @@ public class TrendingProductService {
         for (Map.Entry<String, TrendingStats> entry : productStats.entrySet()) {
             TrendingStats stats = entry.getValue();
             Double score = TrendingProduct.calculateTrendingScore(
-                stats.viewCount,
-                stats.cartAddCount,
-                stats.purchaseCount,
-                Instant.now()
-            );
+                    stats.viewCount,
+                    stats.cartAddCount,
+                    stats.purchaseCount,
+                    Instant.now());
 
             TrendingProduct trending = TrendingProduct.builder()
-                .productId(entry.getKey())
-                .categoryId(null)  // Global trending
-                .trendingScore(score)
-                .viewCount(stats.viewCount)
-                .cartAddCount(stats.cartAddCount)
-                .purchaseCount(stats.purchaseCount)
-                .lastUpdated(Instant.now())
-                .rank(rank++)
-                .build();
+                    .productId(entry.getKey())
+                    .categoryId(null) // Global trending
+                    .trendingScore(score)
+                    .viewCount(stats.viewCount)
+                    .cartAddCount(stats.cartAddCount)
+                    .purchaseCount(stats.purchaseCount)
+                    .lastUpdated(Instant.now())
+                    .rank(rank++)
+                    .build();
 
             trendingProducts.add(trending);
         }
@@ -122,22 +115,21 @@ public class TrendingProductService {
             for (Map.Entry<String, TrendingStats> entry : productStats.entrySet()) {
                 TrendingStats stats = entry.getValue();
                 Double score = TrendingProduct.calculateTrendingScore(
-                    stats.viewCount,
-                    stats.cartAddCount,
-                    stats.purchaseCount,
-                    Instant.now()
-                );
+                        stats.viewCount,
+                        stats.cartAddCount,
+                        stats.purchaseCount,
+                        Instant.now());
 
                 TrendingProduct trending = TrendingProduct.builder()
-                    .productId(entry.getKey())
-                    .categoryId(categoryId)
-                    .trendingScore(score)
-                    .viewCount(stats.viewCount)
-                    .cartAddCount(stats.cartAddCount)
-                    .purchaseCount(stats.purchaseCount)
-                    .lastUpdated(Instant.now())
-                    .rank(rank++)
-                    .build();
+                        .productId(entry.getKey())
+                        .categoryId(categoryId)
+                        .trendingScore(score)
+                        .viewCount(stats.viewCount)
+                        .cartAddCount(stats.cartAddCount)
+                        .purchaseCount(stats.purchaseCount)
+                        .lastUpdated(Instant.now())
+                        .rank(rank++)
+                        .build();
 
                 trendingProducts.add(trending);
             }
@@ -174,16 +166,19 @@ public class TrendingProductService {
         List<RecommendationEvent> events = eventTrackingRepository.findAll();
 
         for (RecommendationEvent event : events) {
-            if (event.getTimestamp().isBefore(sinceTime)) continue;
+            if (event.getTimestamp().isBefore(sinceTime))
+                continue;
 
             // Filter by category if provided
             if (categoryId != null && event.getMetadata() != null) {
                 String eventCategory = (String) event.getMetadata().get("categoryId");
-                if (!categoryId.equals(eventCategory)) continue;
+                if (!categoryId.equals(eventCategory))
+                    continue;
             }
 
             String productId = event.getProductId();
-            if (productId == null) continue;
+            if (productId == null)
+                continue;
 
             TrendingStats stat = stats.getOrDefault(productId, new TrendingStats());
 

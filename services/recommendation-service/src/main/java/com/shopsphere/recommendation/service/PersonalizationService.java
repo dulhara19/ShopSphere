@@ -1,10 +1,7 @@
 package com.shopsphere.recommendation.service;
 
 import com.shopsphere.recommendation.model.UserPreference;
-import com.shopsphere.recommendation.model.RecommendationEvent;
-import com.shopsphere.recommendation.model.EventType;
 import com.shopsphere.recommendation.repository.UserPreferenceRepository;
-import com.shopsphere.recommendation.repository.EventTrackingRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.slf4j.Logger;
@@ -27,20 +24,19 @@ public class PersonalizationService {
     private static final Logger logger = LoggerFactory.getLogger(PersonalizationService.class);
 
     private final UserPreferenceRepository userPreferenceRepository;
-    private final EventTrackingRepository eventTrackingRepository;
 
     /**
      * Get or create user preference
      */
     public UserPreference getUserPreference(String userId) {
         return userPreferenceRepository.findByUserId(userId)
-            .orElseGet(() -> UserPreference.builder()
-                .userId(userId)
-                .categoryAffinity(new HashMap<>())
-                .totalViewCount(0)
-                .totalPurchaseCount(0)
-                .lastUpdated(Instant.now())
-                .build());
+                .orElseGet(() -> UserPreference.builder()
+                        .userId(userId)
+                        .categoryAffinity(new HashMap<>())
+                        .totalViewCount(0)
+                        .totalPurchaseCount(0)
+                        .lastUpdated(Instant.now())
+                        .build());
     }
 
     /**
@@ -91,10 +87,10 @@ public class PersonalizationService {
         }
 
         return preference.getCategoryAffinity().entrySet().stream()
-            .sorted((a, b) -> b.getValue().compareTo(a.getValue()))
-            .limit(limit)
-            .map(Map.Entry::getKey)
-            .toList();
+                .sorted((a, b) -> b.getValue().compareTo(a.getValue()))
+                .limit(limit)
+                .map(Map.Entry::getKey)
+                .toList();
     }
 
     /**
@@ -105,13 +101,15 @@ public class PersonalizationService {
 
         Map<String, Integer> priceRange = new HashMap<>();
         priceRange.put("min", preference.getMinPricePreference() != null ? preference.getMinPricePreference() : 0);
-        priceRange.put("max", preference.getMaxPricePreference() != null ? preference.getMaxPricePreference() : Integer.MAX_VALUE);
+        priceRange.put("max",
+                preference.getMaxPricePreference() != null ? preference.getMaxPricePreference() : Integer.MAX_VALUE);
 
         return priceRange;
     }
 
     /**
-     * Get homepage recommendations (popular for anonymous, personalized for logged-in)
+     * Get homepage recommendations (popular for anonymous, personalized for
+     * logged-in)
      * For now, returns top categories based on affinity
      */
     public List<String> getHomepageRecommendations(String userId, int limit) {
@@ -144,19 +142,19 @@ public class PersonalizationService {
 
         // Sort by affinity score
         preference.getCategoryAffinity().entrySet().stream()
-            .sorted((a, b) -> b.getValue().compareTo(a.getValue()))
-            .limit(Math.min(3, limit / 2))
-            .forEach(e -> recommendations.add(e.getKey()));
+                .sorted((a, b) -> b.getValue().compareTo(a.getValue()))
+                .limit(Math.min(3, limit / 2))
+                .forEach(e -> recommendations.add(e.getKey()));
 
         // Add secondary recommendations (lower affinity)
         preference.getCategoryAffinity().entrySet().stream()
-            .sorted((a, b) -> a.getValue().compareTo(b.getValue()))
-            .limit(Math.max(0, limit - recommendations.size()))
-            .forEach(e -> {
-                if (!recommendations.contains(e.getKey())) {
-                    recommendations.add(e.getKey());
-                }
-            });
+                .sorted((a, b) -> a.getValue().compareTo(b.getValue()))
+                .limit(Math.max(0, limit - recommendations.size()))
+                .forEach(e -> {
+                    if (!recommendations.contains(e.getKey())) {
+                        recommendations.add(e.getKey());
+                    }
+                });
 
         return recommendations.stream().limit(limit).toList();
     }

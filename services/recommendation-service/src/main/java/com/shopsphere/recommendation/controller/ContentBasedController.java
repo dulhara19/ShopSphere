@@ -3,7 +3,6 @@ package com.shopsphere.recommendation.controller;
 import com.shopsphere.recommendation.model.ProductEmbedding;
 import com.shopsphere.recommendation.service.ContentBasedService;
 import org.springframework.web.bind.annotation.*;
-import org.springframework.http.ResponseEntity;
 
 import java.util.List;
 
@@ -19,13 +18,13 @@ public class ContentBasedController {
 
     @PostMapping("/embed")
     public ProductEmbedding generateEmbedding(@RequestParam String productId,
-                                              @RequestParam String description) {
+            @RequestParam String description) {
         return contentService.generateEmbedding(productId, description);
     }
 
     @GetMapping("/similar/{productId}")
     public List<String> similarContent(@PathVariable String productId,
-                                       @RequestParam(defaultValue = "10") int limit) {
+            @RequestParam(defaultValue = "10") int limit) {
         return contentService.findSimilarByContent(productId, limit);
     }
 }

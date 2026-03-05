@@ -1,6 +1,5 @@
 package com.shopsphere.recommendation.service;
 
-import com.shopsphere.recommendation.model.RecommendationEvent;
 import lombok.RequiredArgsConstructor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;

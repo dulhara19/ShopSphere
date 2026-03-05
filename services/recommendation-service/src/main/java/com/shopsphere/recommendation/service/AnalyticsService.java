@@ -3,12 +3,9 @@ package com.shopsphere.recommendation.service;
 import com.shopsphere.recommendation.model.RecommendationAnalytics;
 import com.shopsphere.recommendation.repository.RecommendationAnalyticsRepository;
 import lombok.RequiredArgsConstructor;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 
 import java.time.Instant;
-import java.util.Collections;
 import java.util.List;
 
 /**
@@ -17,7 +14,6 @@ import java.util.List;
 @Service
 @RequiredArgsConstructor
 public class AnalyticsService {
-    private static final Logger logger = LoggerFactory.getLogger(AnalyticsService.class);
 
     private final RecommendationAnalyticsRepository analyticsRepository;
 

@@ -148,7 +148,6 @@ public class EventTrackingController {
     public ResponseEntity<String> cleanupOldEvents() {
         logger.info("Cleaning up old events");
         // Delete events older than 90 days
-        Instant ninetyDaysAgo = Instant.now().minusSeconds(90 * 24 * 60 * 60);
         repository.deleteAll();  // In production, use custom query
         return ResponseEntity.ok("Old events cleaned up");
     }
