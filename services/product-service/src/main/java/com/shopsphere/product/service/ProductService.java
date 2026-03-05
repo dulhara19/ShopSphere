@@ -357,7 +357,7 @@ public class ProductService {
                 variant.setSku(product.getSku() + "-" + attrValues);
             }
             
-            // Set availability based on stock (Preparing for Story 2.2.3)
+            // Set availability based on stock
             variant.setAvailable(variant.getStockQuantity() != null && variant.getStockQuantity() > 0);
         }
 
@@ -367,7 +367,42 @@ public class ProductService {
         // Save to MongoDB
         Product updatedProduct = productRepository.save(product);
         
-        // Sync to Elasticsearch (Nested variants will be indexed automatically based on model)
+        // Sync to Elasticsearch
+        productSearchRepository.save(updatedProduct);
+        
+        return updatedProduct;
+    }
+
+    /**
+     * Story 2.2.3: Variant inventory tracking
+     * Updates the stock quantity of a specific variant and adjusts its availability.
+     */
+    public Product updateVariantStock(String productId, String sku, int newQuantity) {
+        Product product = getProductById(productId);
+        
+        if (!product.isHasVariations() || product.getVariants() == null) {
+            throw new RuntimeException("Product does not have variations.");
+        }
+        
+        boolean variantFound = false;
+        for (ProductVariant variant : product.getVariants()) {
+            if (variant.getSku().equals(sku)) {
+                variant.setStockQuantity(newQuantity);
+                // Automatically mark as unavailable if stock is 0 (Out of stock logic)
+                variant.setAvailable(newQuantity > 0);
+                variantFound = true;
+                break;
+            }
+        }
+        
+        if (!variantFound) {
+            throw new RuntimeException("Variant with SKU: " + sku + " not found.");
+        }
+        
+        product.setUpdatedAt(LocalDateTime.now());
+        
+        // Save to MongoDB and sync with Elasticsearch
+        Product updatedProduct = productRepository.save(product);
         productSearchRepository.save(updatedProduct);
         
         return updatedProduct;

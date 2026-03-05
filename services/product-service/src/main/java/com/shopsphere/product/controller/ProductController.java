@@ -177,6 +177,21 @@ public class ProductController {
     }
 
     /**
+     * Story 2.2.3: Variant inventory tracking
+     * Updates the stock for a specific product variant.
+     * URL: PATCH /api/products/{id}/variants/{sku}/stock?quantity=50
+     */
+    @PatchMapping("/{id}/variants/{sku}/stock")
+    public ResponseEntity<Product> updateVariantStock(
+            @PathVariable String id,
+            @PathVariable String sku,
+            @RequestParam int quantity) {
+        
+        Product updatedProduct = productService.updateVariantStock(id, sku, quantity);
+        return ResponseEntity.ok(updatedProduct);
+    }
+
+    /**
      * Story 1.4.1: Upload multiple images for a product
      */
     @PostMapping("/{id}/images")
