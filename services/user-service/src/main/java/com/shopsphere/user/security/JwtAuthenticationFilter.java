@@ -1,5 +1,6 @@
 package com.shopsphere.user.security;
 
+import com.shopsphere.user.service.TokenBlacklistService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
@@ -23,6 +24,7 @@ import java.util.stream.Collectors;
 public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
     private final JwtUtils jwtUtils;
+    private final TokenBlacklistService tokenBlacklistService;
 
     private static final String AUTHORIZATION_HEADER = "Authorization";
     private static final String BEARER_PREFIX = "Bearer ";
@@ -40,6 +42,14 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
             if (jwt == null) {
                 filterChain.doFilter(request, response);
+                return;
+            }
+
+            // Check if token is blacklisted in Redis
+            if (tokenBlacklistService.isTokenBlacklisted(jwt)) {
+                log.warn("Attempted use of blacklisted token");
+                response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
+                response.getWriter().write("Token has been revoked");
                 return;
             }
 

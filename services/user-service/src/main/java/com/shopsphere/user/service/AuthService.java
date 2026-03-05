@@ -29,6 +29,7 @@ public class AuthService {
     private final BCryptPasswordEncoder bCryptPasswordEncoder;
     private final JwtUtils jwtUtils;
     private final UserEventPublisher userEventPublisher;
+    private final TokenBlacklistService tokenBlacklistService;
 
     @Transactional
     public User registerUser(RegisterRequest registerRequest) {
@@ -58,7 +59,6 @@ public class AuthService {
         User savedUser = userRepository.save(user);
         log.info("User successfully registered with email: {}", savedUser.getEmail());
 
-        // Phase 4.3: Publish user.created event
         try {
             UserInternalDto userDto = UserInternalDto.builder()
                 .id(savedUser.getId())
@@ -71,8 +71,7 @@ public class AuthService {
                 .build();
             userEventPublisher.publishUserCreatedEvent(userDto);
         } catch (Exception e) {
-            log.error("Failed to publish user.created event, but user was saved: {}", e.getMessage());
-            // Do not fail the registration if event publishing fails
+            log.error("Failed to publish user.created event: {}", e.getMessage());
         }
 
         return savedUser;
@@ -82,27 +81,17 @@ public class AuthService {
     public LoginResponse login(LoginRequest loginRequest) {
         log.info("Attempting login for email: {}", loginRequest.getEmail());
 
-        // Step 1: Find user by email
         User user = userRepository.findByEmail(loginRequest.getEmail())
-            .orElseThrow(() -> {
-                log.warn("Login failed: User not found with email {}", loginRequest.getEmail());
-                return new UserNotFoundException(
-                    String.format("User with email '%s' not found", loginRequest.getEmail())
-                );
-            });
+            .orElseThrow(() -> new UserNotFoundException("User not found"));
 
-        // Step 2: Verify password
         if (!bCryptPasswordEncoder.matches(loginRequest.getPassword(), user.getPasswordHash())) {
-            log.warn("Login failed: Invalid password for email {}", loginRequest.getEmail());
             throw new RuntimeException("Invalid email or password");
         }
 
-        // 🔥 Step 2.5:
         List<String> roleNames = user.getRoles().stream()
             .map(Enum::name)
             .collect(Collectors.toList());
 
-        // Step 3 & 4: Generate JWT tokens
         String accessToken = jwtUtils.generateAccessToken(user.getEmail(), user.getId().toString(), roleNames);
         String refreshToken = jwtUtils.generateRefreshToken(user.getEmail(), user.getId().toString());
 
@@ -110,9 +99,6 @@ public class AuthService {
         long expiresIn = accessTokenExpiration != null ?
             accessTokenExpiration.getTime() - System.currentTimeMillis() : 0;
 
-        log.info("User successfully authenticated: {}", user.getEmail());
-
-        // Step 5: Return response with tokens
         return LoginResponse.builder()
             .accessToken(accessToken)
             .refreshToken(refreshToken)
@@ -123,5 +109,96 @@ public class AuthService {
             .roles(user.getRoles())
             .expiresIn(expiresIn)
             .build();
+    }
+
+    @Transactional(readOnly = true)
+    public LoginResponse refreshAccessToken(String refreshToken) {
+        if (!jwtUtils.validateToken(refreshToken)) {
+            throw new RuntimeException("Invalid or expired refresh token");
+        }
+
+        String email = jwtUtils.extractUsername(refreshToken);
+        User user = userRepository.findByEmail(email)
+            .orElseThrow(() -> new UserNotFoundException("User not found"));
+
+        List<String> roleNames = user.getRoles().stream()
+            .map(Enum::name)
+            .collect(Collectors.toList());
+
+        String newAccessToken = jwtUtils.generateAccessToken(user.getEmail(), user.getId().toString(), roleNames);
+        Date expiration = jwtUtils.getExpirationDate(newAccessToken);
+        long expiresIn = expiration != null ? expiration.getTime() - System.currentTimeMillis() : 0;
+
+        return LoginResponse.builder()
+            .accessToken(newAccessToken)
+            .refreshToken(refreshToken)
+            .tokenType("Bearer")
+            .email(user.getEmail())
+            .expiresIn(expiresIn)
+            .build();
+    }
+
+    /**
+     * Logout user by blacklisting the access token in Redis.
+     *
+     * Debug Version: Logs current time, expiration, TTL for troubleshooting
+     */
+    public void logout(String token) {
+        log.info("========== LOGOUT DEBUG START ==========");
+        log.info("Attempting to logout and blacklist token");
+
+        String actualToken = token;
+        if (token != null && token.startsWith("Bearer ")) {
+            actualToken = token.substring(7);
+            log.info("Extracted token from Bearer prefix");
+        }
+
+        log.info("Token (first 50 chars): {}", actualToken != null ? actualToken.substring(0, Math.min(50, actualToken.length())) : "null");
+
+        try {
+            if (actualToken == null || !jwtUtils.validateToken(actualToken)) {
+                log.warn("Logout failed: Invalid or expired token");
+                log.info("========== LOGOUT DEBUG END (FAILED - INVALID TOKEN) ==========");
+                return;
+            }
+            log.info("✓ Token validation passed");
+
+            Date expirationDate = jwtUtils.getExpirationDate(actualToken);
+            if (expirationDate == null) {
+                log.warn("Logout failed: Could not extract expiration date");
+                log.info("========== LOGOUT DEBUG END (FAILED - NO EXPIRATION DATE) ==========");
+                return;
+            }
+            log.info("✓ Expiration date extracted: {}", expirationDate);
+
+            long currentTimeMillis = System.currentTimeMillis();
+            long expirationTimeMillis = expirationDate.getTime();
+            long ttl = expirationTimeMillis - currentTimeMillis;
+
+            // 🔴 DEBUG LOGGING - Key information
+            log.info("--- TTL CALCULATION DEBUG ---");
+            log.info("Current Time (ms):     {}", currentTimeMillis);
+            log.info("Expiration Time (ms):  {}", expirationTimeMillis);
+            log.info("TTL Calculated (ms):   {}", ttl);
+            log.info("TTL in Seconds:        {}", ttl / 1000);
+            log.info("TTL in Minutes:        {}", ttl / 1000 / 60);
+            log.info("TTL > 0?               {}", ttl > 0);
+            log.info("--- END TTL DEBUG ---");
+
+            if (ttl > 0) {
+                log.info("✓ TTL is positive, proceeding with blacklist");
+                tokenBlacklistService.blacklistToken(actualToken, ttl);
+                log.info("✓ Token blacklisted successfully. TTL: {} ms ({} seconds)", ttl, ttl / 1000);
+            } else {
+                log.warn("⚠ TTL is <= 0 (token already expired or expires very soon). Not blacklisting.");
+                log.info("Time until expiration: {} ms", ttl);
+            }
+
+            log.info("========== LOGOUT DEBUG END (SUCCESS) ==========");
+
+        } catch (Exception e) {
+            log.error("❌ Unexpected error during logout: {}", e.getMessage(), e);
+            log.info("========== LOGOUT DEBUG END (FAILED - EXCEPTION) ==========");
+        }
     }
 }
