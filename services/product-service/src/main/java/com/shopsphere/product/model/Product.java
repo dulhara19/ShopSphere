@@ -8,6 +8,7 @@ import org.springframework.data.mongodb.core.mapping.Document;
 import org.springframework.data.elasticsearch.annotations.Field;
 import org.springframework.data.elasticsearch.annotations.FieldType;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.List;
 
 @Data
@@ -49,6 +50,17 @@ public class Product {
     
     @Field(type = FieldType.Keyword)
     private String brand;
+    
+    // --- Story 2.2.2: Product Variations Additions ---
+    
+    // Indicates if this product has multiple variations
+    private boolean hasVariations = false;
+    
+    // The list of variations (e.g., Red-S, Red-M, Blue-L)
+    @Field(type = FieldType.Nested)
+    private List<ProductVariant> variants = new ArrayList<>();
+    
+    // -------------------------------------------------
     
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;

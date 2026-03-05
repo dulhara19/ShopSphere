@@ -6,6 +6,7 @@ import com.shopsphere.product.dto.ProductValidationResponseDTO;
 import com.shopsphere.product.exception.ProductNotFoundException;
 import com.shopsphere.product.model.Category;
 import com.shopsphere.product.model.Product;
+import com.shopsphere.product.model.ProductVariant; // Added for Story 2.2.2
 import com.shopsphere.product.model.SearchAnalytics; // Added for Story 2.1.5
 import com.shopsphere.product.repository.CategoryRepository;
 import com.shopsphere.product.repository.ProductRepository;
@@ -335,5 +336,40 @@ public class ProductService {
                 findChildCategoryIds(cat.getId(), allCats, resultIds);
             }
         }
+    }
+
+    /**
+     * Story 2.2.2: Add or Update variants for a parent product
+     * Generates SKUs for variants and syncs with Elasticsearch.
+     */
+    public Product addProductVariants(String productId, List<ProductVariant> variants) {
+        Product product = getProductById(productId);
+        
+        // Mark that this product now has variations
+        product.setHasVariations(true);
+        
+        for (ProductVariant variant : variants) {
+            // Auto-generate variant SKU if not provided: PARENT-SKU-ATTR1-ATTR2
+            if (variant.getSku() == null || variant.getSku().isEmpty()) {
+                String attrValues = String.join("-", variant.getAttributes().values());
+                // Remove spaces and make uppercase for SKU standard
+                attrValues = attrValues.replaceAll("\\s+", "").toUpperCase();
+                variant.setSku(product.getSku() + "-" + attrValues);
+            }
+            
+            // Set availability based on stock (Preparing for Story 2.2.3)
+            variant.setAvailable(variant.getStockQuantity() != null && variant.getStockQuantity() > 0);
+        }
+
+        product.setVariants(variants);
+        product.setUpdatedAt(LocalDateTime.now());
+
+        // Save to MongoDB
+        Product updatedProduct = productRepository.save(product);
+        
+        // Sync to Elasticsearch (Nested variants will be indexed automatically based on model)
+        productSearchRepository.save(updatedProduct);
+        
+        return updatedProduct;
     }
 }

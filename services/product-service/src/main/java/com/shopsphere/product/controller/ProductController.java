@@ -4,8 +4,9 @@ import com.shopsphere.product.dto.ProductInternalResponseDTO;
 import com.shopsphere.product.dto.ProductSearchResponseDTO;
 import com.shopsphere.product.dto.ProductValidationResponseDTO;
 import com.shopsphere.product.model.Product;
+import com.shopsphere.product.model.ProductVariant; // Added for Story 2.2.2
 import com.shopsphere.product.model.SearchAnalytics;
-import com.shopsphere.product.repository.SearchAnalyticsRepository; // Added import for repository
+import com.shopsphere.product.repository.SearchAnalyticsRepository;
 import com.shopsphere.product.service.ProductService;
 import com.shopsphere.product.service.ImageService;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -29,7 +30,7 @@ public class ProductController {
     @Autowired
     private ImageService imageService;
 
-    // Fix: Injected the repository directly to resolve the red line
+    // Injected the repository directly to resolve the red line for Analytics
     @Autowired
     private SearchAnalyticsRepository searchAnalyticsRepository;
 
@@ -129,7 +130,7 @@ public class ProductController {
 
     /**
      * Story 2.1.3: Autocomplete API for search bar
-     * URL: GET /api/products/suggestions?q=iph
+     * URL: GET /api/products/suggestions?q=keyword
      */
     @GetMapping("/suggestions")
     public ResponseEntity<List<String>> getSuggestions(@RequestParam(name = "q") String query) {
@@ -158,8 +159,21 @@ public class ProductController {
      */
     @GetMapping("/analytics/search")
     public ResponseEntity<List<SearchAnalytics>> getSearchAnalytics() {
-        // Fix: Use the directly injected repository to get all analytics
         return ResponseEntity.ok(searchAnalyticsRepository.findAll()); 
+    }
+
+    /**
+     * Story 2.2.2: Add or Update product variants
+     * Allows a seller to add specific variations (e.g., Size, Color) to an existing base product.
+     * URL: POST /api/products/{id}/variants
+     */
+    @PostMapping("/{id}/variants")
+    public ResponseEntity<Product> addProductVariants(
+            @PathVariable String id, 
+            @RequestBody List<ProductVariant> variants) {
+        
+        Product updatedProduct = productService.addProductVariants(id, variants);
+        return ResponseEntity.ok(updatedProduct);
     }
 
     /**
@@ -188,7 +202,6 @@ public class ProductController {
             product.setPrimaryImage(currentImages.get(0));
         }
 
-        // Image එක් කිරීමෙන් පසු product එක update කිරීම
         Product updatedProduct = productService.updateProduct(id, product);
         return ResponseEntity.ok(updatedProduct);
     }
