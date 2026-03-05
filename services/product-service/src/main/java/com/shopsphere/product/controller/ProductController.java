@@ -121,6 +121,16 @@ public class ProductController {
     }
 
     /**
+     * Story 2.1.3: Autocomplete API for search bar
+     * URL: GET /api/products/suggestions?q=iph
+     */
+    @GetMapping("/suggestions")
+    public ResponseEntity<List<String>> getSuggestions(@RequestParam(name = "q") String query) {
+        List<String> suggestions = productService.getAutocompleteSuggestions(query);
+        return ResponseEntity.ok(suggestions);
+    }
+
+    /**
      * Story 1.4.1: Upload multiple images for a product
      */
     @PostMapping("/{id}/images")

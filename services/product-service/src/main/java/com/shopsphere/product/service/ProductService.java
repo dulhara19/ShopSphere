@@ -167,6 +167,23 @@ public class ProductService {
     }
 
     /**
+     * Story 2.1.3: Get product name suggestions for autocomplete
+     * Returns a list of strings (product names) instead of full product objects
+     */
+    public List<String> getAutocompleteSuggestions(String query) {
+        // Limit results to top 5 suggestions for better performance
+        Pageable pageable = PageRequest.of(0, 5);
+        
+        List<Product> products = productSearchRepository.findByNameSuggestions(query.toLowerCase(), pageable);
+        
+        // Extract names, ensure they are unique, and return as a list
+        return products.stream()
+                .map(Product::getName)
+                .distinct()
+                .toList();
+    }
+
+    /**
      * Story 1.5.1: Get product by ID for internal services
      */
     public ProductInternalResponseDTO getProductInternal(String id) {
