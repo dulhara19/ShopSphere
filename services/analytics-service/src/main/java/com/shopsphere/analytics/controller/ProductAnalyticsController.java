@@ -82,13 +82,4 @@ public class ProductAnalyticsController {
         return ResponseEntity.ok(ApiResponseDTO.success(metrics, "Category performance retrieved"));
     }
 
-    @GetMapping("/search/top-terms")
-    public ResponseEntity<ApiResponseDTO<String>> getTopSearchTerms() {
-        return ResponseEntity.ok(ApiResponseDTO.success("Top search terms", "Retrieved"));
-    }
-
-    @GetMapping("/search/no-results")
-    public ResponseEntity<ApiResponseDTO<String>> getZeroResultSearches() {
-        return ResponseEntity.ok(ApiResponseDTO.success("Zero result searches", "Retrieved"));
-    }
 }

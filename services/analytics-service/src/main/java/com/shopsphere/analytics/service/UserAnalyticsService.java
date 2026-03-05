@@ -39,39 +39,75 @@ public class UserAnalyticsService {
     public Long getDailyActiveUsers(LocalDate date) {
         String cacheKey = USER_CACHE_KEY + "dau:" + date;
 
-        Long cached = (Long) redisTemplate.opsForValue().get(cacheKey);
-        if (cached != null) {
-            return cached;
+        try {
+            if (redisTemplate != null) {
+                Long cached = (Long) redisTemplate.opsForValue().get(cacheKey);
+                if (cached != null) {
+                    return cached;
+                }
+            }
+        } catch (Exception e) {
+            log.debug("Redis cache unavailable: {}", e.getMessage());
         }
 
         Long dau = userMetricRepository.countActiveUsersByDate(date);
-        redisTemplate.opsForValue().set(cacheKey, dau, CACHE_TTL_MINUTES, TimeUnit.MINUTES);
+        try {
+            if (redisTemplate != null) {
+                redisTemplate.opsForValue().set(cacheKey, dau, CACHE_TTL_MINUTES, TimeUnit.MINUTES);
+            }
+        } catch (Exception e) {
+            log.debug("Could not cache result to Redis: {}", e.getMessage());
+        }
         return dau;
     }
 
     public Long getWeeklyActiveUsers(LocalDate startOfWeek, LocalDate endOfWeek) {
         String cacheKey = USER_CACHE_KEY + "wau:" + startOfWeek + ":" + endOfWeek;
 
-        Long cached = (Long) redisTemplate.opsForValue().get(cacheKey);
-        if (cached != null) {
-            return cached;
+        try {
+            if (redisTemplate != null) {
+                Long cached = (Long) redisTemplate.opsForValue().get(cacheKey);
+                if (cached != null) {
+                    return cached;
+                }
+            }
+        } catch (Exception e) {
+            log.debug("Redis cache unavailable: {}", e.getMessage());
         }
 
         Long wau = userMetricRepository.countWeeklyActiveUsers(startOfWeek, endOfWeek);
-        redisTemplate.opsForValue().set(cacheKey, wau, CACHE_TTL_MINUTES, TimeUnit.MINUTES);
+        try {
+            if (redisTemplate != null) {
+                redisTemplate.opsForValue().set(cacheKey, wau, CACHE_TTL_MINUTES, TimeUnit.MINUTES);
+            }
+        } catch (Exception e) {
+            log.debug("Could not cache result to Redis: {}", e.getMessage());
+        }
         return wau;
     }
 
     public Long getMonthlyActiveUsers(LocalDate startOfMonth, LocalDate endOfMonth) {
         String cacheKey = USER_CACHE_KEY + "mau:" + startOfMonth + ":" + endOfMonth;
 
-        Long cached = (Long) redisTemplate.opsForValue().get(cacheKey);
-        if (cached != null) {
-            return cached;
+        try {
+            if (redisTemplate != null) {
+                Long cached = (Long) redisTemplate.opsForValue().get(cacheKey);
+                if (cached != null) {
+                    return cached;
+                }
+            }
+        } catch (Exception e) {
+            log.debug("Redis cache unavailable: {}", e.getMessage());
         }
 
         Long mau = userMetricRepository.countMonthlyActiveUsers(startOfMonth, endOfMonth);
-        redisTemplate.opsForValue().set(cacheKey, mau, CACHE_TTL_MINUTES, TimeUnit.MINUTES);
+        try {
+            if (redisTemplate != null) {
+                redisTemplate.opsForValue().set(cacheKey, mau, CACHE_TTL_MINUTES, TimeUnit.MINUTES);
+            }
+        } catch (Exception e) {
+            log.debug("Could not cache result to Redis: {}", e.getMessage());
+        }
         return mau;
     }
 

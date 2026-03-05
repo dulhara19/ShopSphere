@@ -59,4 +59,11 @@ public class Export {
 
     @Column
     private String filters; // JSON string of filters applied
+
+    @Column
+    private Long scheduledAt;
+
+    @Column
+    @Builder.Default
+    private Boolean recurring = false;
 }

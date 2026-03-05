@@ -3,6 +3,7 @@ package com.shopsphere.analytics.service;
 import com.shopsphere.analytics.dto.EventDTO;
 import com.shopsphere.analytics.model.Event;
 import com.shopsphere.analytics.repository.EventRepository;
+import com.shopsphere.analytics.service.RealTimeAnalyticsService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.InjectMocks;
@@ -21,6 +22,9 @@ public class EventServiceTest {
 
     @Mock
     private EventRepository eventRepository;
+
+    @Mock
+    private RealTimeAnalyticsService realTimeAnalyticsService;
 
     @InjectMocks
     private EventService eventService;

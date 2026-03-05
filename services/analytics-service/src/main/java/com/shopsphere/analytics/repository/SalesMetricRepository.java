@@ -33,4 +33,7 @@ public interface SalesMetricRepository extends JpaRepository<SalesMetric, Long> 
     Optional<Object> sumRevenueBetween(@Param("from") LocalDate from, @Param("to") LocalDate to);
 
     List<SalesMetric> findByMetricDateBetweenAndSeller(LocalDate from, LocalDate to, String seller);
+
+    @Query("SELECT COALESCE(SUM(sm.viewCount),0), COALESCE(SUM(sm.addToCartCount),0), COALESCE(SUM(sm.checkoutCount),0), COALESCE(SUM(sm.purchaseCount),0) FROM SalesMetric sm WHERE sm.metricDate BETWEEN :from AND :to")
+    List<Object[]> sumFunnelMetrics(@Param("from") LocalDate from, @Param("to") LocalDate to);
 }

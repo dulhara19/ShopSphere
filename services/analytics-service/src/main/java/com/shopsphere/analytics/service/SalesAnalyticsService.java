@@ -1,5 +1,6 @@
 package com.shopsphere.analytics.service;
 
+import com.shopsphere.analytics.dto.FunnelDTO;
 import com.shopsphere.analytics.dto.SalesMetricDTO;
 import com.shopsphere.analytics.dto.SalesSummaryDTO;
 import com.shopsphere.analytics.model.SalesMetric;
@@ -131,6 +132,99 @@ public class SalesAnalyticsService {
         return topCategories.stream()
             .map(this::convertToDTO)
             .collect(Collectors.toList());
+    }
+
+    public SalesSummaryDTO getSellerSalesSummary(LocalDate from, LocalDate to, String seller) {
+        List<SalesMetric> metrics = salesMetricRepository.findByMetricDateBetweenAndSeller(from, to, seller);
+
+        BigDecimal totalRevenue = metrics.stream()
+            .map(SalesMetric::getTotalRevenue)
+            .reduce(BigDecimal.ZERO, BigDecimal::add);
+
+        Long totalOrders = metrics.stream()
+            .mapToLong(SalesMetric::getTotalOrders)
+            .sum();
+
+        Long totalItems = metrics.stream()
+            .mapToLong(SalesMetric::getTotalItems)
+            .sum();
+
+        BigDecimal aov = totalOrders > 0
+            ? totalRevenue.divide(BigDecimal.valueOf(totalOrders), 2, BigDecimal.ROUND_HALF_UP)
+            : BigDecimal.ZERO;
+
+        int daysBetween = (int) java.time.temporal.ChronoUnit.DAYS.between(from, to);
+        LocalDate previousFrom = from.minusDays(daysBetween + 1);
+        LocalDate previousTo = from.minusDays(1);
+
+        List<SalesMetric> previousMetrics = salesMetricRepository.findByMetricDateBetweenAndSeller(previousFrom, previousTo, seller);
+        BigDecimal previousRevenue = previousMetrics.stream()
+            .map(SalesMetric::getTotalRevenue)
+            .reduce(BigDecimal.ZERO, BigDecimal::add);
+        Long previousOrders = previousMetrics.stream()
+            .mapToLong(SalesMetric::getTotalOrders)
+            .sum();
+
+        String revenueChange = calculatePercentageChange(previousRevenue, totalRevenue);
+        String ordersChange = calculatePercentageChange(BigDecimal.valueOf(previousOrders), BigDecimal.valueOf(totalOrders));
+
+        return SalesSummaryDTO.builder()
+            .totalRevenue(totalRevenue)
+            .totalOrders(totalOrders)
+            .averageOrderValue(aov)
+            .totalItems(totalItems)
+            .comparisonPeriod(SalesSummaryDTO.ComparisonPeriodDTO.builder()
+                .revenueChange(revenueChange)
+                .ordersChange(ordersChange)
+                .previousPeriodRevenue(previousRevenue)
+                .previousPeriodOrders(previousOrders)
+                .build())
+            .build();
+    }
+
+    public FunnelDTO getConversionFunnel(LocalDate from, LocalDate to) {
+        List<Object[]> results = salesMetricRepository.sumFunnelMetrics(from, to);
+
+        long views = 0, addToCarts = 0, checkouts = 0, purchases = 0;
+        if (results != null && !results.isEmpty()) {
+            Object[] row = results.get(0);
+            views = ((Number) row[0]).longValue();
+            addToCarts = ((Number) row[1]).longValue();
+            checkouts = ((Number) row[2]).longValue();
+            purchases = ((Number) row[3]).longValue();
+        }
+
+        List<FunnelDTO.FunnelStepDTO> steps = List.of(
+            FunnelDTO.FunnelStepDTO.builder()
+                .stepName("Views")
+                .count(views)
+                .conversionRate(BigDecimal.valueOf(100))
+                .build(),
+            FunnelDTO.FunnelStepDTO.builder()
+                .stepName("Add to Cart")
+                .count(addToCarts)
+                .conversionRate(views > 0 ? BigDecimal.valueOf(addToCarts * 100.0 / views).setScale(2, BigDecimal.ROUND_HALF_UP) : BigDecimal.ZERO)
+                .build(),
+            FunnelDTO.FunnelStepDTO.builder()
+                .stepName("Checkout")
+                .count(checkouts)
+                .conversionRate(views > 0 ? BigDecimal.valueOf(checkouts * 100.0 / views).setScale(2, BigDecimal.ROUND_HALF_UP) : BigDecimal.ZERO)
+                .build(),
+            FunnelDTO.FunnelStepDTO.builder()
+                .stepName("Purchase")
+                .count(purchases)
+                .conversionRate(views > 0 ? BigDecimal.valueOf(purchases * 100.0 / views).setScale(2, BigDecimal.ROUND_HALF_UP) : BigDecimal.ZERO)
+                .build()
+        );
+
+        BigDecimal overallRate = views > 0
+            ? BigDecimal.valueOf(purchases * 100.0 / views).setScale(2, BigDecimal.ROUND_HALF_UP)
+            : BigDecimal.ZERO;
+
+        return FunnelDTO.builder()
+            .steps(steps)
+            .overallConversionRate(overallRate)
+            .build();
     }
 
     @Transactional

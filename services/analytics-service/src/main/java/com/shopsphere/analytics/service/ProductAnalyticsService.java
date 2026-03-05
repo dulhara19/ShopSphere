@@ -53,10 +53,16 @@ public class ProductAnalyticsService {
     public List<ProductMetricDTO> getTopViewedProducts(int limit, LocalDate from, LocalDate to) {
         String cacheKey = PRODUCT_CACHE_KEY + "top-viewed:" + from + ":" + to + ":" + limit;
 
-        @SuppressWarnings("unchecked")
-        List<ProductMetricDTO> cached = (List<ProductMetricDTO>) redisTemplate.opsForValue().get(cacheKey);
-        if (cached != null) {
-            return cached;
+        try {
+            if (redisTemplate != null) {
+                @SuppressWarnings("unchecked")
+                List<ProductMetricDTO> cached = (List<ProductMetricDTO>) redisTemplate.opsForValue().get(cacheKey);
+                if (cached != null) {
+                    return cached;
+                }
+            }
+        } catch (Exception e) {
+            log.debug("Redis cache unavailable: {}", e.getMessage());
         }
 
         List<ProductMetric> topProducts = productMetricRepository.findTopViewedProducts(from, to, limit);
@@ -64,17 +70,29 @@ public class ProductAnalyticsService {
             .map(this::convertToDTO)
             .collect(Collectors.toList());
 
-        redisTemplate.opsForValue().set(cacheKey, result, CACHE_TTL_MINUTES, TimeUnit.MINUTES);
+        try {
+            if (redisTemplate != null) {
+                redisTemplate.opsForValue().set(cacheKey, result, CACHE_TTL_MINUTES, TimeUnit.MINUTES);
+            }
+        } catch (Exception e) {
+            log.debug("Could not cache result to Redis: {}", e.getMessage());
+        }
         return result;
     }
 
     public List<ProductMetricDTO> getTopSellingProducts(int limit, LocalDate from, LocalDate to) {
         String cacheKey = PRODUCT_CACHE_KEY + "top-selling:" + from + ":" + to + ":" + limit;
 
-        @SuppressWarnings("unchecked")
-        List<ProductMetricDTO> cached = (List<ProductMetricDTO>) redisTemplate.opsForValue().get(cacheKey);
-        if (cached != null) {
-            return cached;
+        try {
+            if (redisTemplate != null) {
+                @SuppressWarnings("unchecked")
+                List<ProductMetricDTO> cached = (List<ProductMetricDTO>) redisTemplate.opsForValue().get(cacheKey);
+                if (cached != null) {
+                    return cached;
+                }
+            }
+        } catch (Exception e) {
+            log.debug("Redis cache unavailable: {}", e.getMessage());
         }
 
         List<ProductMetric> topProducts = productMetricRepository.findTopSellingProducts(from, to, limit);
@@ -82,17 +100,29 @@ public class ProductAnalyticsService {
             .map(this::convertToDTO)
             .collect(Collectors.toList());
 
-        redisTemplate.opsForValue().set(cacheKey, result, CACHE_TTL_MINUTES, TimeUnit.MINUTES);
+        try {
+            if (redisTemplate != null) {
+                redisTemplate.opsForValue().set(cacheKey, result, CACHE_TTL_MINUTES, TimeUnit.MINUTES);
+            }
+        } catch (Exception e) {
+            log.debug("Could not cache result to Redis: {}", e.getMessage());
+        }
         return result;
     }
 
     public List<ProductMetricDTO> getTopRevenueProducts(int limit, LocalDate from, LocalDate to) {
         String cacheKey = PRODUCT_CACHE_KEY + "top-revenue:" + from + ":" + to + ":" + limit;
 
-        @SuppressWarnings("unchecked")
-        List<ProductMetricDTO> cached = (List<ProductMetricDTO>) redisTemplate.opsForValue().get(cacheKey);
-        if (cached != null) {
-            return cached;
+        try {
+            if (redisTemplate != null) {
+                @SuppressWarnings("unchecked")
+                List<ProductMetricDTO> cached = (List<ProductMetricDTO>) redisTemplate.opsForValue().get(cacheKey);
+                if (cached != null) {
+                    return cached;
+                }
+            }
+        } catch (Exception e) {
+            log.debug("Redis cache unavailable: {}", e.getMessage());
         }
 
         List<ProductMetric> topProducts = productMetricRepository.findTopRevenueProducts(from, to, limit);
@@ -100,7 +130,13 @@ public class ProductAnalyticsService {
             .map(this::convertToDTO)
             .collect(Collectors.toList());
 
-        redisTemplate.opsForValue().set(cacheKey, result, CACHE_TTL_MINUTES, TimeUnit.MINUTES);
+        try {
+            if (redisTemplate != null) {
+                redisTemplate.opsForValue().set(cacheKey, result, CACHE_TTL_MINUTES, TimeUnit.MINUTES);
+            }
+        } catch (Exception e) {
+            log.debug("Could not cache result to Redis: {}", e.getMessage());
+        }
         return result;
     }
 

@@ -13,7 +13,7 @@ import jakarta.validation.Valid;
 import java.util.List;
 
 @RestController
-@RequestMapping("/api/analytics/export")
+@RequestMapping({"/api/analytics/export", "/api/analytics/exports"})
 @RequiredArgsConstructor
 public class ExportController {
 

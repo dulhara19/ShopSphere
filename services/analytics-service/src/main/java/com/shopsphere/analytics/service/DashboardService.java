@@ -3,6 +3,8 @@ package com.shopsphere.analytics.service;
 import com.shopsphere.analytics.dto.DashboardDTO;
 import com.shopsphere.analytics.dto.ProductMetricDTO;
 import com.shopsphere.analytics.dto.SalesMetricDTO;
+import com.shopsphere.analytics.model.ProductMetric;
+import com.shopsphere.analytics.repository.ProductMetricRepository;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Service;
@@ -21,13 +23,16 @@ public class DashboardService {
     private final SalesAnalyticsService salesAnalyticsService;
     private final ProductAnalyticsService productAnalyticsService;
     private final UserAnalyticsService userAnalyticsService;
-    private RedisTemplate<String, Object> redisTemplate;
+    private final ProductMetricRepository productMetricRepository;
+    private final RedisTemplate<String, Object> redisTemplate;
 
     public DashboardService(SalesAnalyticsService salesAnalyticsService, ProductAnalyticsService productAnalyticsService,
-                           UserAnalyticsService userAnalyticsService, Optional<RedisTemplate<String, Object>> redisTemplate) {
+                           UserAnalyticsService userAnalyticsService, ProductMetricRepository productMetricRepository,
+                           Optional<RedisTemplate<String, Object>> redisTemplate) {
         this.salesAnalyticsService = salesAnalyticsService;
         this.productAnalyticsService = productAnalyticsService;
         this.userAnalyticsService = userAnalyticsService;
+        this.productMetricRepository = productMetricRepository;
         this.redisTemplate = redisTemplate.orElse(null);
     }
 
@@ -37,11 +42,16 @@ public class DashboardService {
     public DashboardDTO getAdminDashboard() {
         String cacheKey = DASHBOARD_CACHE_KEY + "admin:" + LocalDate.now();
 
-        @SuppressWarnings("unchecked")
-        DashboardDTO cached = (DashboardDTO) redisTemplate.opsForValue().get(cacheKey);
-        if (cached != null) {
-            log.info("Dashboard cache hit");
-            return cached;
+        try {
+            if (redisTemplate != null) {
+                DashboardDTO cached = (DashboardDTO) redisTemplate.opsForValue().get(cacheKey);
+                if (cached != null) {
+                    log.info("Dashboard cache hit");
+                    return cached;
+                }
+            }
+        } catch (Exception e) {
+            log.debug("Redis cache unavailable for dashboard: {}", e.getMessage());
         }
 
         LocalDate today = LocalDate.now();
@@ -104,27 +114,38 @@ public class DashboardService {
             .products(productsDashboard)
             .build();
 
-        redisTemplate.opsForValue().set(cacheKey, dashboard, CACHE_TTL_MINUTES, TimeUnit.MINUTES);
+        try {
+            if (redisTemplate != null) {
+                redisTemplate.opsForValue().set(cacheKey, dashboard, CACHE_TTL_MINUTES, TimeUnit.MINUTES);
+            }
+        } catch (Exception e) {
+            log.debug("Could not cache dashboard to Redis: {}", e.getMessage());
+        }
         return dashboard;
     }
 
     public DashboardDTO getSellerDashboard(String sellerId) {
         String cacheKey = DASHBOARD_CACHE_KEY + "seller:" + sellerId + ":" + LocalDate.now();
 
-        @SuppressWarnings("unchecked")
-        DashboardDTO cached = (DashboardDTO) redisTemplate.opsForValue().get(cacheKey);
-        if (cached != null) {
-            return cached;
+        try {
+            if (redisTemplate != null) {
+                DashboardDTO cached = (DashboardDTO) redisTemplate.opsForValue().get(cacheKey);
+                if (cached != null) {
+                    return cached;
+                }
+            }
+        } catch (Exception e) {
+            log.debug("Redis cache unavailable for seller dashboard: {}", e.getMessage());
         }
 
         LocalDate today = LocalDate.now();
         LocalDate weekStart = today.minusDays(today.getDayOfWeek().getValue() - 1);
         LocalDate monthStart = today.withDayOfMonth(1);
 
-        // For seller, we would filter by seller ID in the repository queries
-        var todaysSales = salesAnalyticsService.getSalesSummary(today, today);
-        var weekSales = salesAnalyticsService.getSalesSummary(weekStart, today);
-        var monthSales = salesAnalyticsService.getSalesSummary(monthStart, today);
+        // Filter sales by seller
+        var todaysSales = salesAnalyticsService.getSellerSalesSummary(today, today, sellerId);
+        var weekSales = salesAnalyticsService.getSellerSalesSummary(weekStart, today, sellerId);
+        var monthSales = salesAnalyticsService.getSellerSalesSummary(monthStart, today, sellerId);
 
         DashboardDTO.SalesDashboardDTO salesDashboard = DashboardDTO.SalesDashboardDTO.builder()
             .today(todaysSales.getTotalRevenue())
@@ -133,16 +154,47 @@ public class DashboardService {
             .change(monthSales.getComparisonPeriod().getRevenueChange())
             .build();
 
-        DashboardDTO dashboard = DashboardDTO.builder()
-            .sales(salesDashboard)
+        // Filter products by seller
+        List<ProductMetric> sellerProducts = productMetricRepository.findTopSellingProductsBySeller(
+            monthStart, today, sellerId, 5);
+        List<DashboardDTO.TopProductDTO> topProductsDTOs = sellerProducts.stream()
+            .map(p -> DashboardDTO.TopProductDTO.builder()
+                .productId(p.getProductId())
+                .unitsSold(p.getUnitsSold())
+                .revenue(p.getRevenue())
+                .build())
+            .toList();
+
+        DashboardDTO.ProductsDashboardDTO productsDashboard = DashboardDTO.ProductsDashboardDTO.builder()
+            .topSelling(topProductsDTOs)
             .build();
 
-        redisTemplate.opsForValue().set(cacheKey, dashboard, CACHE_TTL_MINUTES, TimeUnit.MINUTES);
+        DashboardDTO dashboard = DashboardDTO.builder()
+            .sales(salesDashboard)
+            .products(productsDashboard)
+            .build();
+
+        try {
+            if (redisTemplate != null) {
+                redisTemplate.opsForValue().set(cacheKey, dashboard, CACHE_TTL_MINUTES, TimeUnit.MINUTES);
+            }
+        } catch (Exception e) {
+            log.debug("Could not cache seller dashboard to Redis: {}", e.getMessage());
+        }
         return dashboard;
     }
 
     public void invalidateDashboardCache() {
         log.info("Invalidating dashboard cache");
-        redisTemplate.keys(DASHBOARD_CACHE_KEY + "*").forEach(key -> redisTemplate.delete(key));
+        try {
+            if (redisTemplate != null) {
+                var keys = redisTemplate.keys(DASHBOARD_CACHE_KEY + "*");
+                if (keys != null) {
+                    keys.forEach(key -> redisTemplate.delete(key));
+                }
+            }
+        } catch (Exception e) {
+            log.debug("Could not invalidate dashboard cache: {}", e.getMessage());
+        }
     }
 }

@@ -34,4 +34,7 @@ public interface ProductMetricRepository extends JpaRepository<ProductMetric, Lo
     List<ProductMetric> findTopProductsByCategory(@Param("categoryId") String categoryId, @Param("from") LocalDate from, @Param("to") LocalDate to);
 
     List<ProductMetric> findByMetricDateBetween(LocalDate from, LocalDate to);
+
+    @Query("SELECT pm FROM ProductMetric pm WHERE pm.metricDate BETWEEN :from AND :to AND pm.productId IN (SELECT sm.productId FROM SalesMetric sm WHERE sm.seller = :seller AND sm.metricDate BETWEEN :from AND :to) ORDER BY pm.purchaseCount DESC LIMIT :limit")
+    List<ProductMetric> findTopSellingProductsBySeller(@Param("from") LocalDate from, @Param("to") LocalDate to, @Param("seller") String seller, @Param("limit") int limit);
 }

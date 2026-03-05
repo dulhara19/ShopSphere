@@ -1,6 +1,7 @@
 package com.shopsphere.analytics.controller;
 
 import com.shopsphere.analytics.dto.ApiResponseDTO;
+import com.shopsphere.analytics.dto.FunnelDTO;
 import com.shopsphere.analytics.dto.SalesMetricDTO;
 import com.shopsphere.analytics.dto.SalesSummaryDTO;
 import com.shopsphere.analytics.service.SalesAnalyticsService;
@@ -82,10 +83,14 @@ public class SalesAnalyticsController {
     }
 
     @GetMapping("/funnel")
-    public ResponseEntity<ApiResponseDTO<String>> getConversionFunnel(
+    public ResponseEntity<ApiResponseDTO<FunnelDTO>> getConversionFunnel(
         @RequestParam(name = "from") String from,
         @RequestParam(name = "to") String to) {
-        
-        return ResponseEntity.ok(ApiResponseDTO.success("Conversion funnel data", "Funnel retrieved"));
+
+        LocalDate fromDate = LocalDate.parse(from);
+        LocalDate toDate = LocalDate.parse(to);
+
+        FunnelDTO funnel = salesAnalyticsService.getConversionFunnel(fromDate, toDate);
+        return ResponseEntity.ok(ApiResponseDTO.success(funnel, "Funnel retrieved"));
     }
 }
