@@ -3,6 +3,8 @@ package com.shopsphere.product.service;
 import com.shopsphere.product.dto.ProductInternalResponseDTO;
 import com.shopsphere.product.dto.ProductSearchResponseDTO;
 import com.shopsphere.product.dto.ProductValidationResponseDTO;
+import com.shopsphere.product.dto.VariantCombinationDTO; // Added for Story 2.2.4
+import com.shopsphere.product.dto.VariantSelectionResponseDTO; // Added for Story 2.2.4
 import com.shopsphere.product.exception.ProductNotFoundException;
 import com.shopsphere.product.model.Category;
 import com.shopsphere.product.model.Product;
@@ -33,8 +35,10 @@ import co.elastic.clients.elasticsearch._types.aggregations.StringTermsBucket;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.HashSet; // Added for Story 2.2.4
 import java.util.List;
 import java.util.Map;
+import java.util.Set; // Added for Story 2.2.4
 import java.util.UUID;
 
 @Service
@@ -406,5 +410,47 @@ public class ProductService {
         productSearchRepository.save(updatedProduct);
         
         return updatedProduct;
+    }
+
+    /**
+     * Story 2.2.4: Variant selection UI support
+     * Formats variations into an easy-to-use structure for the frontend UI.
+     */
+    public VariantSelectionResponseDTO getVariantSelectionOptions(String productId) {
+        Product product = getProductById(productId);
+        
+        Map<String, Set<String>> availableAttributes = new HashMap<>();
+        List<VariantCombinationDTO> combinations = new ArrayList<>();
+
+        if (!product.isHasVariations() || product.getVariants() == null || product.getVariants().isEmpty()) {
+            // If the product has no variations, return empty DTOs to avoid null pointers in the frontend
+            return VariantSelectionResponseDTO.builder()
+                    .availableAttributes(availableAttributes)
+                    .combinations(combinations)
+                    .build();
+        }
+
+        for (ProductVariant variant : product.getVariants()) {
+            // 1. Extract unique attributes (e.g., gets all unique sizes and colors)
+            for (Map.Entry<String, String> entry : variant.getAttributes().entrySet()) {
+                availableAttributes
+                    .computeIfAbsent(entry.getKey(), k -> new HashSet<>())
+                    .add(entry.getValue());
+            }
+
+            // 2. Create the exact combination record
+            combinations.add(VariantCombinationDTO.builder()
+                    .sku(variant.getSku())
+                    .attributes(variant.getAttributes())
+                    // Fallback to base product price if variant doesn't have a specific price
+                    .price(variant.getPrice() != null ? variant.getPrice() : product.getPrice()) 
+                    .inStock(variant.isAvailable())
+                    .build());
+        }
+
+        return VariantSelectionResponseDTO.builder()
+                .availableAttributes(availableAttributes)
+                .combinations(combinations)
+                .build();
     }
 }

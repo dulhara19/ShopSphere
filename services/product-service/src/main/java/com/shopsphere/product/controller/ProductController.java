@@ -3,6 +3,7 @@ package com.shopsphere.product.controller;
 import com.shopsphere.product.dto.ProductInternalResponseDTO;
 import com.shopsphere.product.dto.ProductSearchResponseDTO;
 import com.shopsphere.product.dto.ProductValidationResponseDTO;
+import com.shopsphere.product.dto.VariantSelectionResponseDTO; // Added for Story 2.2.4
 import com.shopsphere.product.model.Product;
 import com.shopsphere.product.model.ProductVariant; // Added for Story 2.2.2
 import com.shopsphere.product.model.SearchAnalytics;
@@ -291,6 +292,17 @@ public class ProductController {
     @PostMapping("/validate")
     public ResponseEntity<ProductValidationResponseDTO> validateProducts(@RequestBody List<String> ids) {
         ProductValidationResponseDTO response = productService.validateProducts(ids);
+        return ResponseEntity.ok(response);
+    }
+
+    /**
+     * Story 2.2.4: Variant selection UI support
+     * Returns structured variant data for the frontend product page.
+     * URL: GET /api/products/{id}/variant-options
+     */
+    @GetMapping("/{id}/variant-options")
+    public ResponseEntity<VariantSelectionResponseDTO> getVariantOptions(@PathVariable String id) {
+        VariantSelectionResponseDTO response = productService.getVariantSelectionOptions(id);
         return ResponseEntity.ok(response);
     }
 }
