@@ -4,6 +4,8 @@ import com.shopsphere.product.dto.ProductInternalResponseDTO;
 import com.shopsphere.product.dto.ProductSearchResponseDTO;
 import com.shopsphere.product.dto.ProductValidationResponseDTO;
 import com.shopsphere.product.model.Product;
+import com.shopsphere.product.model.SearchAnalytics;
+import com.shopsphere.product.repository.SearchAnalyticsRepository; // Added import for repository
 import com.shopsphere.product.service.ProductService;
 import com.shopsphere.product.service.ImageService;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -26,6 +28,10 @@ public class ProductController {
 
     @Autowired
     private ImageService imageService;
+
+    // Fix: Injected the repository directly to resolve the red line
+    @Autowired
+    private SearchAnalyticsRepository searchAnalyticsRepository;
 
     /**
      * Story 1.1.1: Create Product (Seller)
@@ -144,6 +150,16 @@ public class ProductController {
         
         ProductSearchResponseDTO response = productService.searchWithFacets(keyword, page, size);
         return ResponseEntity.ok(response);
+    }
+
+    /**
+     * Story 2.1.5: Get all search analytics (Admin only)
+     * Retrieves tracked search queries and zero-result search data.
+     */
+    @GetMapping("/analytics/search")
+    public ResponseEntity<List<SearchAnalytics>> getSearchAnalytics() {
+        // Fix: Use the directly injected repository to get all analytics
+        return ResponseEntity.ok(searchAnalyticsRepository.findAll()); 
     }
 
     /**

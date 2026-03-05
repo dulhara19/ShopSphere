@@ -6,26 +6,28 @@ import com.shopsphere.product.dto.ProductValidationResponseDTO;
 import com.shopsphere.product.exception.ProductNotFoundException;
 import com.shopsphere.product.model.Category;
 import com.shopsphere.product.model.Product;
+import com.shopsphere.product.model.SearchAnalytics; // Added for Story 2.1.5
 import com.shopsphere.product.repository.CategoryRepository;
 import com.shopsphere.product.repository.ProductRepository;
 import com.shopsphere.product.repository.ProductSearchRepository;
+import com.shopsphere.product.repository.SearchAnalyticsRepository; // Added for Story 2.1.5
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.elasticsearch.client.elc.NativeQuery;
-import org.springframework.data.elasticsearch.client.elc.ElasticsearchAggregations; // Fixed Import
 import org.springframework.data.elasticsearch.core.ElasticsearchOperations;
 import org.springframework.data.elasticsearch.core.SearchHitSupport;
 import org.springframework.data.elasticsearch.core.SearchHits;
-import org.springframework.data.elasticsearch.core.SearchPage; // Fixed Import
+import org.springframework.data.elasticsearch.core.SearchPage;
 import org.springframework.data.elasticsearch.core.query.Query;
+import org.springframework.scheduling.annotation.Async; // Added for Story 2.1.5
 import org.springframework.stereotype.Service;
 
 import co.elastic.clients.elasticsearch._types.aggregations.Aggregation;
-import co.elastic.clients.elasticsearch._types.aggregations.StringTermsAggregate; // Fixed Import
-import co.elastic.clients.elasticsearch._types.aggregations.StringTermsBucket; // Fixed Import
+import co.elastic.clients.elasticsearch._types.aggregations.StringTermsAggregate;
+import co.elastic.clients.elasticsearch._types.aggregations.StringTermsBucket;
 
 import java.time.LocalDateTime;
 import java.util.ArrayList;
@@ -33,7 +35,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
-import java.util.stream.Collectors;
 
 @Service
 public class ProductService {
@@ -49,6 +50,9 @@ public class ProductService {
 
     @Autowired
     private ElasticsearchOperations elasticsearchOperations;
+
+    @Autowired
+    private SearchAnalyticsRepository searchAnalyticsRepository; // Injected for Analytics
 
     /**
      * Story 1.1.1: Create Product (Seller)
@@ -151,7 +155,24 @@ public class ProductService {
     }
 
     /**
+     * Story 2.1.5: Async method to track search queries
+     * This saves the keyword and the number of results found without blocking the main thread.
+     */
+    @Async
+    public void trackSearch(String keyword, long resultCount) {
+        if (keyword != null && !keyword.trim().isEmpty()) {
+            SearchAnalytics record = SearchAnalytics.builder()
+                    .query(keyword.trim().toLowerCase())
+                    .resultCount(resultCount)
+                    .timestamp(LocalDateTime.now())
+                    .build();
+            searchAnalyticsRepository.save(record);
+        }
+    }
+
+    /**
      * Story 2.1.2: Advanced Full-Text Search using Elasticsearch
+     * Updated to track search analytics (Story 2.1.5)
      */
     public Page<Product> searchProductsInElasticsearch(String keyword, int page, int size) {
         Pageable pageable = PageRequest.of(page, size);
@@ -160,12 +181,17 @@ public class ProductService {
             return (Page<Product>) productSearchRepository.findAll(pageable);
         }
         
-        return productSearchRepository.findByNameOrDescription(keyword, pageable);
+        Page<Product> results = productSearchRepository.findByNameOrDescription(keyword, pageable);
+        
+        // Track the search request asynchronously
+        trackSearch(keyword, results.getTotalElements());
+        
+        return results;
     }
 
     /**
      * Story 2.1.4: Faceted Search Implementation
-     * FIXED Red Lines: Uses ElasticsearchAggregations and SearchPage
+     * Updated to track search analytics (Story 2.1.5) and fix aggregation red lines
      */
     @SuppressWarnings("unchecked")
     public ProductSearchResponseDTO searchWithFacets(String keyword, int page, int size) {
@@ -184,40 +210,44 @@ public class ProductService {
                 .build();
 
         SearchHits<Product> searchHits = elasticsearchOperations.search(query, Product.class);
+        
+        // Track the search request asynchronously
+        if(keyword != null && !keyword.isEmpty()){
+            trackSearch(keyword, searchHits.getTotalHits());
+        }
 
         Map<String, Long> categoryFacets = new HashMap<>();
         Map<String, Long> brandFacets = new HashMap<>();
 
-        // Fix: Cast getAggregations() to ElasticsearchAggregations for 8.x client
+        // Extract aggregations correctly for Elasticsearch 8.x
         if (searchHits.hasAggregations()) {
-            ElasticsearchAggregations aggregations = (ElasticsearchAggregations) searchHits.getAggregations();
+            // Processing Category Facets
+            org.springframework.data.elasticsearch.client.elc.ElasticsearchAggregations aggregations = 
+                (org.springframework.data.elasticsearch.client.elc.ElasticsearchAggregations) searchHits.getAggregations();
             
-            // Extract Category Facets
             if (aggregations.aggregationsAsMap().containsKey("category_counts")) {
                 co.elastic.clients.elasticsearch._types.aggregations.Aggregate aggregate = 
                     aggregations.aggregationsAsMap().get("category_counts").aggregation().getAggregate();
                 if (aggregate.isSterms()) {
-                    StringTermsAggregate sterms = aggregate.sterms();
-                    for (StringTermsBucket bucket : sterms.buckets().array()) {
+                    for (StringTermsBucket bucket : aggregate.sterms().buckets().array()) {
                         categoryFacets.put(bucket.key().stringValue(), bucket.docCount());
                     }
                 }
             }
 
-            // Extract Brand Facets
+            // Processing Brand Facets
             if (aggregations.aggregationsAsMap().containsKey("brand_counts")) {
                 co.elastic.clients.elasticsearch._types.aggregations.Aggregate aggregate = 
                     aggregations.aggregationsAsMap().get("brand_counts").aggregation().getAggregate();
                 if (aggregate.isSterms()) {
-                    StringTermsAggregate sterms = aggregate.sterms();
-                    for (StringTermsBucket bucket : sterms.buckets().array()) {
+                    for (StringTermsBucket bucket : aggregate.sterms().buckets().array()) {
                         brandFacets.put(bucket.key().stringValue(), bucket.docCount());
                     }
                 }
             }
         }
 
-        // Fix: Use searchPageFor and extract page safely
+        // Convert SearchHits to Page safely
         SearchPage<Product> searchPage = SearchHitSupport.searchPageFor(searchHits, query.getPageable());
         Page<Product> productPage = (Page<Product>) SearchHitSupport.unwrapSearchHits(searchPage);
 
