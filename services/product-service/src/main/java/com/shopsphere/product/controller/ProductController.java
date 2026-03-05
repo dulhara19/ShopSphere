@@ -10,6 +10,7 @@ import com.shopsphere.product.model.SearchAnalytics;
 import com.shopsphere.product.repository.SearchAnalyticsRepository;
 import com.shopsphere.product.service.ProductService;
 import com.shopsphere.product.service.ImageService;
+import com.shopsphere.product.service.VisualSearchService; // Added for Story 2.4.1
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.http.ResponseEntity;
@@ -32,6 +33,9 @@ public class ProductController {
 
     @Autowired
     private ImageService imageService;
+
+    @Autowired
+    private VisualSearchService visualSearchService; // Injected for Story 2.4.1
 
     // Injected the repository directly to resolve the red line for Analytics
     @Autowired
@@ -331,5 +335,20 @@ public class ProductController {
         
         productService.updateProductRating(id, averageRating, reviewCount);
         return ResponseEntity.ok().build();
+    }
+
+    /**
+     * Story 2.4.1: Image Upload and Feature Extraction for Visual Search
+     * URL: POST /api/products/visual-search
+     */
+    @PostMapping("/visual-search")
+    public ResponseEntity<List<Double>> uploadImageForSearch(@RequestParam("image") MultipartFile file) {
+        try {
+            // Extract features using AI model
+            List<Double> visualFeatures = visualSearchService.extractFeatures(file);
+            return ResponseEntity.ok(visualFeatures);
+        } catch (Exception e) {
+            throw new RuntimeException("Error processing image: " + e.getMessage());
+        }
     }
 }
