@@ -140,18 +140,19 @@ public class ProductController {
     }
 
     /**
-     * Story 2.1.4 & 2.3.1: Faceted Search & Brand Filter API
-     * Returns products along with category and brand aggregations.
-     * URL Example: GET /api/products/search/facets?q=shirt&brands=Nike,Adidas
+     * Story 2.1.4, 2.3.1 & 2.3.2: Faceted Search & Filters API
+     * Returns products along with category and brand aggregations and rating filters.
+     * URL Example: GET /api/products/search/facets?q=shirt&brands=Nike,Adidas&minRating=4.0
      */
     @GetMapping("/search/facets")
     public ResponseEntity<ProductSearchResponseDTO> searchWithFacets(
             @RequestParam(name = "q", required = false) String keyword,
             @RequestParam(required = false) List<String> brands,
+            @RequestParam(required = false) Double minRating,
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "20") int size) {
         
-        ProductSearchResponseDTO response = productService.searchWithFacets(keyword, brands, page, size);
+        ProductSearchResponseDTO response = productService.searchWithFacets(keyword, brands, minRating, page, size);
         return ResponseEntity.ok(response);
     }
 
@@ -305,5 +306,18 @@ public class ProductController {
     public ResponseEntity<VariantSelectionResponseDTO> getVariantOptions(@PathVariable String id) {
         VariantSelectionResponseDTO response = productService.getVariantSelectionOptions(id);
         return ResponseEntity.ok(response);
+    }
+
+    /**
+     * Story 2.3.2: Internal API to update product rating
+     */
+    @PatchMapping("/internal/{id}/rating")
+    public ResponseEntity<Void> updateProductRating(
+            @PathVariable String id,
+            @RequestParam Double averageRating,
+            @RequestParam Integer reviewCount) {
+        
+        productService.updateProductRating(id, averageRating, reviewCount);
+        return ResponseEntity.ok().build();
     }
 }

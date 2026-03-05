@@ -32,6 +32,7 @@ import co.elastic.clients.elasticsearch._types.FieldValue; // Added for Story 2.
 import co.elastic.clients.elasticsearch._types.aggregations.Aggregation;
 import co.elastic.clients.elasticsearch._types.aggregations.StringTermsAggregate;
 import co.elastic.clients.elasticsearch._types.aggregations.StringTermsBucket;
+import co.elastic.clients.json.JsonData; // Added for Story 2.3.2
 
 import java.time.LocalDateTime;
 import java.util.ArrayList;
@@ -196,11 +197,10 @@ public class ProductService {
     }
 
     /**
-     * Story 2.1.4 & 2.3.1: Faceted Search & Filter by Brand
-     * Updated to support multi-select brand filtering.
+     * Story 2.1.4, 2.3.1 & 2.3.2: Faceted Search with Brand and Rating Filters
      */
     @SuppressWarnings("unchecked")
-    public ProductSearchResponseDTO searchWithFacets(String keyword, List<String> brands, int page, int size) {
+    public ProductSearchResponseDTO searchWithFacets(String keyword, List<String> brands, Double minRating, int page, int size) {
         Pageable pageable = PageRequest.of(page, size);
 
         Query query = NativeQuery.builder()
@@ -222,6 +222,14 @@ public class ProductService {
                         b.filter(f -> f.terms(t -> t
                                 .field("brand")
                                 .terms(t2 -> t2.value(fieldValues))
+                        ));
+                    }
+
+                    // 3. Story 2.3.2: Filter by Minimum Rating
+                    if (minRating != null && minRating > 0) {
+                        b.filter(f -> f.range(r -> r
+                                .field("averageRating")
+                                .gte(JsonData.of(minRating)) // gte = Greater Than or Equal
                         ));
                     }
                     
@@ -467,5 +475,18 @@ public class ProductService {
                 .availableAttributes(availableAttributes)
                 .combinations(combinations)
                 .build();
+    }
+
+    /**
+     * Story 2.3.2: Update product rating (Called by Review Service internally)
+     */
+    public void updateProductRating(String productId, Double newAverage, Integer newCount) {
+        Product product = getProductById(productId);
+        product.setAverageRating(newAverage);
+        product.setReviewCount(newCount);
+        product.setUpdatedAt(LocalDateTime.now());
+        
+        Product updatedProduct = productRepository.save(product);
+        productSearchRepository.save(updatedProduct); // Sync with Elasticsearch
     }
 }

@@ -51,16 +51,18 @@ public class Product {
     @Field(type = FieldType.Keyword)
     private String brand;
     
-    // --- Story 2.2.2: Product Variations Additions ---
-    
-    // Indicates if this product has multiple variations
+    // --- Story 2.2.2: Product Variations ---
     private boolean hasVariations = false;
     
-    // The list of variations (e.g., Red-S, Red-M, Blue-L)
     @Field(type = FieldType.Nested)
     private List<ProductVariant> variants = new ArrayList<>();
     
-    // -------------------------------------------------
+    // --- Story 2.3.2: Rating & Reviews ---
+    @Field(type = FieldType.Double)
+    private Double averageRating = 0.0;
+    
+    @Field(type = FieldType.Integer)
+    private Integer reviewCount = 0;
     
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
