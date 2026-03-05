@@ -142,28 +142,30 @@ public class ProductController {
     }
 
     /**
-     * Story 2.1.4, 2.3.1, 2.3.2 & 2.3.3: Advanced Faceted Search & Filters API
-     * Returns products along with category and brand aggregations and multi-filter support.
-     * URL Example: GET /api/products/search/facets?q=shirt&brands=Nike,Adidas&minRating=4.0&color=red&size=M
+     * Story 2.1.4, 2.3.1, 2.3.2, 2.3.3 & 2.3.4: Advanced Faceted Search & Filters API
+     * Returns products with categories, brands, ratings, dynamic attributes, and availability status.
+     * URL Example: GET /api/products/search/facets?q=shirt&brands=Nike&inStock=true&color=red
      */
     @GetMapping("/search/facets")
     public ResponseEntity<ProductSearchResponseDTO> searchWithFacets(
             @RequestParam(name = "q", required = false) String keyword,
             @RequestParam(required = false) List<String> brands,
             @RequestParam(required = false) Double minRating,
+            @RequestParam(required = false) Boolean inStock,
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "20") int size,
             @RequestParam Map<String, String> allParams) {
         
-        // Remove standard parameters to isolate dynamic attributes (size, color, material, etc.)
+        // Isolate dynamic attributes (size, color, material, etc.)
         Map<String, String> attributes = new HashMap<>(allParams);
         attributes.remove("q");
         attributes.remove("brands");
         attributes.remove("minRating");
+        attributes.remove("inStock");
         attributes.remove("page");
         attributes.remove("size");
 
-        ProductSearchResponseDTO response = productService.searchWithFacets(keyword, brands, minRating, attributes, page, size);
+        ProductSearchResponseDTO response = productService.searchWithFacets(keyword, brands, minRating, attributes, inStock, page, size);
         return ResponseEntity.ok(response);
     }
 

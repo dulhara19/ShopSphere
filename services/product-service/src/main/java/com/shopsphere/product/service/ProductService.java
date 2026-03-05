@@ -197,7 +197,8 @@ public class ProductService {
     }
 
     /**
-     * Story 2.1.4, 2.3.1, 2.3.2 & 2.3.3: Advanced Faceted Search with Brand, Rating and Attribute Filters
+     * Story 2.1.4, 2.3.1, 2.3.2, 2.3.3 & 2.3.4: Advanced Faceted Search
+     * Supports: Keywords, Brands, Ratings, Attributes, and Availability
      */
     @SuppressWarnings("unchecked")
     public ProductSearchResponseDTO searchWithFacets(
@@ -205,6 +206,7 @@ public class ProductService {
             List<String> brands, 
             Double minRating, 
             Map<String, String> attributes, 
+            Boolean inStock,
             int page, int size) {
         
         Pageable pageable = PageRequest.of(page, size);
@@ -219,24 +221,15 @@ public class ProductService {
                         ));
                     }
 
-                    // 2. Story 2.3.1: Filter by Brand (Multi-select support)
+                    // 2. Story 2.3.1: Filter by Brand
                     if (brands != null && !brands.isEmpty()) {
-                        List<FieldValue> fieldValues = brands.stream()
-                                .map(FieldValue::of)
-                                .toList();
-                        
-                        b.filter(f -> f.terms(t -> t
-                                .field("brand")
-                                .terms(t2 -> t2.value(fieldValues))
-                        ));
+                        List<FieldValue> fieldValues = brands.stream().map(FieldValue::of).toList();
+                        b.filter(f -> f.terms(t -> t.field("brand").terms(t2 -> t2.value(fieldValues))));
                     }
 
                     // 3. Story 2.3.2: Filter by Minimum Rating
                     if (minRating != null && minRating > 0) {
-                        b.filter(f -> f.range(r -> r
-                                .field("averageRating")
-                                .gte(JsonData.of(minRating))
-                        ));
+                        b.filter(f -> f.range(r -> r.field("averageRating").gte(JsonData.of(minRating))));
                     }
 
                     // 4. Story 2.3.3: Filter by Dynamic Attributes (Nested variants filtering)
@@ -253,6 +246,17 @@ public class ProductService {
                             ));
                         }
                     }
+
+                    // 5. Story 2.3.4: Filter by Availability (Nested)
+                    // Only show products where at least one variant is available
+                    if (inStock != null && inStock) {
+                        b.filter(f -> f.nested(n -> n
+                            .path("variants")
+                            .query(nq -> nq.bool(nb -> nb
+                                .must(nm -> nm.term(t -> t.field("variants.available").value(true)))
+                            ))
+                        ));
+                    }
                     
                     return b;
                 }))
@@ -263,7 +267,7 @@ public class ProductService {
 
         SearchHits<Product> searchHits = elasticsearchOperations.search(query, Product.class);
         
-        // Track the search request asynchronously
+        // Track search asynchronously
         if (keyword != null && !keyword.isEmpty()) {
             trackSearch(keyword, searchHits.getTotalHits());
         }
@@ -271,7 +275,6 @@ public class ProductService {
         Map<String, Long> categoryFacets = new HashMap<>();
         Map<String, Long> brandFacets = new HashMap<>();
 
-        // Extract aggregations correctly for Elasticsearch 8.x
         if (searchHits.hasAggregations()) {
             org.springframework.data.elasticsearch.client.elc.ElasticsearchAggregations aggregations = 
                 (org.springframework.data.elasticsearch.client.elc.ElasticsearchAggregations) searchHits.getAggregations();
