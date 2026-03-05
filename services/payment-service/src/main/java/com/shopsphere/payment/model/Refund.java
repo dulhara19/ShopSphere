@@ -12,11 +12,7 @@ import java.time.LocalDateTime;
  * Maps to 'refunds' table in PostgreSQL.
  */
 @Entity
-@Table(name = "refunds", indexes = {
-    @Index(name = "idx_payment_id", columnList = "payment_id"),
-    @Index(name = "idx_stripe_refund_id", columnList = "stripe_refund_id"),
-    @Index(name = "idx_status", columnList = "status")
-})
+@Table(name = "refunds")
 @Getter
 @Setter
 @NoArgsConstructor

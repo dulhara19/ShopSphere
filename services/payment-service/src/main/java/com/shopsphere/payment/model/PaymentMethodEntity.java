@@ -11,10 +11,7 @@ import java.time.LocalDateTime;
  * Maps to 'payment_methods' table in PostgreSQL.
  */
 @Entity
-@Table(name = "payment_methods", indexes = {
-    @Index(name = "idx_user_id", columnList = "user_id"),
-    @Index(name = "idx_stripe_payment_method_id", columnList = "stripe_payment_method_id")
-})
+@Table(name = "payment_methods")
 @Getter
 @Setter
 @NoArgsConstructor

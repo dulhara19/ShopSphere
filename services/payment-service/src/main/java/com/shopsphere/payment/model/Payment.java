@@ -12,12 +12,7 @@ import java.time.LocalDateTime;
  * Maps to 'payments' table in PostgreSQL.
  */
 @Entity
-@Table(name = "payments", indexes = {
-    @Index(name = "idx_order_id", columnList = "order_id"),
-    @Index(name = "idx_user_id", columnList = "user_id"),
-    @Index(name = "idx_stripe_payment_intent_id", columnList = "stripe_payment_intent_id"),
-    @Index(name = "idx_status", columnList = "status")
-})
+@Table(name = "payments")
 @Getter
 @Setter
 @NoArgsConstructor
@@ -59,7 +54,7 @@ public class Payment {
     @Column(name = "failure_reason")
     private String failureReason;
 
-    @Column(columnDefinition = "jsonb")
+    @Column(columnDefinition = "TEXT")
     private String metadata;
 
     @Column(nullable = false, updatable = false)
