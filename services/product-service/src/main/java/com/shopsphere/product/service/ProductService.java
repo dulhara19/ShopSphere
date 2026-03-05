@@ -1,6 +1,7 @@
 package com.shopsphere.product.service;
 
 import com.shopsphere.product.dto.ProductInternalResponseDTO;
+import com.shopsphere.product.dto.ProductSearchResponseDTO;
 import com.shopsphere.product.dto.ProductValidationResponseDTO;
 import com.shopsphere.product.exception.ProductNotFoundException;
 import com.shopsphere.product.model.Category;
@@ -13,7 +14,18 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
+import org.springframework.data.elasticsearch.client.elc.NativeQuery;
+import org.springframework.data.elasticsearch.client.elc.ElasticsearchAggregations; // Fixed Import
+import org.springframework.data.elasticsearch.core.ElasticsearchOperations;
+import org.springframework.data.elasticsearch.core.SearchHitSupport;
+import org.springframework.data.elasticsearch.core.SearchHits;
+import org.springframework.data.elasticsearch.core.SearchPage; // Fixed Import
+import org.springframework.data.elasticsearch.core.query.Query;
 import org.springframework.stereotype.Service;
+
+import co.elastic.clients.elasticsearch._types.aggregations.Aggregation;
+import co.elastic.clients.elasticsearch._types.aggregations.StringTermsAggregate; // Fixed Import
+import co.elastic.clients.elasticsearch._types.aggregations.StringTermsBucket; // Fixed Import
 
 import java.time.LocalDateTime;
 import java.util.ArrayList;
@@ -21,6 +33,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
+import java.util.stream.Collectors;
 
 @Service
 public class ProductService {
@@ -34,6 +47,9 @@ public class ProductService {
     @Autowired
     private ProductSearchRepository productSearchRepository;
 
+    @Autowired
+    private ElasticsearchOperations elasticsearchOperations;
+
     /**
      * Story 1.1.1: Create Product (Seller)
      * Story 2.1.1: Sync with Elasticsearch
@@ -44,10 +60,7 @@ public class ProductService {
         product.setCreatedAt(LocalDateTime.now());
         product.setUpdatedAt(LocalDateTime.now());
         
-        // Save to MongoDB
         Product savedProduct = productRepository.save(product);
-        
-        // Sync to Elasticsearch
         productSearchRepository.save(savedProduct);
         
         return savedProduct;
@@ -79,10 +92,7 @@ public class ProductService {
 
         existingProduct.setUpdatedAt(LocalDateTime.now());
         
-        // Update MongoDB
         Product updatedProduct = productRepository.save(existingProduct);
-        
-        // Update Elasticsearch index
         productSearchRepository.save(updatedProduct);
         
         return updatedProduct;
@@ -97,15 +107,12 @@ public class ProductService {
         existingProduct.setStatus("DELETED");
         existingProduct.setUpdatedAt(LocalDateTime.now());
         
-        // Soft delete in MongoDB
         productRepository.save(existingProduct);
-        
-        // Remove from Elasticsearch search index to prevent appearing in searches
         productSearchRepository.deleteById(id);
     }
 
     /**
-     * Story 1.1.5: List seller's products (Paginated with Status Filter)
+     * Story 1.1.5: List seller's products
      */
     public Page<Product> getSellerProducts(String sellerId, String status, int page, int size, String sortBy) {
         Pageable pageable = PageRequest.of(page, size, Sort.by(sortBy).descending());
@@ -145,7 +152,6 @@ public class ProductService {
 
     /**
      * Story 2.1.2: Advanced Full-Text Search using Elasticsearch
-     * Provides high-performance search across name and description with fuzzy matching.
      */
     public Page<Product> searchProductsInElasticsearch(String keyword, int page, int size) {
         Pageable pageable = PageRequest.of(page, size);
@@ -158,8 +164,72 @@ public class ProductService {
     }
 
     /**
+     * Story 2.1.4: Faceted Search Implementation
+     * FIXED Red Lines: Uses ElasticsearchAggregations and SearchPage
+     */
+    @SuppressWarnings("unchecked")
+    public ProductSearchResponseDTO searchWithFacets(String keyword, int page, int size) {
+        Pageable pageable = PageRequest.of(page, size);
+
+        Query query = NativeQuery.builder()
+                .withQuery(q -> q
+                    .bool(b -> b
+                        .should(s -> s.match(m -> m.field("name").query(keyword).fuzziness("AUTO")))
+                        .should(s -> s.match(m -> m.field("description").query(keyword).fuzziness("AUTO")))
+                    )
+                )
+                .withAggregation("category_counts", Aggregation.of(a -> a.terms(t -> t.field("categoryId"))))
+                .withAggregation("brand_counts", Aggregation.of(a -> a.terms(t -> t.field("brand"))))
+                .withPageable(pageable)
+                .build();
+
+        SearchHits<Product> searchHits = elasticsearchOperations.search(query, Product.class);
+
+        Map<String, Long> categoryFacets = new HashMap<>();
+        Map<String, Long> brandFacets = new HashMap<>();
+
+        // Fix: Cast getAggregations() to ElasticsearchAggregations for 8.x client
+        if (searchHits.hasAggregations()) {
+            ElasticsearchAggregations aggregations = (ElasticsearchAggregations) searchHits.getAggregations();
+            
+            // Extract Category Facets
+            if (aggregations.aggregationsAsMap().containsKey("category_counts")) {
+                co.elastic.clients.elasticsearch._types.aggregations.Aggregate aggregate = 
+                    aggregations.aggregationsAsMap().get("category_counts").aggregation().getAggregate();
+                if (aggregate.isSterms()) {
+                    StringTermsAggregate sterms = aggregate.sterms();
+                    for (StringTermsBucket bucket : sterms.buckets().array()) {
+                        categoryFacets.put(bucket.key().stringValue(), bucket.docCount());
+                    }
+                }
+            }
+
+            // Extract Brand Facets
+            if (aggregations.aggregationsAsMap().containsKey("brand_counts")) {
+                co.elastic.clients.elasticsearch._types.aggregations.Aggregate aggregate = 
+                    aggregations.aggregationsAsMap().get("brand_counts").aggregation().getAggregate();
+                if (aggregate.isSterms()) {
+                    StringTermsAggregate sterms = aggregate.sterms();
+                    for (StringTermsBucket bucket : sterms.buckets().array()) {
+                        brandFacets.put(bucket.key().stringValue(), bucket.docCount());
+                    }
+                }
+            }
+        }
+
+        // Fix: Use searchPageFor and extract page safely
+        SearchPage<Product> searchPage = SearchHitSupport.searchPageFor(searchHits, query.getPageable());
+        Page<Product> productPage = (Page<Product>) SearchHitSupport.unwrapSearchHits(searchPage);
+
+        return ProductSearchResponseDTO.builder()
+                .products(productPage)
+                .categoryFacets(categoryFacets)
+                .brandFacets(brandFacets)
+                .build();
+    }
+
+    /**
      * Story 2.1.1: Bulk Indexing Logic
-     * Manually sync all existing products from MongoDB to Elasticsearch index.
      */
     public void syncAllProductsToElasticsearch() {
         List<Product> allProducts = productRepository.findAll();
@@ -168,15 +238,11 @@ public class ProductService {
 
     /**
      * Story 2.1.3: Get product name suggestions for autocomplete
-     * Returns a list of strings (product names) instead of full product objects
      */
     public List<String> getAutocompleteSuggestions(String query) {
-        // Limit results to top 5 suggestions for better performance
         Pageable pageable = PageRequest.of(0, 5);
-        
         List<Product> products = productSearchRepository.findByNameSuggestions(query.toLowerCase(), pageable);
         
-        // Extract names, ensure they are unique, and return as a list
         return products.stream()
                 .map(Product::getName)
                 .distinct()
@@ -188,7 +254,6 @@ public class ProductService {
      */
     public ProductInternalResponseDTO getProductInternal(String id) {
         Product product = getProductById(id);
-        
         return ProductInternalResponseDTO.builder()
                 .id(product.getId())
                 .name(product.getName())
@@ -204,7 +269,6 @@ public class ProductService {
     public List<ProductInternalResponseDTO> getProductsByIds(List<String> ids) {
         Iterable<Product> products = productRepository.findAllById(ids);
         List<ProductInternalResponseDTO> responseList = new ArrayList<>();
-        
         products.forEach(product -> {
             responseList.add(ProductInternalResponseDTO.builder()
                     .id(product.getId())
@@ -214,7 +278,6 @@ public class ProductService {
                     .isAvailable("ACTIVE".equalsIgnoreCase(product.getStatus()))
                     .build());
         });
-        
         return responseList;
     }
 
@@ -224,28 +287,17 @@ public class ProductService {
     public ProductValidationResponseDTO validateProducts(List<String> ids) {
         Iterable<Product> products = productRepository.findAllById(ids);
         Map<String, Boolean> results = new HashMap<>();
-        
         for (String id : ids) {
             results.put(id, false);
         }
-
         products.forEach(product -> {
             if ("ACTIVE".equalsIgnoreCase(product.getStatus())) {
                 results.put(product.getId(), true);
             }
         });
-
-        boolean allValid = results.values().stream().allMatch(v -> v);
-
-        return ProductValidationResponseDTO.builder()
-                .allValid(allValid)
-                .results(results)
-                .build();
+        return ProductValidationResponseDTO.builder().allValid(results.values().stream().allMatch(v -> v)).results(results).build();
     }
 
-    /**
-     * Helper method to recursively find all subcategory IDs
-     */
     private void findChildCategoryIds(String parentId, List<Category> allCats, List<String> resultIds) {
         for (Category cat : allCats) {
             if (parentId.equals(cat.getParentCategoryId())) {

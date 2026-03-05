@@ -1,6 +1,7 @@
 package com.shopsphere.product.controller;
 
 import com.shopsphere.product.dto.ProductInternalResponseDTO;
+import com.shopsphere.product.dto.ProductSearchResponseDTO;
 import com.shopsphere.product.dto.ProductValidationResponseDTO;
 import com.shopsphere.product.model.Product;
 import com.shopsphere.product.service.ProductService;
@@ -128,6 +129,21 @@ public class ProductController {
     public ResponseEntity<List<String>> getSuggestions(@RequestParam(name = "q") String query) {
         List<String> suggestions = productService.getAutocompleteSuggestions(query);
         return ResponseEntity.ok(suggestions);
+    }
+
+    /**
+     * Story 2.1.4: Faceted Search API
+     * Returns products along with category and brand aggregations.
+     * URL: GET /api/products/search/facets?q=keyword
+     */
+    @GetMapping("/search/facets")
+    public ResponseEntity<ProductSearchResponseDTO> searchWithFacets(
+            @RequestParam(name = "q") String keyword,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "20") int size) {
+        
+        ProductSearchResponseDTO response = productService.searchWithFacets(keyword, page, size);
+        return ResponseEntity.ok(response);
     }
 
     /**
