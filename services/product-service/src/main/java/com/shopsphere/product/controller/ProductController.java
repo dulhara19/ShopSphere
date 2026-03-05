@@ -98,6 +98,29 @@ public class ProductController {
     }
 
     /**
+     * Story 2.1.1: Bulk Sync Endpoint
+     * Manually sync all existing MongoDB products to Elasticsearch index.
+     */
+    @PostMapping("/sync-to-elastic")
+    public ResponseEntity<String> syncToElastic() {
+        productService.syncAllProductsToElasticsearch();
+        return ResponseEntity.ok("Synchronization successful!");
+    }
+
+    /**
+     * Story 2.1.2: Advanced Full-Text Search using Elasticsearch
+     */
+    @GetMapping("/search/advanced")
+    public ResponseEntity<Page<Product>> advancedSearch(
+            @RequestParam(name = "q") String keyword,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "20") int size) {
+        
+        Page<Product> results = productService.searchProductsInElasticsearch(keyword, page, size);
+        return ResponseEntity.ok(results);
+    }
+
+    /**
      * Story 1.4.1: Upload multiple images for a product
      */
     @PostMapping("/{id}/images")
@@ -123,6 +146,7 @@ public class ProductController {
             product.setPrimaryImage(currentImages.get(0));
         }
 
+        // Image එක් කිරීමෙන් පසු product එක update කිරීම
         Product updatedProduct = productService.updateProduct(id, product);
         return ResponseEntity.ok(updatedProduct);
     }
@@ -193,8 +217,6 @@ public class ProductController {
 
     /**
      * Story 1.5.3: Validate product existence and status (Internal use)
-     * URL Example: POST /api/products/validate
-     * Body: ["id1", "id2"]
      */
     @PostMapping("/validate")
     public ResponseEntity<ProductValidationResponseDTO> validateProducts(@RequestBody List<String> ids) {
