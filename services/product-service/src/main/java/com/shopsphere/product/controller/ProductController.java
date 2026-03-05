@@ -18,7 +18,9 @@ import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 @CrossOrigin 
 @RestController
@@ -140,9 +142,9 @@ public class ProductController {
     }
 
     /**
-     * Story 2.1.4, 2.3.1 & 2.3.2: Faceted Search & Filters API
-     * Returns products along with category and brand aggregations and rating filters.
-     * URL Example: GET /api/products/search/facets?q=shirt&brands=Nike,Adidas&minRating=4.0
+     * Story 2.1.4, 2.3.1, 2.3.2 & 2.3.3: Advanced Faceted Search & Filters API
+     * Returns products along with category and brand aggregations and multi-filter support.
+     * URL Example: GET /api/products/search/facets?q=shirt&brands=Nike,Adidas&minRating=4.0&color=red&size=M
      */
     @GetMapping("/search/facets")
     public ResponseEntity<ProductSearchResponseDTO> searchWithFacets(
@@ -150,9 +152,18 @@ public class ProductController {
             @RequestParam(required = false) List<String> brands,
             @RequestParam(required = false) Double minRating,
             @RequestParam(defaultValue = "0") int page,
-            @RequestParam(defaultValue = "20") int size) {
+            @RequestParam(defaultValue = "20") int size,
+            @RequestParam Map<String, String> allParams) {
         
-        ProductSearchResponseDTO response = productService.searchWithFacets(keyword, brands, minRating, page, size);
+        // Remove standard parameters to isolate dynamic attributes (size, color, material, etc.)
+        Map<String, String> attributes = new HashMap<>(allParams);
+        attributes.remove("q");
+        attributes.remove("brands");
+        attributes.remove("minRating");
+        attributes.remove("page");
+        attributes.remove("size");
+
+        ProductSearchResponseDTO response = productService.searchWithFacets(keyword, brands, minRating, attributes, page, size);
         return ResponseEntity.ok(response);
     }
 

@@ -197,10 +197,16 @@ public class ProductService {
     }
 
     /**
-     * Story 2.1.4, 2.3.1 & 2.3.2: Faceted Search with Brand and Rating Filters
+     * Story 2.1.4, 2.3.1, 2.3.2 & 2.3.3: Advanced Faceted Search with Brand, Rating and Attribute Filters
      */
     @SuppressWarnings("unchecked")
-    public ProductSearchResponseDTO searchWithFacets(String keyword, List<String> brands, Double minRating, int page, int size) {
+    public ProductSearchResponseDTO searchWithFacets(
+            String keyword, 
+            List<String> brands, 
+            Double minRating, 
+            Map<String, String> attributes, 
+            int page, int size) {
+        
         Pageable pageable = PageRequest.of(page, size);
 
         Query query = NativeQuery.builder()
@@ -229,8 +235,23 @@ public class ProductService {
                     if (minRating != null && minRating > 0) {
                         b.filter(f -> f.range(r -> r
                                 .field("averageRating")
-                                .gte(JsonData.of(minRating)) // gte = Greater Than or Equal
+                                .gte(JsonData.of(minRating))
                         ));
+                    }
+
+                    // 4. Story 2.3.3: Filter by Dynamic Attributes (Nested variants filtering)
+                    if (attributes != null && !attributes.isEmpty()) {
+                        for (Map.Entry<String, String> entry : attributes.entrySet()) {
+                            String attrKey = entry.getKey();
+                            String attrValue = entry.getValue();
+
+                            b.filter(f -> f.nested(n -> n
+                                .path("variants")
+                                .query(nq -> nq.bool(nb -> nb
+                                    .must(nm -> nm.match(m -> m.field("variants.attributes." + attrKey).query(attrValue)))
+                                ))
+                            ));
+                        }
                     }
                     
                     return b;
