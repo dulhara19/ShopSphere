@@ -11,6 +11,7 @@ import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 
 import java.time.LocalDateTime;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
 import java.util.UUID;
 
@@ -158,6 +159,14 @@ public class User {
     @Enumerated(EnumType.STRING)
     @Builder.Default
     private Set<Role> roles = new HashSet<>();
+
+    /**
+     * Collection of addresses associated with this user (one-to-many relationship)
+     * Cascade delete ensures addresses are deleted when user is deleted
+     * Lazy loading is used to avoid loading all addresses with every user fetch
+     */
+    @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
+    private List<Address> addresses;
 
     /**
      * Timestamp when user account was created

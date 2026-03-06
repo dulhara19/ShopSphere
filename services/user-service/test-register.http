@@ -1,178 +1,45 @@
+### 1. Register a fresh user (Since we did ddl-auto: create)
 POST http://localhost:3001/api/auth/register
 Content-Type: application/json
 
 {
-    "firstName": "Kamal",
-    "lastName": "Silva",
-    "email": "kamal@example.com",
-    "password": "password123"
-}
-### User Login - Success Scenario
-POST http://localhost:3001/api/auth/login
-Content-Type: application/json
-
-{
-    "email": "kamal@example.com",
-    "password": "password123"
-}
-
-### Test Protected Route with Token
-GET http://localhost:3001/api/auth/me
-Authorization: Bearer eyJhbGciOiJIUzM4NCJ9.eyJ0b2tlblR5cGUiOiJhY2Nlc3MiLCJ1c2VySWQiOiJhNGRhMGFlYi04NzU2LTQzYTItODAyYi0wZWFhYTRlZmQxMjkiLCJzdWIiOiJzYW1hbkBleGFtcGxlLmNvbSIsImlhdCI6MTc3MTM0OTE2MiwiZXhwIjoxNzcxMzUwMDYyfQ.2smWuAb_6S_3sRbxEuujtJCTs9Cdn1tGko28TBdHda66CGsfUMxGXf0ROBh18N2D
-Content-Type: application/json
-
-### Get My Profile
-GET http://localhost:3001/api/users/me
-Authorization: Bearer eyJhbGciOiJIUzM4NCJ9.eyJ0b2tlblR5cGUiOiJhY2Nlc3MiLCJ1c2VySWQiOiJiMTUzMGUwNi1lNTExLTQwNDQtYjEwNy04OTMyNWMzNmJhODEiLCJzdWIiOiJzYW1hbkBleGFtcGxlLmNvbSIsImlhdCI6MTc3MTQyOTEzNiwiZXhwIjoxNzcxNDMwMDM2fQ.80o4v9lZ9oasBEWJ8hjoFbjcpNwAMZ4lXy9u4sTNZGaxfSp6BZUMbFRRR2r638V4
-Content-Type: application/json
-
-### Update My Profile
-PUT http://localhost:3001/api/users/c0f71de1-c5d9-40e5-af5d-c79faf05a1e7
-Authorization: Bearer eyJhbGciOiJIUzM4NCJ9.eyJ0b2tlblR5cGUiOiJhY2Nlc3MiLCJ1c2VySWQiOiJjMGY3MWRlMS1jNWQ5LTQwZTUtYWY1ZC1jNzlmYWYwNWExZTciLCJzdWIiOiJzYW1hbkBleGFtcGxlLmNvbSIsImlhdCI6MTc3MTM1NDUwMywiZXhwIjoxNzcxMzU1NDAzfQ.iJw5nODWNtw8ypoZXq-FhTNirlZ-PM5cgdu3g7JmgvYYAvYBsCmcW4QDaSzinZPw
-Content-Type: application/json
-
-{
-    "firstName": "Saman",
-    "lastName": "Perera",
-    "phone": "0771234567",
-    "address": "No 123, Galle Road",
-    "city": "Colombo",
-    "state": "Western",
-    "postalCode": "00300",
-    "country": "Sri Lanka"
-}
-
-### GET All Users (Admin Only)
-GET http://localhost:3001/api/admin/users?page=0&size=10
-Authorization: Bearer eyJhbGciOiJIUzM4NCJ9.eyJ0b2tlblR5cGUiOiJhY2Nlc3MiLCJ1c2VySWQiOiIzNmJlMzRjNy0wMTBhLTQ5ZTQtYWZjNC03YTIzODJiY2E5NjgiLCJzdWIiOiJzYW1hbkBleGFtcGxlLmNvbSIsImlhdCI6MTc3MTQzMzEyMSwiZXhwIjoxNzcxNDM0MDIxfQ.6NeIcFbLxk-dpymrNHLGG8YXiTDifbbMQW_rmTa4WC0KemMNTMYvpEnNHpHAp2DS
-
-Accept: application/json
-
-### Get My Profile
-GET http://localhost:3001/api/users/me
-Authorization: Bearer eyJhbGciOiJIUzM4NCJ9.eyJ0b2tlblR5cGUiOiJhY2Nlc3MiLCJ1c2VySWQiOiIzNmJlMzRjNy0wMTBhLTQ5ZTQtYWZjNC03YTIzODJiY2E5NjgiLCJzdWIiOiJzYW1hbkBleGFtcGxlLmNvbSIsImlhdCI6MTc3MTQzMzEyMSwiZXhwIjoxNzcxNDM0MDIxfQ.6NeIcFbLxk-dpymrNHLGG8YXiTDifbbMQW_rmTa4WC0KemMNTMYvpEnNHpHAp2DS
-
-### GET All Users (Admin Only)
-GET http://localhost:3001/api/admin/users?page=0&size=10
-Authorization: Bearer eyJhbGciOiJIUzM4NCJ9.eyJyb2xlcyI6WyJBRE1JTiJdLCJ0b2tlblR5cGUiOiJhY2Nlc3MiLCJ1c2VySWQiOiI3MTU0ZjliMi1mOTQ4LTQ5NDQtOTcyOC1hZmQ0YWViZTdlM2UiLCJzdWIiOiJzYW1hbkBleGFtcGxlLmNvbSIsImlhdCI6MTc3MTQzODcxMCwiZXhwIjoxNzcxNDM5NjEwfQ._wqPTJqSXC87dClaIHyjA-NoOaqlUuY89oZDw_laJJ71YOyR6_OvnRPnIj2wqDhI
-Accept: application/json
-
-### Update Kamal's Role to ADMIN
-PUT http://localhost:3001/api/admin/users/ed1f6685-8333-4fbc-93c9-75e20629c9ce/role
-Authorization: Bearer eyJhbGciOiJIUzM4NCJ9.eyJyb2xlcyI6WyJBRE1JTiJdLCJ0b2tlblR5cGUiOiJhY2Nlc3MiLCJ1c2VySWQiOiI3MTU0ZjliMi1mOTQ4LTQ5NDQtOTcyOC1hZmQ0YWViZTdlM2UiLCJzdWIiOiJzYW1hbkBleGFtcGxlLmNvbSIsImlhdCI6MTc3MTQzODcxMCwiZXhwIjoxNzcxNDM5NjEwfQ._wqPTJqSXC87dClaIHyjA-NoOaqlUuY89oZDw_laJJ71YOyR6_OvnRPnIj2wqDhI
-Content-Type: application/json
-
-{
-    "roles": ["ADMIN"]
-}
-
-### Get Current User Profile
-GET http://localhost:3001/api/users/me
-Authorization: Bearer eyJhbGciOiJIUzM4NCJ9.eyJyb2xlcyI6WyJBRE1JTiJdLCJ0b2tlblR5cGUiOiJhY2Nlc3MiLCJ1c2VySWQiOiI3MTU0ZjliMi1mOTQ4LTQ5NDQtOTcyOC1hZmQ0YWViZTdlM2UiLCJzdWIiOiJzYW1hbkBleGFtcGxlLmNvbSIsImlhdCI6MTc3MTQ0MDE2MSwiZXhwIjoxNzcxNDQxMDYxfQ.T5vr8fwadboRh5ilaXvg7A7c6VwyT1SRVRvdj1S5Xae9SFk9w38wn1ANv-ETn3Hp
-
-### Get Paginated User List
-GET http://localhost:3001/api/admin/users?page=0&size=10
-Authorization: Bearer eyJhbGciOiJIUzM4NCJ9.eyJyb2xlcyI6WyJBRE1JTiJdLCJ0b2tlblR5cGUiOiJhY2Nlc3MiLCJ1c2VySWQiOiI3MTU0ZjliMi1mOTQ4LTQ5NDQtOTcyOC1hZmQ0YWViZTdlM2UiLCJzdWIiOiJzYW1hbkBleGFtcGxlLmNvbSIsImlhdCI6MTc3MTQ0MDE2MSwiZXhwIjoxNzcxNDQxMDYxfQ.T5vr8fwadboRh5ilaXvg7A7c6VwyT1SRVRvdj1S5Xae9SFk9w38wn1ANv-ETn3Hp
-
-### Update Kamal's Role to CUSTOMER
-PUT http://localhost:3001/api/admin/users/ed1f6685-8333-4fbc-93c9-75e20629c9ce/role
-Authorization: Bearer eyJhbGciOiJIUzM4NCJ9.eyJyb2xlcyI6WyJBRE1JTiJdLCJ0b2tlblR5cGUiOiJhY2Nlc3MiLCJ1c2VySWQiOiI3MTU0ZjliMi1mOTQ4LTQ5NDQtOTcyOC1hZmQ0YWViZTdlM2UiLCJzdWIiOiJzYW1hbkBleGFtcGxlLmNvbSIsImlhdCI6MTc3MTQ0MDE2MSwiZXhwIjoxNzcxNDQxMDYxfQ.T5vr8fwadboRh5ilaXvg7A7c6VwyT1SRVRvdj1S5Xae9SFk9w38wn1ANv-ETn3Hp
-Content-Type: application/json
-
-{
-    "roles": ["CUSTOMER"]
-}
-
-### Security Test: Access Denied for Customer
-GET http://localhost:3001/api/admin/users
-Authorization: Bearer eyJhbGciOiJIUzM4NCJ9.eyJyb2xlcyI6WyJDVVNUT01FUiJdLCJ0b2tlblR5cGUiOiJhY2Nlc3MiLCJ1c2VySWQiOiJlZDFmNjY4NS04MzMzLTRmYmMtOTNjOS03NWUyMDYyOWM5Y2UiLCJzdWIiOiJrYW1hbEBleGFtcGxlLmNvbSIsImlhdCI6MTc3MTQ0MDY3NiwiZXhwIjoxNzcxNDQxNTc2fQ.Jq7XZwK7_rJ4SQMgVCb8d1seuIM8MM4o65ISTdVK3EWp7Prr_yA_GKjc-rI01iNc
-
-### Request Password Reset
-POST http://localhost:3001/api/auth/forgot-password
-Content-Type: application/json
-
-{
-    "email": "rajapakshadilshan9999@gmail.com"
-}
-
-### Request Password Reset
-POST http://localhost:3001/api/auth/forgot-password
-Content-Type: application/json
-
-{
-"email": "rajapakshadilshan9999@gmail.com"
-}
-
-### Reset Password
-POST http://localhost:3001/api/auth/reset-password
-Content-Type: application/json
-
-{
-    "token": "442127",
-    "newPassword": "Shopsphere@2026"
-}
-### Reset Password
-POST http://localhost:3001/api/auth/reset-password
-Content-Type: application/json
-
-{
-    "email": "rajapakshadilshan9999@gmail.com",
-    "code": "442127",
-    "password": "Shopsphere@2026"
-}
-
-### Reset Password
-POST http://localhost:3001/api/auth/reset-password
-Content-Type: application/json
-
-{
-    "email": "rajapakshadilshan9999@gmail.com",
-    "code": "442127",
-    "newPassword": "Shopsphere@2026"
-}
-
-
-### Register a new user to test Auditing
-POST http://localhost:3001/api/auth/register
-Content-Type: application/json
-
-{
-    "username": "audit_test_user",
-    "email": "audit@shopsphere.com",
+    "username": "address_tester",
+    "email": "tester@example.com",
     "password": "Password@123",
-    "firstName": "Audit",
-    "lastName": "Test"
+    "firstName": "Address",
+    "lastName": "Tester"
 }
 
-### 1. Forgot Password Request
-POST http://localhost:3001/api/auth/forgot-password
-Content-Type: application/json
-
-{
-    "email": "audit@shopsphere.com"
-}
-
-### 2. Reset Password Request
-POST http://localhost:3001/api/auth/reset-password
-Content-Type: application/json
-
-{
-    "email": "audit@shopsphere.com",
-    "code": "737905",
-    "newPassword": "NewAuditPassword@2026"
-}
-### Login to get Token
+### 2. Login to get a valid Token
+# @name login
 POST http://localhost:3001/api/auth/login
 Content-Type: application/json
 
 {
-    "email": "audit@shopsphere.com",
+    "email": "tester@example.com",
     "password": "Password@123"
 }
-### Test Internal Validation
-POST http://localhost:3001/internal/auth/validate?token=eyJhbGciOiJIUzM4NCJ9.eyJyb2xlcyI6WyJDVVNUT01FUiJdLCJ0b2tlblR5cGUiOiJhY2Nlc3MiLCJ1c2VySWQiOiJkNmEwZGI1Yy03YzU4LTRiYTAtODA3ZS1kYmVkOTRhMzU4OTIiLCJzdWIiOiJhdWRpdEBzaG9wc3BoZXJlLmNvbSIsImlhdCI6MTc3MTYwNDc2MiwiZXhwIjoxNzcxNjA1NjYyfQ._GbNuDavxskwEzpV7kBgkUmKs7WuY93IHWik9M3xl7DDg3Z5cqkKhJlu-p62Hl7S
 
+### 4. Add a New Shipping Address
+POST http://localhost:3001/api/users/me/addresses
+Authorization: Bearer eyJhbGciOiJIUzM4NCJ9.eyJyb2xlcyI6WyJDVVNUT01FUiJdLCJ0b2tlblR5cGUiOiJhY2Nlc3MiLCJ1c2VySWQiOiJlMjM1MDJjNi1mODg2LTQ5YzYtOTAyMS1mNDlhN2Y4YTBiNzQiLCJzdWIiOiJ0ZXN0ZXJAZXhhbXBsZS5jb20iLCJpYXQiOjE3NzI3MTkwODcsImV4cCI6MTc3MjcxOTk4N30.8J67TPgyrneTZmkOQ32t4n-tR5l6Etcr5lW2-tAiWHG1pxtCGFxO2vPf0DP306uw
+Content-Type: application/json
 
-### Phase 4.2 Test - Get User by ID (Internal)
-GET http://localhost:3001/internal/users/d96bcd61-aca1-4caa-9f45-2daf8193838c
-Accept: application/json
+{
+    "street": "456 Galle Road",
+    "city": "Bambalapitiya",
+    "state": "Western",
+    "zipCode": "00400",
+    "country": "Sri Lanka",
+    "isDefault": true
+}
+
+### Logout Request
+POST http://localhost:3001/api/auth/logout
+Authorization: Bearer eyJhbGciOiJIUzM4NCJ9.eyJyb2xlcyI6WyJDVVNUT01FUiJdLCJ0b2tlblR5cGUiOiJhY2Nlc3MiLCJ1c2VySWQiOiJlMjM1MDJjNi1mODg2LTQ5YzYtOTAyMS1mNDlhN2Y4YTBiNzQiLCJzdWIiOiJ0ZXN0ZXJAZXhhbXBsZS5jb20iLCJpYXQiOjE3NzI3MTkwODcsImV4cCI6MTc3MjcxOTk4N30.8J67TPgyrneTZmkOQ32t4n-tR5l6Etcr5lW2-tAiWHG1pxtCGFxO2vPf0DP306uw
+Content-Type: application/json
+
+{
+    "refreshToken": "eyJhbGciOiJIUzM4NCJ9.eyJ0b2tlblR5cGUiOiJyZWZyZXNoIiwidXNlcklkIjoiZTIzNTAyYzYtZjg4Ni00OWM2LTkwMjEtZjQ5YTdmOGEwYjc0Iiwic3ViIjoidGVzdGVyQGV4YW1wbGUuY29tIiwiaWF0IjoxNzcyNzE5MDg3LCJleHAiOjE3NzMzMjM4ODd9.tfRO5tzVPw9sim7V5VtEzTDCKWGfVQlcUhcdlkMgnoi1VEvL9NF2S8P4n8lPIENZ"
+}
+

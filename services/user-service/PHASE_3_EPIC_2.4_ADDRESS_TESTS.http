@@ -1,0 +1,154 @@
+### =====================================================
+### Phase 3 - Epic 2.4: Address Management - API Tests
+### =====================================================
+
+### 0. Register a test user for address testing
+POST http://localhost:3001/api/auth/register
+Content-Type: application/json
+
+{
+    "firstName": "Address",
+    "lastName": "Tester",
+    "email": "address-tester@example.com",
+    "password": "AddressTest@123"
+}
+
+### 1. Login as address tester
+POST http://localhost:3001/api/auth/login
+Content-Type: application/json
+
+{
+    "email": "address-tester@example.com",
+    "password": "AddressTest@123"
+}
+
+### 2. Add first address (should be set as default automatically)
+POST http://localhost:3001/api/users/me/addresses
+Authorization: Bearer eyJhbGciOiJIUzM4NCJ9.eyJyb2xlcyI6WyJDVVNUT01FUiJdLCJ0b2tlblR5cGUiOiJhY2Nlc3MiLCJ1c2VySWQiOiJYWFhYWFhYWCIsInN1YiI6ImFkZHJlc3MtdGVzdGVyQGV4YW1wbGUuY29tIiwiaWF0IjoxNzcxNjA0NzYyLCJleHAiOjE3NzE2MDU2NjJ9.XXX
+Content-Type: application/json
+
+{
+    "street": "123 Main Street",
+    "city": "New York",
+    "state": "NY",
+    "zipCode": "10001",
+    "country": "USA",
+    "isDefault": true
+}
+
+### 3. Add second address (not default)
+POST http://localhost:3001/api/users/me/addresses
+Authorization: Bearer <TOKEN_FROM_LOGIN>
+Content-Type: application/json
+
+{
+    "street": "456 Oak Avenue",
+    "city": "Los Angeles",
+    "state": "CA",
+    "zipCode": "90001",
+    "country": "USA",
+    "isDefault": false
+}
+
+### 4. Add third address (not default)
+POST http://localhost:3001/api/users/me/addresses
+Authorization: Bearer <TOKEN_FROM_LOGIN>
+Content-Type: application/json
+
+{
+    "street": "789 Pine Road",
+    "city": "Chicago",
+    "state": "IL",
+    "zipCode": "60601",
+    "country": "USA",
+    "isDefault": false
+}
+
+### 5. Get all addresses for the user
+GET http://localhost:3001/api/users/me/addresses
+Authorization: Bearer <TOKEN_FROM_LOGIN>
+Accept: application/json
+
+### 6. Set second address as default
+PUT http://localhost:3001/api/users/me/addresses/<ADDRESS_ID_2>/default
+Authorization: Bearer <TOKEN_FROM_LOGIN>
+Content-Type: application/json
+
+### 7. Verify default address changed
+GET http://localhost:3001/api/users/me/addresses
+Authorization: Bearer <TOKEN_FROM_LOGIN>
+Accept: application/json
+
+### 8. Delete an address (non-default)
+DELETE http://localhost:3001/api/users/me/addresses/<ADDRESS_ID_3>
+Authorization: Bearer <TOKEN_FROM_LOGIN>
+
+### 9. Verify address was deleted
+GET http://localhost:3001/api/users/me/addresses
+Authorization: Bearer <TOKEN_FROM_LOGIN>
+Accept: application/json
+
+### 10. Delete default address (system should set another as default)
+DELETE http://localhost:3001/api/users/me/addresses/<ADDRESS_ID_2>
+Authorization: Bearer <TOKEN_FROM_LOGIN>
+
+### 11. Verify new default address was set
+GET http://localhost:3001/api/users/me/addresses
+Authorization: Bearer <TOKEN_FROM_LOGIN>
+Accept: application/json
+
+### 12. Try to access addresses of another user (should fail with 403 or 404)
+DELETE http://localhost:3001/api/users/me/addresses/<ANOTHER_USER_ADDRESS_ID>
+Authorization: Bearer <TOKEN_FROM_LOGIN>
+
+### 13. Add address with validation error (missing required field)
+POST http://localhost:3001/api/users/me/addresses
+Authorization: Bearer <TOKEN_FROM_LOGIN>
+Content-Type: application/json
+
+{
+    "city": "New York",
+    "state": "NY",
+    "zipCode": "10001",
+    "country": "USA"
+}
+
+### 14. Add address with empty street field
+POST http://localhost:3001/api/users/me/addresses
+Authorization: Bearer <TOKEN_FROM_LOGIN>
+Content-Type: application/json
+
+{
+    "street": "",
+    "city": "New York",
+    "state": "NY",
+    "zipCode": "10001",
+    "country": "USA"
+}
+
+### =====================================================
+### Security Tests - Unauthenticated Access
+### =====================================================
+
+### S1. Try to add address without authentication
+POST http://localhost:3001/api/users/me/addresses
+Content-Type: application/json
+
+{
+    "street": "123 Main Street",
+    "city": "New York",
+    "state": "NY",
+    "zipCode": "10001",
+    "country": "USA"
+}
+
+### S2. Try to get addresses without authentication
+GET http://localhost:3001/api/users/me/addresses
+Accept: application/json
+
+### S3. Try to set default address without authentication
+PUT http://localhost:3001/api/users/me/addresses/some-id/default
+
+### S4. Try to delete address without authentication
+DELETE http://localhost:3001/api/users/me/addresses/some-id
+
