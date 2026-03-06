@@ -3,6 +3,7 @@ package com.shopsphere.product.controller;
 import com.shopsphere.product.dto.ProductInternalResponseDTO;
 import com.shopsphere.product.dto.ProductSearchResponseDTO;
 import com.shopsphere.product.dto.ProductValidationResponseDTO;
+import com.shopsphere.product.dto.ReviewSummaryDTO; // Added for Story 2.5.1
 import com.shopsphere.product.dto.VariantSelectionResponseDTO; // Added for Story 2.2.4
 import com.shopsphere.product.model.Product;
 import com.shopsphere.product.model.ProductVariant; // Added for Story 2.2.2
@@ -11,6 +12,7 @@ import com.shopsphere.product.repository.SearchAnalyticsRepository;
 import com.shopsphere.product.service.ProductService;
 import com.shopsphere.product.service.ImageService;
 import com.shopsphere.product.service.VisualSearchService; // Added for Story 2.4.1
+import com.shopsphere.product.service.integration.ReviewIntegrationService; // Added for Story 2.5.1
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.http.ResponseEntity;
@@ -41,6 +43,9 @@ public class ProductController {
     @Autowired
     private SearchAnalyticsRepository searchAnalyticsRepository;
 
+    @Autowired
+    private ReviewIntegrationService reviewIntegrationService; // Injected for Story 2.5.1
+
     /**
      * Story 1.1.1: Create Product (Seller)
      */
@@ -51,11 +56,20 @@ public class ProductController {
     }
 
     /**
-     * Story 1.1.2: Get product by ID
+     * Story 1.1.2 & 2.5.1: Get product by ID with aggregated Ratings
      */
     @GetMapping("/{id}")
     public ResponseEntity<Product> getProductById(@PathVariable String id) {
+        // 1. Get core product details
         Product product = productService.getProductById(id);
+        
+        // 2. Story 2.5.1: Fetch and attach aggregated ratings from Review Service (Cached)
+        ReviewSummaryDTO reviewSummary = reviewIntegrationService.getProductRatingSummary(id);
+        if (reviewSummary != null && reviewSummary.getTotalReviews() != null) {
+            product.setAverageRating(reviewSummary.getAverageRating());
+            product.setReviewCount(reviewSummary.getTotalReviews());
+        }
+        
         return ResponseEntity.ok(product);
     }
 
