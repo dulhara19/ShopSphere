@@ -1,0 +1,25 @@
+server:
+  port: 3008
+
+spring:
+  data:
+    mongodb:
+      uri: mongodb://localhost:27017/recommendation_service
+      database: recommendation_service
+    redis:
+      host: localhost
+      port: 6379
+
+  rabbitmq:
+    host: localhost
+    port: 5672
+    username: guest
+    password: guest
+
+  jpa:
+    show-sql: false
+
+logging:
+  level:
+    com.shopsphere.recommendation: DEBUG
+    org.springframework: INFO

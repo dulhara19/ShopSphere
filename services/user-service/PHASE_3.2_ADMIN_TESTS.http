@@ -1,0 +1,204 @@
+### Phase 3.2: Admin Features - HTTP Test Suite
+### Base URL: http://localhost:3001
+
+### Variables
+@base_url = http://localhost:3001
+@admin_token = {ADMIN_JWT_TOKEN}
+@customer_token = {CUSTOMER_JWT_TOKEN}
+@seller_token = {SELLER_JWT_TOKEN}
+@invalid_token = invalid.token.here
+@test_user_id = {TARGET_USER_ID}
+
+---
+
+### Test 1: Get All Users - Default Pagination
+### Expected: 200 OK with paginated user list
+### Requires: ADMIN role
+GET {{base_url}}/api/admin/users
+Authorization: Bearer {{admin_token}}
+
+---
+
+### Test 2: Get All Users - Custom Page Size
+### Expected: 200 OK with 10 users per page
+GET {{base_url}}/api/admin/users?page=0&size=10
+Authorization: Bearer {{admin_token}}
+
+---
+
+### Test 3: Get All Users - With Sorting
+### Expected: 200 OK sorted by email ascending
+GET {{base_url}}/api/admin/users?sort=email,asc
+Authorization: Bearer {{admin_token}}
+
+---
+
+### Test 4: Get All Users - Multiple Sort Criteria
+### Expected: 200 OK sorted by createdAt descending, then email ascending
+GET {{base_url}}/api/admin/users?sort=createdAt,desc&sort=email,asc
+Authorization: Bearer {{admin_token}}
+
+---
+
+### Test 5: Get All Users - Large Page Number
+### Expected: 200 OK (empty or partial page depending on data)
+GET {{base_url}}/api/admin/users?page=100&size=20
+Authorization: Bearer {{admin_token}}
+
+---
+
+### Test 6: Update User Roles - Add SELLER Role
+### Expected: 200 OK with updated user having SELLER role
+PUT {{base_url}}/api/admin/users/{{test_user_id}}/role
+Authorization: Bearer {{admin_token}}
+Content-Type: application/json
+
+{
+  "roles": ["ROLE_CUSTOMER", "ROLE_SELLER"]
+}
+
+---
+
+### Test 7: Update User Roles - Admin Only
+### Expected: 200 OK with user having only ADMIN role
+PUT {{base_url}}/api/admin/users/{{test_user_id}}/role
+Authorization: Bearer {{admin_token}}
+Content-Type: application/json
+
+{
+  "roles": ["ROLE_ADMIN"]
+}
+
+---
+
+### Test 8: Update User Roles - Single Role (Customer)
+### Expected: 200 OK with user having CUSTOMER role
+PUT {{base_url}}/api/admin/users/{{test_user_id}}/role
+Authorization: Bearer {{admin_token}}
+Content-Type: application/json
+
+{
+  "roles": ["ROLE_CUSTOMER"]
+}
+
+---
+
+### Test 9: Update User Roles - Multiple Roles
+### Expected: 200 OK with user having all three roles
+PUT {{base_url}}/api/admin/users/{{test_user_id}}/role
+Authorization: Bearer {{admin_token}}
+Content-Type: application/json
+
+{
+  "roles": ["ROLE_CUSTOMER", "ROLE_SELLER", "ROLE_ADMIN"]
+}
+
+---
+
+### Test 10: Access Denied - Customer Trying to Get All Users
+### Expected: 403 Forbidden
+GET {{base_url}}/api/admin/users
+Authorization: Bearer {{customer_token}}
+
+---
+
+### Test 11: Access Denied - Seller Trying to Update Roles
+### Expected: 403 Forbidden
+PUT {{base_url}}/api/admin/users/{{test_user_id}}/role
+Authorization: Bearer {{seller_token}}
+Content-Type: application/json
+
+{
+  "roles": ["ROLE_ADMIN"]
+}
+
+---
+
+### Test 12: Validation Error - Empty Roles
+### Expected: 400 Bad Request - "Roles cannot be empty"
+PUT {{base_url}}/api/admin/users/{{test_user_id}}/role
+Authorization: Bearer {{admin_token}}
+Content-Type: application/json
+
+{
+  "roles": []
+}
+
+---
+
+### Test 13: Validation Error - Null Roles
+### Expected: 400 Bad Request
+PUT {{base_url}}/api/admin/users/{{test_user_id}}/role
+Authorization: Bearer {{admin_token}}
+Content-Type: application/json
+
+{
+}
+
+---
+
+### Test 14: Not Found - Invalid User ID
+### Expected: 404 Not Found - "User not found"
+PUT {{base_url}}/api/admin/users/00000000-0000-0000-0000-000000000000/role
+Authorization: Bearer {{admin_token}}
+Content-Type: application/json
+
+{
+  "roles": ["ROLE_CUSTOMER"]
+}
+
+---
+
+### Test 15: Unauthorized - Missing Token (Get Users)
+### Expected: 401 Unauthorized
+GET {{base_url}}/api/admin/users
+
+---
+
+### Test 16: Unauthorized - Missing Token (Update Roles)
+### Expected: 401 Unauthorized
+PUT {{base_url}}/api/admin/users/{{test_user_id}}/role
+Content-Type: application/json
+
+{
+  "roles": ["ROLE_ADMIN"]
+}
+
+---
+
+### Test 17: Unauthorized - Invalid Token Format
+### Expected: 401 Unauthorized
+GET {{base_url}}/api/admin/users
+Authorization: Bearer {{invalid_token}}
+
+---
+
+### Test 18: Pagination - Second Page
+### Expected: 200 OK with users on page 1
+GET {{base_url}}/api/admin/users?page=1&size=20
+Authorization: Bearer {{admin_token}}
+
+---
+
+### Test 19: Sorting - By Created Date Descending
+### Expected: 200 OK with newest users first
+GET {{base_url}}/api/admin/users?sort=createdAt,desc
+Authorization: Bearer {{admin_token}}
+
+---
+
+### Test 20: Combined - Pagination + Sorting
+### Expected: 200 OK with page 2, 15 items per page, sorted by email
+GET {{base_url}}/api/admin/users?page=2&size=15&sort=email,asc
+Authorization: Bearer {{admin_token}}
+
+---
+
+## Notes:
+# Replace {{admin_token}} with actual JWT token containing ROLE_ADMIN
+# Replace {{customer_token}} with JWT token containing ROLE_CUSTOMER
+# Replace {{seller_token}} with JWT token containing ROLE_SELLER
+# Replace {{test_user_id}} with an actual user ID from the database
+# Run tests sequentially to verify all scenarios
+# Monitor logs for detailed operation information
+

@@ -1,0 +1,91 @@
+### Phase 3.1: Profile APIs - Test Cases
+
+### Test 1: Register User (Create test user for profile testing)
+POST http://localhost:3001/api/auth/register
+Content-Type: application/json
+
+{
+  "firstName": "John",
+  "lastName": "Doe",
+  "email": "john.doe@example.com",
+  "password": "SecurePass123"
+}
+
+###
+
+### Test 2: Login to Get JWT Token
+POST http://localhost:3001/api/auth/login
+Content-Type: application/json
+
+{
+  "email": "john.doe@example.com",
+  "password": "SecurePass123"
+}
+
+###
+
+### Test 3: Get Profile - Success (Replace token with actual token from Test 2)
+GET http://localhost:3001/api/users/me
+Authorization: Bearer eyJhbGciOiJIUzM4NCJ9.eyJ0b2tlblR5cGUiOiJhY2Nlc3MiLCJ1c2VySWQiOiJhNGRhMGFlYi04NzU2LTQzYTItODAyYi0wZWFhYTRlZmQxMjkiLCJzdWIiOiJqb2huLmRvZUBleGFtcGxlLmNvbSIsImlhdCI6MTcwODEwODgwMCwiZXhwIjoxNzA4MTA5NzAwfQ.2smWuAb_6S_3sRbxEuujtJCTs9Cdn1tGko28TBdHda66CGsfUMxGXf0ROBh18N2D
+Content-Type: application/json
+
+###
+
+### Test 4: Get Profile - No Token (Should Return 401 Unauthorized)
+GET http://localhost:3001/api/users/me
+Content-Type: application/json
+
+###
+
+### Test 5: Get Profile - Invalid Token (Should Return 401 Unauthorized)
+GET http://localhost:3001/api/users/me
+Authorization: Bearer invalid_token_xyz
+Content-Type: application/json
+
+###
+
+### Test 6: Get Profile - Expired Token (Should Return 401 Unauthorized)
+GET http://localhost:3001/api/users/me
+Authorization: Bearer eyJhbGciOiJIUzM4NCJ9.eyJ0b2tlblR5cGUiOiJhY2Nlc3MiLCJ1c2VySWQiOiJhNGRhMGFlYi04NzU2LTQzYTItODAyYi0wZWFhYTRlZmQxMjkiLCJzdWIiOiJqb2huLmRvZUBleGFtcGxlLmNvbSIsImlhdCI6MTcwODEwODgwMCwiZXhwIjoxNzA4MTA5NzAwfQ.expired_signature
+Content-Type: application/json
+
+###
+
+### Test 7: Get Profile with Valid Token (Second time - cache test)
+GET http://localhost:3001/api/users/me
+Authorization: Bearer eyJhbGciOiJIUzM4NCJ9.eyJ0b2tlblR5cGUiOiJhY2Nlc3MiLCJ1c2VySWQiOiJhNGRhMGFlYi04NzU2LTQzYTItODAyYi0wZWFhYTRlZmQxMjkiLCJzdWIiOiJqb2huLmRvZUBleGFtcGxlLmNvbSIsImlhdCI6MTcwODEwODgwMCwiZXhwIjoxNzA4MTA5NzAwfQ.2smWuAb_6S_3sRbxEuujtJCTs9Cdn1tGko28TBdHda66CGsfUMxGXf0ROBh18N2D
+Content-Type: application/json
+
+###
+
+### Test 8: Register Another User
+POST http://localhost:3001/api/auth/register
+Content-Type: application/json
+
+{
+  "firstName": "Jane",
+  "lastName": "Smith",
+  "email": "jane.smith@example.com",
+  "password": "AnotherSecure456"
+}
+
+###
+
+### Test 9: Login Second User
+POST http://localhost:3001/api/auth/login
+Content-Type: application/json
+
+{
+  "email": "jane.smith@example.com",
+  "password": "AnotherSecure456"
+}
+
+###
+
+### Test 10: Get Profile for Second User (Use token from Test 9)
+GET http://localhost:3001/api/users/me
+Authorization: Bearer [INSERT_TOKEN_FROM_TEST_9]
+Content-Type: application/json
+
+###
+

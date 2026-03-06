@@ -1,0 +1,109 @@
+### Phase 4.2: Data Lookup - Internal User Retrieval Tests
+
+### Test 1: Fetch Existing User by ID (Valid UUID from Phase 3.1 tests)
+GET http://localhost:3001/internal/users/7154f9b2-f948-4944-9728-afd4aebe7e3e
+
+### Test 2: Fetch Another User (Kamal Silva - from registration tests)
+GET http://localhost:3001/internal/users/36be34c7-010a-49e4-afc4-7a2382bca968
+
+### Test 3: Service-to-Service Call - Order Service Lookup
+GET http://localhost:3001/internal/users/7154f9b2-f948-4944-9728-afd4aebe7e3e
+X-Service-Name: order-service
+X-Service-Version: 1.0
+
+### Test 4: Service-to-Service Call - Product Service Lookup
+GET http://localhost:3001/internal/users/36be34c7-010a-49e4-afc4-7a2382bca968
+X-Service-Name: product-service
+X-Service-Version: 1.0
+
+### Test 5: Service-to-Service Call - Notification Service Lookup
+GET http://localhost:3001/internal/users/7154f9b2-f948-4944-9728-afd4aebe7e3e
+X-Service-Name: notification-service
+X-Service-Version: 1.0
+
+### Test 6: Service-to-Service Call - Inventory Service Lookup
+GET http://localhost:3001/internal/users/36be34c7-010a-49e4-afc4-7a2382bca968
+X-Service-Name: inventory-service
+X-Service-Version: 1.0
+
+### Test 7: Service-to-Service Call - Analytics Service Lookup
+GET http://localhost:3001/internal/users/7154f9b2-f948-4944-9728-afd4aebe7e3e
+X-Service-Name: analytics-service
+X-Service-Version: 1.0
+
+### Test 8: Non-existent User (Random UUID)
+GET http://localhost:3001/internal/users/00000000-0000-0000-0000-000000000000
+
+### Test 9: Non-existent User (Different Random UUID)
+GET http://localhost:3001/internal/users/99999999-9999-9999-9999-999999999999
+
+### Test 10: Invalid UUID Format (Should cause validation error)
+GET http://localhost:3001/internal/users/not-a-valid-uuid
+
+### Test 11: Invalid UUID Format - Numeric
+GET http://localhost:3001/internal/users/12345
+
+### Test 12: Empty Path Variable
+GET http://localhost:3001/internal/users/
+
+### Test 13: Verify No Authentication Required (No Bearer Token, No Authorization Header)
+GET http://localhost:3001/internal/users/7154f9b2-f948-4944-9728-afd4aebe7e3e
+Content-Type: application/json
+
+### Test 14: With Authorization Header (Should Still Work - Not Required)
+GET http://localhost:3001/internal/users/7154f9b2-f948-4944-9728-afd4aebe7e3e
+Authorization: Bearer eyJhbGciOiJIUzM4NCJ9.eyJyb2xlcyI6WyJBRE1JTiJdLCJ0b2tlblR5cGUiOiJhY2Nlc3MiLCJ1c2VySWQiOiI3MTU0ZjliMi1mOTQ4LTQ5NDQtOTcyOC1hZmQ0YWViZTdlM2UiLCJzdWIiOiJzYW1hbkBleGFtcGxlLmNvbSIsImlhdCI6MTc3MTQzODcxMCwiZXhwIjoxNzcxNDM5NjEwfQ._wqPTJqSXC87dClaIHyjA-NoOaqlUuY89oZDw_laJJ71YOyR6_OvnRPnIj2wqDhI
+
+### Test 15: With Invalid Token (Should Still Work - Not Required)
+GET http://localhost:3001/internal/users/7154f9b2-f948-4944-9728-afd4aebe7e3e
+Authorization: Bearer invalid.token.here
+
+### Test 16: Fetch User and Verify All Fields Present
+# Expected response should contain: id, username, email, firstName, lastName, phone, roles
+GET http://localhost:3001/internal/users/7154f9b2-f948-4944-9728-afd4aebe7e3e
+
+### Test 17: Fetch Audit User (from test-register.http)
+GET http://localhost:3001/internal/users/d6a0db5c-7c58-4ba0-807e-dbed94a35892
+
+### Test 18: Batch Simulation - Fetch Multiple Users Sequentially
+# First user
+GET http://localhost:3001/internal/users/7154f9b2-f948-4944-9728-afd4aebe7e3e
+
+### Test 19: Second user
+GET http://localhost:3001/internal/users/36be34c7-010a-49e4-afc4-7a2382bca968
+
+### Test 20: Third user
+GET http://localhost:3001/internal/users/ed1f6685-8333-4fbc-93c9-75e20629c9ce
+
+### Test 21: Compare with Public Profile Endpoint
+# This is NOT internal - for comparison purposes
+# Public endpoints require authentication
+GET http://localhost:3001/api/users/7154f9b2-f948-4944-9728-afd4aebe7e3e
+Authorization: Bearer eyJhbGciOiJIUzM4NCJ9.eyJyb2xlcyI6WyJBRE1JTiJdLCJ0b2tlblR5cGUiOiJhY2Nlc3MiLCJ1c2VySWQiOiI3MTU0ZjliMi1mOTQ4LTQ5NDQtOTcyOC1hZmQ0YWViZTdlM2UiLCJzdWIiOiJzYW1hbkBleGFtcGxlLmNvbSIsImlhdCI6MTc3MTQzODcxMCwiZXhwIjoxNzcxNDM5NjEwfQ._wqPTJqSXC87dClaIHyjA-NoOaqlUuY89oZDw_laJJ71YOyR6_OvnRPnIj2wqDhI
+
+### Test 22: Internal vs Public - Internal Should NOT Require Auth
+# This should work even though it's the same UUID
+GET http://localhost:3001/internal/users/7154f9b2-f948-4944-9728-afd4aebe7e3e
+
+### Test 23: Load Test - Fetch Same User Multiple Times
+GET http://localhost:3001/internal/users/7154f9b2-f948-4944-9728-afd4aebe7e3e
+
+###
+GET http://localhost:3001/internal/users/7154f9b2-f948-4944-9728-afd4aebe7e3e
+
+###
+GET http://localhost:3001/internal/users/7154f9b2-f948-4944-9728-afd4aebe7e3e
+
+###
+GET http://localhost:3001/internal/users/7154f9b2-f948-4944-9728-afd4aebe7e3e
+
+###
+GET http://localhost:3001/internal/users/7154f9b2-f948-4944-9728-afd4aebe7e3e
+
+### Test 24: Special Characters in UUID (Should Fail Validation)
+GET http://localhost:3001/internal/users/7154f9b2-f948-4944-9728-afd4aebe7e3e!
+
+### Test 25: UUID with SQL Injection Attempt (Should Be Safe)
+GET http://localhost:3001/internal/users/7154f9b2-f948-4944-9728-afd4aebe7e3e' OR '1'='1
+
+

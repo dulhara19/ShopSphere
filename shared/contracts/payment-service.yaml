@@ -1,0 +1,645 @@
+openapi: 3.0.3
+info:
+  title: Payment Service API
+  description: |
+    Payment Service handles payment processing, refunds, and transaction management for ShopSphere.
+  version: 1.0.0
+  contact:
+    name: Team Member 5
+    email: team5@shopsphere.com
+
+servers:
+  - url: http://localhost:3005
+    description: Local development
+  - url: https://api.shopsphere.com
+    description: Production
+
+tags:
+  - name: Payments
+    description: Payment processing
+  - name: Payment Methods
+    description: Saved payment methods
+  - name: Refunds
+    description: Refund processing
+  - name: Transactions
+    description: Transaction history
+  - name: Webhooks
+    description: Payment provider webhooks
+  - name: Internal
+    description: Internal service-to-service APIs
+
+paths:
+  # ==================== PAYMENTS ====================
+  /api/payments/create-intent:
+    post:
+      tags:
+        - Payments
+      summary: Create payment intent
+      description: Create a Stripe payment intent for checkout
+      operationId: createPaymentIntent
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreatePaymentIntentRequest'
+      responses:
+        '200':
+          description: Payment intent created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaymentIntentResponse'
+        '400':
+          description: Invalid request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /api/payments/{id}/confirm:
+    post:
+      tags:
+        - Payments
+      summary: Confirm payment
+      description: Confirm payment after client-side completion
+      operationId: confirmPayment
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Payment confirmed
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaymentResponse'
+        '400':
+          description: Payment failed
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /api/payments/{id}/status:
+    get:
+      tags:
+        - Payments
+      summary: Get payment status
+      description: Check the status of a payment
+      operationId: getPaymentStatus
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Payment status retrieved
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaymentResponse'
+        '404':
+          description: Payment not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  # ==================== PAYMENT METHODS ====================
+  /api/payment-methods:
+    get:
+      tags:
+        - Payment Methods
+      summary: List saved payment methods
+      description: Get user's saved payment methods
+      operationId: listPaymentMethods
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Payment methods retrieved
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/PaymentMethodResponse'
+
+    post:
+      tags:
+        - Payment Methods
+      summary: Save payment method
+      description: Save a new payment method
+      operationId: savePaymentMethod
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SavePaymentMethodRequest'
+      responses:
+        '201':
+          description: Payment method saved
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaymentMethodResponse'
+
+  /api/payment-methods/{id}:
+    delete:
+      tags:
+        - Payment Methods
+      summary: Remove payment method
+      description: Remove a saved payment method
+      operationId: removePaymentMethod
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Payment method removed
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MessageResponse'
+
+  /api/payment-methods/{id}/default:
+    put:
+      tags:
+        - Payment Methods
+      summary: Set default payment method
+      description: Set a payment method as default
+      operationId: setDefaultPaymentMethod
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Default payment method set
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaymentMethodResponse'
+
+  # ==================== REFUNDS ====================
+  /api/payments/{id}/refund:
+    post:
+      tags:
+        - Refunds
+      summary: Process refund
+      description: Initiate a refund for a payment
+      operationId: processRefund
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RefundRequest'
+      responses:
+        '200':
+          description: Refund initiated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RefundResponse'
+        '400':
+          description: Refund failed
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /api/payments/{id}/refunds:
+    get:
+      tags:
+        - Refunds
+      summary: Get refunds for payment
+      description: Get all refunds associated with a payment
+      operationId: getPaymentRefunds
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Refunds retrieved
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/RefundResponse'
+
+  /api/refunds/{refundId}:
+    get:
+      tags:
+        - Refunds
+      summary: Get refund details
+      description: Get details of a specific refund
+      operationId: getRefund
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: refundId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Refund retrieved
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RefundResponse'
+
+  # ==================== TRANSACTIONS ====================
+  /api/transactions:
+    get:
+      tags:
+        - Transactions
+      summary: List transactions
+      description: Get user's transaction history
+      operationId: listTransactions
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: page
+          in: query
+          schema:
+            type: integer
+            default: 0
+        - name: size
+          in: query
+          schema:
+            type: integer
+            default: 20
+        - name: from
+          in: query
+          schema:
+            type: string
+            format: date
+        - name: to
+          in: query
+          schema:
+            type: string
+            format: date
+        - name: type
+          in: query
+          schema:
+            type: string
+            enum: [PAYMENT, REFUND]
+      responses:
+        '200':
+          description: Transactions retrieved
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TransactionListResponse'
+
+  /api/transactions/{id}:
+    get:
+      tags:
+        - Transactions
+      summary: Get transaction details
+      description: Get details of a transaction
+      operationId: getTransaction
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Transaction retrieved
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TransactionResponse'
+
+  # ==================== WEBHOOKS ====================
+  /api/webhooks/stripe:
+    post:
+      tags:
+        - Webhooks
+      summary: Stripe webhook
+      description: Receive Stripe webhook events
+      operationId: stripeWebhook
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+      responses:
+        '200':
+          description: Webhook received
+        '400':
+          description: Invalid webhook
+
+  # ==================== INTERNAL ====================
+  /internal/payments/order/{orderId}:
+    get:
+      tags:
+        - Internal
+      summary: Get payment for order
+      description: Internal endpoint to get payment details for an order
+      operationId: getPaymentForOrder
+      parameters:
+        - name: orderId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Payment retrieved
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/InternalPaymentResponse'
+        '404':
+          description: Payment not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+
+  schemas:
+    # ==================== REQUEST SCHEMAS ====================
+    CreatePaymentIntentRequest:
+      type: object
+      required:
+        - orderId
+        - amount
+      properties:
+        orderId:
+          type: string
+          format: uuid
+        amount:
+          type: integer
+          description: Amount in cents
+          minimum: 50
+        currency:
+          type: string
+          default: usd
+          enum: [usd, eur, gbp]
+        paymentMethodId:
+          type: string
+          description: Saved payment method ID
+
+    SavePaymentMethodRequest:
+      type: object
+      required:
+        - paymentMethodToken
+      properties:
+        paymentMethodToken:
+          type: string
+          description: Stripe payment method token
+        setAsDefault:
+          type: boolean
+          default: false
+
+    RefundRequest:
+      type: object
+      properties:
+        amount:
+          type: integer
+          description: Amount in cents (null for full refund)
+        reason:
+          type: string
+          enum: [CUSTOMER_REQUEST, DUPLICATE, FRAUDULENT, OTHER]
+
+    # ==================== RESPONSE SCHEMAS ====================
+    PaymentIntentResponse:
+      type: object
+      properties:
+        paymentId:
+          type: string
+          format: uuid
+        clientSecret:
+          type: string
+          description: Stripe client secret
+        amount:
+          type: integer
+        currency:
+          type: string
+        status:
+          $ref: '#/components/schemas/PaymentStatus'
+
+    PaymentResponse:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        orderId:
+          type: string
+          format: uuid
+        amount:
+          type: integer
+        currency:
+          type: string
+        status:
+          $ref: '#/components/schemas/PaymentStatus'
+        paymentMethod:
+          type: string
+        failureReason:
+          type: string
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+
+    PaymentMethodResponse:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        type:
+          type: string
+          enum: [CARD, PAYPAL]
+        card:
+          type: object
+          properties:
+            brand:
+              type: string
+              enum: [visa, mastercard, amex, discover]
+            last4:
+              type: string
+            expiryMonth:
+              type: integer
+            expiryYear:
+              type: integer
+        isDefault:
+          type: boolean
+        createdAt:
+          type: string
+          format: date-time
+
+    RefundResponse:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        paymentId:
+          type: string
+          format: uuid
+        amount:
+          type: integer
+        reason:
+          type: string
+        status:
+          type: string
+          enum: [PENDING, PROCESSING, SUCCEEDED, FAILED]
+        createdAt:
+          type: string
+          format: date-time
+
+    TransactionResponse:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        type:
+          type: string
+          enum: [PAYMENT, REFUND]
+        amount:
+          type: integer
+        currency:
+          type: string
+        status:
+          type: string
+        orderId:
+          type: string
+          format: uuid
+        description:
+          type: string
+        createdAt:
+          type: string
+          format: date-time
+
+    TransactionListResponse:
+      type: object
+      properties:
+        content:
+          type: array
+          items:
+            $ref: '#/components/schemas/TransactionResponse'
+        page:
+          type: integer
+        size:
+          type: integer
+        totalElements:
+          type: integer
+        totalPages:
+          type: integer
+
+    InternalPaymentResponse:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        orderId:
+          type: string
+          format: uuid
+        amount:
+          type: integer
+        status:
+          $ref: '#/components/schemas/PaymentStatus'
+        paidAt:
+          type: string
+          format: date-time
+
+    MessageResponse:
+      type: object
+      properties:
+        message:
+          type: string
+        timestamp:
+          type: string
+          format: date-time
+
+    ErrorResponse:
+      type: object
+      properties:
+        error:
+          type: string
+        message:
+          type: string
+        timestamp:
+          type: string
+          format: date-time
+        path:
+          type: string
+
+    # ==================== ENUMS ====================
+    PaymentStatus:
+      type: string
+      enum:
+        - PENDING
+        - PROCESSING
+        - SUCCEEDED
+        - FAILED
+        - CANCELLED

@@ -1,0 +1,685 @@
+openapi: 3.0.3
+info:
+  title: Shipping Service API
+  description: |
+    Shipping Service manages shipping rates, shipments, and tracking for ShopSphere.
+  version: 1.0.0
+  contact:
+    name: Team Member 6
+    email: team6@shopsphere.com
+
+servers:
+  - url: http://localhost:3006
+    description: Local development
+  - url: https://api.shopsphere.com
+    description: Production
+
+tags:
+  - name: Rates
+    description: Shipping rate calculation
+  - name: Shipments
+    description: Shipment management
+  - name: Tracking
+    description: Shipment tracking
+  - name: Address
+    description: Address validation
+  - name: Internal
+    description: Internal service-to-service APIs
+
+paths:
+  # ==================== ADDRESS ====================
+  /api/shipping/validate-address:
+    post:
+      tags:
+        - Address
+      summary: Validate address
+      description: Validate and standardize a shipping address
+      operationId: validateAddress
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AddressRequest'
+      responses:
+        '200':
+          description: Address validation result
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AddressValidationResponse'
+
+  /api/shipping/zones:
+    get:
+      tags:
+        - Address
+      summary: Get shipping zones
+      description: Get all shipping zones
+      operationId: getShippingZones
+      responses:
+        '200':
+          description: Zones retrieved
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/ShippingZone'
+
+  /api/shipping/zones/{country}:
+    get:
+      tags:
+        - Address
+      summary: Get zone for country
+      description: Get shipping zone for a specific country
+      operationId: getZoneForCountry
+      parameters:
+        - name: country
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Zone retrieved
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ShippingZone'
+
+  # ==================== RATES ====================
+  /api/shipping/calculate-rate:
+    post:
+      tags:
+        - Rates
+      summary: Calculate shipping rate
+      description: Get shipping rate quotes for a package
+      operationId: calculateRate
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CalculateRateRequest'
+      responses:
+        '200':
+          description: Rates calculated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ShippingRatesResponse'
+
+  /api/shipping/rates/flat:
+    get:
+      tags:
+        - Rates
+      summary: Get flat rates
+      description: Get configured flat shipping rates
+      operationId: getFlatRates
+      responses:
+        '200':
+          description: Flat rates retrieved
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/FlatRate'
+
+  /api/shipping/free-shipping-threshold:
+    get:
+      tags:
+        - Rates
+      summary: Get free shipping threshold
+      description: Get minimum order amount for free shipping
+      operationId: getFreeShippingThreshold
+      responses:
+        '200':
+          description: Threshold retrieved
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  threshold:
+                    type: number
+                    format: double
+                  currency:
+                    type: string
+
+  # ==================== SHIPMENTS ====================
+  /api/shipments:
+    post:
+      tags:
+        - Shipments
+      summary: Create shipment
+      description: Create a new shipment for an order
+      operationId: createShipment
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateShipmentRequest'
+      responses:
+        '201':
+          description: Shipment created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ShipmentResponse'
+
+  /api/shipments/{id}:
+    get:
+      tags:
+        - Shipments
+      summary: Get shipment
+      description: Get shipment details
+      operationId: getShipment
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Shipment retrieved
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ShipmentResponse'
+        '404':
+          description: Shipment not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+    delete:
+      tags:
+        - Shipments
+      summary: Cancel shipment
+      description: Cancel a shipment (before pickup)
+      operationId: cancelShipment
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Shipment cancelled
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MessageResponse'
+        '400':
+          description: Cannot cancel shipment
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /api/shipments/order/{orderId}:
+    get:
+      tags:
+        - Shipments
+      summary: Get shipment by order
+      description: Get shipment for a specific order
+      operationId: getShipmentByOrder
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: orderId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Shipment retrieved
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ShipmentResponse'
+
+  /api/shipments/{id}/status:
+    put:
+      tags:
+        - Shipments
+      summary: Update shipment status
+      description: Update the status of a shipment
+      operationId: updateShipmentStatus
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateShipmentStatusRequest'
+      responses:
+        '200':
+          description: Status updated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ShipmentResponse'
+
+  # ==================== TRACKING ====================
+  /api/tracking/{trackingNumber}:
+    get:
+      tags:
+        - Tracking
+      summary: Track shipment
+      description: Get tracking information (public)
+      operationId: trackShipment
+      parameters:
+        - name: trackingNumber
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Tracking info retrieved
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TrackingResponse'
+        '404':
+          description: Tracking number not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /api/tracking/{trackingNumber}/history:
+    get:
+      tags:
+        - Tracking
+      summary: Get tracking history
+      description: Get full tracking event history
+      operationId: getTrackingHistory
+      parameters:
+        - name: trackingNumber
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: History retrieved
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/TrackingEvent'
+
+  # ==================== INTERNAL ====================
+  /internal/shipping/rates:
+    post:
+      tags:
+        - Internal
+      summary: Get rates (internal)
+      description: Internal endpoint for checkout
+      operationId: getInternalRates
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CalculateRateRequest'
+      responses:
+        '200':
+          description: Rates retrieved
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ShippingRatesResponse'
+
+  /internal/shipments/order/{orderId}:
+    get:
+      tags:
+        - Internal
+      summary: Get shipment (internal)
+      description: Internal endpoint for other services
+      operationId: getInternalShipment
+      parameters:
+        - name: orderId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Shipment retrieved
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/InternalShipmentResponse'
+
+  /internal/shipments/{id}/delivered:
+    post:
+      tags:
+        - Internal
+      summary: Mark as delivered
+      description: Internal endpoint to mark shipment as delivered
+      operationId: markDelivered
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Marked as delivered
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ShipmentResponse'
+
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+
+  schemas:
+    # ==================== REQUEST SCHEMAS ====================
+    AddressRequest:
+      type: object
+      required:
+        - line1
+        - city
+        - postalCode
+        - country
+      properties:
+        line1:
+          type: string
+        line2:
+          type: string
+        city:
+          type: string
+        state:
+          type: string
+        postalCode:
+          type: string
+        country:
+          type: string
+
+    CalculateRateRequest:
+      type: object
+      required:
+        - origin
+        - destination
+        - package
+      properties:
+        origin:
+          $ref: '#/components/schemas/AddressRequest'
+        destination:
+          $ref: '#/components/schemas/AddressRequest'
+        package:
+          $ref: '#/components/schemas/PackageInfo'
+
+    PackageInfo:
+      type: object
+      required:
+        - weight
+      properties:
+        weight:
+          type: number
+          format: double
+          description: Weight in kg
+        dimensions:
+          type: object
+          properties:
+            length:
+              type: number
+              format: double
+            width:
+              type: number
+              format: double
+            height:
+              type: number
+              format: double
+
+    CreateShipmentRequest:
+      type: object
+      required:
+        - orderId
+        - carrier
+        - service
+        - destination
+      properties:
+        orderId:
+          type: string
+          format: uuid
+        carrier:
+          type: string
+          enum: [FEDEX, UPS, DHL, USPS]
+        service:
+          type: string
+          enum: [GROUND, EXPRESS, OVERNIGHT]
+        origin:
+          $ref: '#/components/schemas/AddressRequest'
+        destination:
+          $ref: '#/components/schemas/AddressRequest'
+        package:
+          $ref: '#/components/schemas/PackageInfo'
+
+    UpdateShipmentStatusRequest:
+      type: object
+      required:
+        - status
+      properties:
+        status:
+          $ref: '#/components/schemas/ShipmentStatus'
+        location:
+          type: string
+        notes:
+          type: string
+
+    # ==================== RESPONSE SCHEMAS ====================
+    AddressValidationResponse:
+      type: object
+      properties:
+        valid:
+          type: boolean
+        standardized:
+          $ref: '#/components/schemas/AddressRequest'
+        issues:
+          type: array
+          items:
+            type: string
+
+    ShippingZone:
+      type: object
+      properties:
+        id:
+          type: string
+        name:
+          type: string
+        countries:
+          type: array
+          items:
+            type: string
+
+    ShippingRatesResponse:
+      type: object
+      properties:
+        options:
+          type: array
+          items:
+            $ref: '#/components/schemas/ShippingOption'
+
+    ShippingOption:
+      type: object
+      properties:
+        carrier:
+          type: string
+        service:
+          type: string
+        rate:
+          type: number
+          format: double
+        currency:
+          type: string
+        estimatedDays:
+          type: integer
+        estimatedDelivery:
+          type: string
+          format: date
+
+    FlatRate:
+      type: object
+      properties:
+        zone:
+          type: string
+        rate:
+          type: number
+          format: double
+        currency:
+          type: string
+
+    ShipmentResponse:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        orderId:
+          type: string
+          format: uuid
+        trackingNumber:
+          type: string
+        carrier:
+          type: string
+        service:
+          type: string
+        status:
+          $ref: '#/components/schemas/ShipmentStatus'
+        origin:
+          $ref: '#/components/schemas/AddressRequest'
+        destination:
+          $ref: '#/components/schemas/AddressRequest'
+        shippingCost:
+          type: number
+          format: double
+        estimatedDelivery:
+          type: string
+          format: date
+        actualDelivery:
+          type: string
+          format: date-time
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+
+    TrackingResponse:
+      type: object
+      properties:
+        trackingNumber:
+          type: string
+        carrier:
+          type: string
+        status:
+          $ref: '#/components/schemas/ShipmentStatus'
+        estimatedDelivery:
+          type: string
+          format: date
+        currentLocation:
+          type: string
+        history:
+          type: array
+          items:
+            $ref: '#/components/schemas/TrackingEvent'
+
+    TrackingEvent:
+      type: object
+      properties:
+        status:
+          $ref: '#/components/schemas/ShipmentStatus'
+        location:
+          type: string
+        description:
+          type: string
+        timestamp:
+          type: string
+          format: date-time
+
+    InternalShipmentResponse:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        orderId:
+          type: string
+          format: uuid
+        trackingNumber:
+          type: string
+        status:
+          $ref: '#/components/schemas/ShipmentStatus'
+        carrier:
+          type: string
+
+    MessageResponse:
+      type: object
+      properties:
+        message:
+          type: string
+        timestamp:
+          type: string
+          format: date-time
+
+    ErrorResponse:
+      type: object
+      properties:
+        error:
+          type: string
+        message:
+          type: string
+        timestamp:
+          type: string
+          format: date-time
+        path:
+          type: string
+
+    # ==================== ENUMS ====================
+    ShipmentStatus:
+      type: string
+      enum:
+        - PENDING
+        - LABEL_CREATED
+        - PICKED_UP
+        - IN_TRANSIT
+        - OUT_FOR_DELIVERY
+        - DELIVERED
+        - RETURNED
