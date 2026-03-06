@@ -551,13 +551,19 @@ public class ProductService {
     }
 
     /**
-     * Story 2.3.2 & 2.5.2: Update product rating (Called by Review Service internally)
+     * Story 2.3.2, 2.5.2 & 2.5.3: Update product rating and breakdown
      * Updates MongoDB, Elasticsearch, and refreshes the Redis Cache immediately.
      */
-    public void updateProductRating(String productId, Double newAverage, Integer newCount) {
+    public void updateProductRating(String productId, Double newAverage, Integer newCount, Map<String, Integer> ratingBreakdown) {
         Product product = getProductById(productId);
         product.setAverageRating(newAverage);
         product.setReviewCount(newCount);
+        
+        // Story 2.5.3: Set Breakdown
+        if (ratingBreakdown != null) {
+            product.setRatingBreakdown(ratingBreakdown);
+        }
+        
         product.setUpdatedAt(LocalDateTime.now());
         
         // 1. Update MongoDB
@@ -566,9 +572,9 @@ public class ProductService {
         // 2. Sync with Elasticsearch
         productSearchRepository.save(updatedProduct); 
         
-        // 3. Story 2.5.2: Update Redis Cache to reflect new reviews immediately
+        // 3. Story 2.5.2 & 2.5.3: Update Redis Cache to reflect new reviews immediately
         String cacheKey = "rating_summary_" + productId;
-        ReviewSummaryDTO updatedSummary = new ReviewSummaryDTO(newAverage, newCount);
+        ReviewSummaryDTO updatedSummary = new ReviewSummaryDTO(newAverage, newCount, ratingBreakdown);
         redisTemplate.opsForValue().set(cacheKey, updatedSummary, 30, TimeUnit.MINUTES);
     }
 }

@@ -3,7 +3,7 @@ package com.shopsphere.product.controller;
 import com.shopsphere.product.dto.ProductInternalResponseDTO;
 import com.shopsphere.product.dto.ProductSearchResponseDTO;
 import com.shopsphere.product.dto.ProductValidationResponseDTO;
-import com.shopsphere.product.dto.ReviewSummaryDTO; // Added for Story 2.5.1
+import com.shopsphere.product.dto.ReviewSummaryDTO; // Added for Story 2.5.1 & 2.5.3
 import com.shopsphere.product.dto.VariantSelectionResponseDTO; // Added for Story 2.2.4
 import com.shopsphere.product.model.Product;
 import com.shopsphere.product.model.ProductVariant; // Added for Story 2.2.2
@@ -56,18 +56,20 @@ public class ProductController {
     }
 
     /**
-     * Story 1.1.2 & 2.5.1: Get product by ID with aggregated Ratings
+     * Story 1.1.2, 2.5.1 & 2.5.3: Get product by ID with aggregated Ratings & Breakdown
      */
     @GetMapping("/{id}")
     public ResponseEntity<Product> getProductById(@PathVariable String id) {
         // 1. Get core product details
         Product product = productService.getProductById(id);
         
-        // 2. Story 2.5.1: Fetch and attach aggregated ratings from Review Service (Cached)
+        // 2. Story 2.5.1 & 2.5.3: Fetch and attach aggregated ratings & breakdown
         ReviewSummaryDTO reviewSummary = reviewIntegrationService.getProductRatingSummary(id);
         if (reviewSummary != null && reviewSummary.getTotalReviews() != null) {
             product.setAverageRating(reviewSummary.getAverageRating());
             product.setReviewCount(reviewSummary.getTotalReviews());
+            // Added for Story 2.5.3
+            product.setRatingBreakdown(reviewSummary.getRatingBreakdown());
         }
         
         return ResponseEntity.ok(product);
@@ -339,15 +341,20 @@ public class ProductController {
     }
 
     /**
-     * Story 2.3.2: Internal API to update product rating
+     * Story 2.3.2 & 2.5.3: Internal API to update product rating and breakdown
+     * Changed to @RequestBody to properly accept the Map payload from Review Service
      */
     @PatchMapping("/internal/{id}/rating")
     public ResponseEntity<Void> updateProductRating(
             @PathVariable String id,
-            @RequestParam Double averageRating,
-            @RequestParam Integer reviewCount) {
+            @RequestBody ReviewSummaryDTO ratingData) { // Changed to use DTO
         
-        productService.updateProductRating(id, averageRating, reviewCount);
+        productService.updateProductRating(
+            id, 
+            ratingData.getAverageRating(), 
+            ratingData.getTotalReviews(), 
+            ratingData.getRatingBreakdown() // Passed the breakdown map
+        );
         return ResponseEntity.ok().build();
     }
 

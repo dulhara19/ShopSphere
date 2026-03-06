@@ -7,6 +7,7 @@ import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
 
+import java.util.HashMap; // Added for Story 2.5.3
 import java.util.concurrent.TimeUnit;
 
 @Service
@@ -18,11 +19,12 @@ public class ReviewIntegrationService {
     @Autowired
     private RedisTemplate<String, Object> redisTemplate;
 
+    // Review Service URL from application.yml, defaults to localhost:8083
     @Value("${services.review.url:http://localhost:8083/api/reviews}")
     private String reviewServiceUrl;
 
     /**
-     * Story 2.5.1: Aggregate from Review Service and Cache rating data
+     * Story 2.5.1 & 2.5.3: Aggregate from Review Service, Handle Breakdown and Cache rating data
      */
     public ReviewSummaryDTO getProductRatingSummary(String productId) {
         String cacheKey = "rating_summary_" + productId;
@@ -43,7 +45,8 @@ public class ReviewIntegrationService {
             } catch (Exception e) {
                 // Fallback gracefully if Review Service is down
                 System.err.println("Failed to fetch reviews for product " + productId + ": " + e.getMessage());
-                summary = new ReviewSummaryDTO(0.0, 0);
+                // Story 2.5.3: Added empty HashMap for the ratingBreakdown fallback
+                summary = new ReviewSummaryDTO(0.0, 0, new HashMap<>());
             }
         }
         return summary;

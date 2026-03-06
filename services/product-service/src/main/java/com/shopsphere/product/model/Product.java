@@ -9,7 +9,9 @@ import org.springframework.data.elasticsearch.annotations.Field;
 import org.springframework.data.elasticsearch.annotations.FieldType;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
+import java.util.HashMap; // Added for Story 2.5.3
 import java.util.List;
+import java.util.Map; // Added for Story 2.5.3
 
 @Data
 @AllArgsConstructor
@@ -69,6 +71,10 @@ public class Product {
     
     @Field(type = FieldType.Integer)
     private Integer reviewCount = 0;
+
+    // --- Story 2.5.3: Rating Breakdown ---
+    // Stores the distribution of ratings (e.g., {"5": 120, "4": 45, "3": 10, "2": 2, "1": 5})
+    private Map<String, Integer> ratingBreakdown = new HashMap<>();
     
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
