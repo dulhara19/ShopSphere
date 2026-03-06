@@ -1,0 +1,12 @@
+server:
+  port: 3006
+
+spring:
+  data:
+    mongodb:
+      host: localhost
+      port: 27017
+      database: shopsphere_shipping
+  application:
+    name: shipping-service
+
