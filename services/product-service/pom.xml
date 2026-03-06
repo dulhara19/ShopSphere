@@ -39,9 +39,9 @@
         </dependency>
 
         <dependency>
-    <groupId>org.springframework.boot</groupId>
-    <artifactId>spring-boot-starter-data-redis</artifactId>
-</dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-data-redis</artifactId>
+        </dependency>
 
         <dependency>
             <groupId>org.projectlombok</groupId>
@@ -74,9 +74,8 @@
 
         <dependency>
             <groupId>ai.djl.pytorch</groupId>
-            <artifactId>pytorch-native-cpu</artifactId>
-            <classifier>win-x86_64</classifier>
-            <version>1.13.1</version>
+            <artifactId>pytorch-native-auto</artifactId>
+            <version>${djl.version}</version>
             <scope>runtime</scope>
         </dependency>
 

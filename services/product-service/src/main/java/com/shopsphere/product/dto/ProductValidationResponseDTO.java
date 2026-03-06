@@ -16,8 +16,7 @@ import java.util.Map;
 @Builder
 public class ProductValidationResponseDTO {
     
-    // Indicates if all requested product IDs are valid and ACTIVE
-    private Boolean allValid;
+    private boolean allValid;
     
     // Mapping of each product ID to its specific validation status
     private Map<String, Boolean> results;

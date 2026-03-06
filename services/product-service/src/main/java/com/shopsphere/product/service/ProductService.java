@@ -6,6 +6,7 @@ import com.shopsphere.product.dto.ProductValidationResponseDTO;
 import com.shopsphere.product.dto.ReviewSummaryDTO; // Added for Story 2.5.2
 import com.shopsphere.product.dto.VariantCombinationDTO; // Added for Story 2.2.4
 import com.shopsphere.product.dto.VariantSelectionResponseDTO; // Added for Story 2.2.4
+import com.shopsphere.product.exception.BadRequestException;
 import com.shopsphere.product.exception.ProductNotFoundException;
 import com.shopsphere.product.model.Category;
 import com.shopsphere.product.model.Product;
@@ -38,15 +39,17 @@ import co.elastic.clients.elasticsearch._types.aggregations.StringTermsAggregate
 import co.elastic.clients.elasticsearch._types.aggregations.StringTermsBucket;
 import co.elastic.clients.json.JsonData; // Added for Story 2.3.2
 
+import java.security.MessageDigest;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.HashSet; // Added for Story 2.2.4
+import java.util.HashSet;
+import java.util.HexFormat;
 import java.util.List;
 import java.util.Map;
-import java.util.Set; // Added for Story 2.2.4
+import java.util.Set;
 import java.util.UUID;
-import java.util.concurrent.TimeUnit; // Added for Story 2.4.3
+import java.util.concurrent.TimeUnit;
 
 @Service
 public class ProductService {
@@ -78,8 +81,10 @@ public class ProductService {
      */
     @SuppressWarnings("unchecked")
     public List<Product> findSimilarProducts(MultipartFile image) throws Exception {
-        // Generate a unique cache key based on filename and size
-        String cacheKey = "img_feat_" + image.getOriginalFilename() + "_" + image.getSize();
+        // Generate a unique cache key based on content hash
+        MessageDigest md = MessageDigest.getInstance("MD5");
+        String contentHash = HexFormat.of().formatHex(md.digest(image.getBytes()));
+        String cacheKey = "img_feat_" + contentHash;
         
         // 1. Story 2.4.3: Check if embedding exists in Redis cache
         List<Double> queryEmbedding = (List<Double>) redisTemplate.opsForValue().get(cacheKey);
@@ -360,6 +365,13 @@ public class ProductService {
     }
 
     /**
+     * Story 2.1.5: Get all search analytics
+     */
+    public List<SearchAnalytics> getSearchAnalytics() {
+        return searchAnalyticsRepository.findAll();
+    }
+
+    /**
      * Story 2.1.1: Bulk Indexing Logic
      */
     public void syncAllProductsToElasticsearch() {
@@ -481,7 +493,7 @@ public class ProductService {
         Product product = getProductById(productId);
         
         if (!product.isHasVariations() || product.getVariants() == null) {
-            throw new RuntimeException("Product does not have variations.");
+            throw new BadRequestException("Product does not have variations.");
         }
         
         boolean variantFound = false;
@@ -496,7 +508,7 @@ public class ProductService {
         }
         
         if (!variantFound) {
-            throw new RuntimeException("Variant with SKU: " + sku + " not found.");
+            throw new ProductNotFoundException("Variant with SKU: " + sku + " not found.");
         }
         
         product.setUpdatedAt(LocalDateTime.now());
