@@ -393,7 +393,7 @@ dist/
 
 # Gatsby
 .cache/
-public/
+/public/
 
 # SvelteKit
 .svelte-kit/

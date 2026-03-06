@@ -1,0 +1,7 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="400" height="400" viewBox="0 0 400 400">
+  <rect width="400" height="400" fill="#f3f4f6"/>
+  <g transform="translate(150, 150)" fill="#9ca3af">
+    <path d="M50 0C22.4 0 0 22.4 0 50v20c0 27.6 22.4 50 50 50s50-22.4 50-50V50C100 22.4 77.6 0 50 0zm0 100c-16.5 0-30-13.5-30-30V50c0-16.5 13.5-30 30-30s30 13.5 30 30v20c0 16.5-13.5 30-30 30z"/>
+  </g>
+  <text x="200" y="320" text-anchor="middle" fill="#9ca3af" font-family="sans-serif" font-size="16">No Image</text>
+</svg>
