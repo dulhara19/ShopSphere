@@ -351,4 +351,19 @@ public class ProductController {
             throw new RuntimeException("Error processing image: " + e.getMessage());
         }
     }
+
+    /**
+     * Story 2.4.2: Find similar products using visual search
+     * This endpoint receives an image and returns a list of similar products based on vector similarity.
+     * URL: POST /api/products/visual-search/similar
+     */
+    @PostMapping("/visual-search/similar")
+    public ResponseEntity<List<Product>> findSimilarProducts(@RequestParam("image") MultipartFile file) {
+        try {
+            List<Product> similarProducts = productService.findSimilarProducts(file);
+            return ResponseEntity.ok(similarProducts);
+        } catch (Exception e) {
+            throw new RuntimeException("Error performing visual search: " + e.getMessage());
+        }
+    }
 }

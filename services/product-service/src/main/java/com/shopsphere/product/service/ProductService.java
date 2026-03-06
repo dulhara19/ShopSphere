@@ -21,12 +21,14 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.elasticsearch.client.elc.NativeQuery;
 import org.springframework.data.elasticsearch.core.ElasticsearchOperations;
+import org.springframework.data.elasticsearch.core.SearchHit;
 import org.springframework.data.elasticsearch.core.SearchHitSupport;
 import org.springframework.data.elasticsearch.core.SearchHits;
 import org.springframework.data.elasticsearch.core.SearchPage;
 import org.springframework.data.elasticsearch.core.query.Query;
 import org.springframework.scheduling.annotation.Async; // Added for Story 2.1.5
 import org.springframework.stereotype.Service;
+import org.springframework.web.multipart.MultipartFile;
 
 import co.elastic.clients.elasticsearch._types.FieldValue; // Added for Story 2.3.1
 import co.elastic.clients.elasticsearch._types.aggregations.Aggregation;
@@ -60,6 +62,35 @@ public class ProductService {
 
     @Autowired
     private SearchAnalyticsRepository searchAnalyticsRepository; // Injected for Analytics
+
+    @Autowired
+    private VisualSearchService visualSearchService; // Injected for Story 2.4.2
+
+    /**
+     * Story 2.4.2: Find similar products based on image content using Cosine Similarity.
+     * Extracts embedding from input image and compares it with indexed product embeddings in Elasticsearch.
+     */
+    public List<Product> findSimilarProducts(MultipartFile image) throws Exception {
+        // 1. Extract visual features (embedding) from the input image
+        List<Double> queryEmbedding = visualSearchService.extractFeatures(image);
+
+        // 2. Build script score query for vector similarity calculation
+        // Formula: cosineSimilarity(vector, field) + 1.0 (to avoid negative scores)
+        NativeQuery query = NativeQuery.builder()
+                .withQuery(q -> q.scriptScore(s -> s
+                        .query(iq -> iq.matchAll(m -> m))
+                        .script(sc -> sc.inline(i -> i
+                                .source("cosineSimilarity(params.query_vector, 'imageEmbedding') + 1.0")
+                                .params("query_vector", JsonData.of(queryEmbedding))
+                        ))
+                ))
+                .withPageable(PageRequest.of(0, 10))
+                .build();
+
+        // 3. Execute search and extract results
+        SearchHits<Product> hits = elasticsearchOperations.search(query, Product.class);
+        return hits.stream().map(SearchHit::getContent).toList();
+    }
 
     /**
      * Story 1.1.1: Create Product (Seller)
