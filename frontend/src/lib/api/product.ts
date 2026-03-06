@@ -37,8 +37,28 @@ export const productApi = {
    * GET /api/products
    * Search and list products with filters
    */
-  getProducts: (params: ProductSearchParams) =>
-    productClient.get<PaginatedResponse<ProductSummary>>('/api/products', { params }),
+  getProducts: (params: ProductSearchParams) => {
+    const sortMap: Record<string, { sortBy: string; direction: string }> = {
+      newest: { sortBy: 'createdAt', direction: 'desc' },
+      price_asc: { sortBy: 'price', direction: 'asc' },
+      price_desc: { sortBy: 'price', direction: 'desc' },
+      name_asc: { sortBy: 'name', direction: 'asc' },
+      name_desc: { sortBy: 'name', direction: 'desc' },
+      rating: { sortBy: 'averageRating', direction: 'desc' },
+    };
+    const sortConfig = sortMap[params.sort || 'newest'] || sortMap.newest;
+    const backendParams: Record<string, any> = {
+      page: params.page,
+      size: params.size,
+      sortBy: sortConfig.sortBy,
+      direction: sortConfig.direction,
+      ...(params.category && { categoryId: params.category }),
+      ...(params.search && { search: params.search }),
+      ...(params.minPrice != null && { minPrice: params.minPrice }),
+      ...(params.maxPrice != null && { maxPrice: params.maxPrice }),
+    };
+    return productClient.get<PaginatedResponse<ProductSummary>>('/api/products', { params: backendParams });
+  },
 
   /**
    * GET /api/products/{id}

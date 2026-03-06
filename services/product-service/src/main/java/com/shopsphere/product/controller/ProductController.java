@@ -10,6 +10,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
+import java.math.BigDecimal;
 import java.util.List;
 
 @RestController
@@ -28,7 +29,9 @@ public class ProductController {
             @RequestParam(defaultValue = "desc") String direction,
             @RequestParam(required = false) String keyword,
             @RequestParam(required = false) String search,
-            @RequestParam(required = false) String categoryId) {
+            @RequestParam(required = false) String categoryId,
+            @RequestParam(required = false) BigDecimal minPrice,
+            @RequestParam(required = false) BigDecimal maxPrice) {
 
         String searchTerm = keyword != null ? keyword : search;
         Page<ProductResponse> result;
@@ -37,7 +40,7 @@ public class ProductController {
         } else if (categoryId != null && !categoryId.isBlank()) {
             result = productService.getProductsByCategory(categoryId, page, size);
         } else {
-            result = productService.listProducts(page, size, sortBy, direction);
+            result = productService.listProducts(page, size, sortBy, direction, minPrice, maxPrice);
         }
         return ResponseEntity.ok(result);
     }

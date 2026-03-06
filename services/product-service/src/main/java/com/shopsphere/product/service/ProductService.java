@@ -15,6 +15,7 @@ import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
+import java.math.BigDecimal;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -38,10 +39,23 @@ public class ProductService {
     private String baseUrl;
 
     public Page<ProductResponse> listProducts(int page, int size, String sortBy, String direction) {
+        return listProducts(page, size, sortBy, direction, null, null);
+    }
+
+    public Page<ProductResponse> listProducts(int page, int size, String sortBy, String direction,
+                                               BigDecimal minPrice, BigDecimal maxPrice) {
         Sort sort = direction.equalsIgnoreCase("desc")
                 ? Sort.by(sortBy).descending()
                 : Sort.by(sortBy).ascending();
         Pageable pageable = PageRequest.of(page, size, sort);
+
+        if (minPrice != null && maxPrice != null) {
+            return productRepository.findByDeletedFalseAndPriceBetween(minPrice, maxPrice, pageable).map(this::toResponse);
+        } else if (minPrice != null) {
+            return productRepository.findByDeletedFalseAndPriceGreaterThanEqual(minPrice, pageable).map(this::toResponse);
+        } else if (maxPrice != null) {
+            return productRepository.findByDeletedFalseAndPriceLessThanEqual(maxPrice, pageable).map(this::toResponse);
+        }
         return productRepository.findByDeletedFalse(pageable).map(this::toResponse);
     }
 

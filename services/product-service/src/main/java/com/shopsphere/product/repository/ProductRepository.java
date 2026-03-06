@@ -7,6 +7,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.mongodb.repository.MongoRepository;
 import org.springframework.data.mongodb.repository.Query;
 
+import java.math.BigDecimal;
 import java.util.List;
 import java.util.Optional;
 
@@ -26,4 +27,10 @@ public interface ProductRepository extends MongoRepository<Product, String> {
     Optional<Product> findByIdAndDeletedFalse(String id);
 
     List<Product> findByIdInAndDeletedFalse(List<String> ids);
+
+    Page<Product> findByDeletedFalseAndPriceBetween(BigDecimal minPrice, BigDecimal maxPrice, Pageable pageable);
+
+    Page<Product> findByDeletedFalseAndPriceGreaterThanEqual(BigDecimal minPrice, Pageable pageable);
+
+    Page<Product> findByDeletedFalseAndPriceLessThanEqual(BigDecimal maxPrice, Pageable pageable);
 }
