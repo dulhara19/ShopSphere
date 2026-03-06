@@ -33,11 +33,12 @@ export const notificationApi = {
 
   /**
    * GET /api/notifications/unread-count
-   * Get unread count
+   * Get unread count for a user
    */
-  getUnreadCount: () =>
+  getUnreadCount: (userId: string) =>
     notificationClient.get<ApiResponse<UnreadCountResponse>>(
-      '/api/notifications/unread-count'
+      '/api/notifications/unread-count',
+      { params: { userId } }
     ),
 
   /**
@@ -56,10 +57,12 @@ export const notificationApi = {
 
   /**
    * PUT /api/notifications/read-all
-   * Mark all as read
+   * Mark all as read for a user
    */
-  markAllAsRead: () =>
-    notificationClient.put<ApiResponse<void>>('/api/notifications/read-all'),
+  markAllAsRead: (userId: string) =>
+    notificationClient.put<ApiResponse<void>>('/api/notifications/read-all', null, {
+      params: { userId },
+    }),
 
   /**
    * DELETE /api/notifications/{id}
@@ -68,4 +71,12 @@ export const notificationApi = {
   deleteNotification: (id: string) =>
     notificationClient.delete<ApiResponse<void>>(`/api/notifications/${id}`),
 
+  /**
+   * DELETE /api/notifications/clear-all
+   * Clear all notifications for a user
+   */
+  clearAll: (userId: string) =>
+    notificationClient.delete<ApiResponse<void>>('/api/notifications/clear-all', {
+      params: { userId },
+    }),
 };

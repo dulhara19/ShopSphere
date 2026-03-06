@@ -15,4 +15,4 @@ COPY --from=build /workspace/target/*.jar app.jar
 
 EXPOSE 3007
 
-ENTRYPOINT ["java", "-jar", "/app/app.jar"]
+ENTRYPOINT ["java", "-Xmx256m", "-Xms128m", "-jar", "/app/app.jar"]

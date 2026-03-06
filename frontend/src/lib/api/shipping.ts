@@ -98,16 +98,23 @@ export const shippingApi = {
     ),
 
   /**
-   * GET /api/shipping/{trackingNumber}
+   * GET /api/shipping/track/{trackingNumber}
    * Track a shipment
    */
   trackShipment: (trackingNumber: string) =>
-    shippingClient.get<ApiResponse<TrackingInfo>>(`/api/shipping/${trackingNumber}`),
+    shippingClient.get<ApiResponse<TrackingInfo>>(`/api/shipping/track/${trackingNumber}`),
 
   /**
-   * PUT /api/shipping/{id}/status
+   * PUT /api/shipping/update-status/{trackingNumber}
    * Update shipment status
    */
-  updateShipmentStatus: (id: string, status: string) =>
-    shippingClient.put<ApiResponse<void>>(`/api/shipping/${id}/status`, { status }),
+  updateShipmentStatus: (trackingNumber: string, status: string) =>
+    shippingClient.put<ApiResponse<void>>(
+      `/api/shipping/update-status/${trackingNumber}`,
+      null,
+      { params: { status } }
+    ),
 };
+
+// NOTE: The following methods have no backend implementation yet and represent the target contract:
+// - validateAddress, getZones, getZoneByCountry, calculateRate, getFlatRates, getFreeShippingThreshold

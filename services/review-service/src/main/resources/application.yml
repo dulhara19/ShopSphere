@@ -4,11 +4,11 @@ server:
 spring:
   data:
     mongodb:
-      uri: mongodb://localhost:27017/reviewdb
+      uri: ${SPRING_DATA_MONGODB_URI:mongodb://localhost:27017/reviewdb}
     # Redis configuration updated for Spring Boot 3.x
     redis:
-      host: localhost
-      port: 6379
+      host: ${SPRING_DATA_REDIS_HOST:localhost}
+      port: ${SPRING_DATA_REDIS_PORT:6379}
 
 # Logging configuration
 logging:

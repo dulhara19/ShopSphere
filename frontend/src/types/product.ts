@@ -138,3 +138,24 @@ export interface ProductValidationResponse {
   }>;
   allValid: boolean;
 }
+
+// Variation attribute (for product variants)
+export interface VariationAttribute {
+  id: UUID;
+  name: string;
+  values: string[];
+  createdAt: ISO8601;
+  updatedAt: ISO8601;
+}
+
+// Create attribute request
+export interface CreateAttributeRequest {
+  name: string;
+  values: string[];
+}
+
+// Update attribute request
+export interface UpdateAttributeRequest {
+  name?: string;
+  values?: string[];
+}

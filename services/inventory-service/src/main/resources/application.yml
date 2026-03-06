@@ -3,14 +3,14 @@ spring:
     name: inventory-service
   
   datasource:
-    url: jdbc:postgresql://localhost:5432/shopsphere_inventory
-    username: postgres
-    password: postgres
+    url: ${SPRING_DATASOURCE_URL:jdbc:postgresql://localhost:5432/shopsphere_inventory}
+    username: ${SPRING_DATASOURCE_USERNAME:postgres}
+    password: ${SPRING_DATASOURCE_PASSWORD:postgres}
     driver-class-name: org.postgresql.Driver
-  
+
   jpa:
     hibernate:
-      ddl-auto: validate
+      ddl-auto: ${SPRING_JPA_HIBERNATE_DDL_AUTO:update}
     properties:
       hibernate:
         dialect: org.hibernate.dialect.PostgreSQL10Dialect
@@ -18,8 +18,8 @@ spring:
     show-sql: false
   
   redis:
-    host: localhost
-    port: 6379
+    host: ${SPRING_REDIS_HOST:localhost}
+    port: ${SPRING_REDIS_PORT:6379}
     timeout: 2000
     jedis:
       pool:
@@ -28,7 +28,7 @@ spring:
         min-idle: 0
   
   kafka:
-    bootstrap-servers: localhost:9092
+    bootstrap-servers: ${SPRING_KAFKA_BOOTSTRAP_SERVERS:localhost:9092}
     producer:
       key-serializer: org.apache.kafka.common.serialization.StringSerializer
       value-serializer: org.springframework.kafka.support.serializer.JsonSerializer

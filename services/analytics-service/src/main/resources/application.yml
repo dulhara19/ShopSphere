@@ -1,13 +1,10 @@
 spring:
   application:
     name: analytics-service
-  profiles:
-    active: dev-h2
-  
   datasource:
-    url: jdbc:postgresql://localhost:5432/analytics_db
-    username: postgres
-    password: postgres
+    url: ${SPRING_DATASOURCE_URL:jdbc:postgresql://localhost:5432/analytics_db}
+    username: ${SPRING_DATASOURCE_USERNAME:postgres}
+    password: ${SPRING_DATASOURCE_PASSWORD:postgres}
     driver-class-name: org.postgresql.Driver
   
   sql:
@@ -27,16 +24,16 @@ spring:
     show-sql: false
 
   rabbitmq:
-    host: localhost
-    port: 5672
-    username: guest
-    password: guest
+    host: ${SPRING_RABBITMQ_HOST:localhost}
+    port: ${SPRING_RABBITMQ_PORT:5672}
+    username: ${SPRING_RABBITMQ_USERNAME:guest}
+    password: ${SPRING_RABBITMQ_PASSWORD:guest}
     virtual-host: /
 
   redis:
-    host: localhost
-    port: 6379
-    password: 
+    host: ${SPRING_REDIS_HOST:localhost}
+    port: ${SPRING_REDIS_PORT:6379}
+    password:
     timeout: 60000
     database: 0
 

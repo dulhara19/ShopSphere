@@ -23,6 +23,9 @@ import {
   ProductBatchRequest,
   ProductValidationRequest,
   ProductValidationResponse,
+  VariationAttribute,
+  CreateAttributeRequest,
+  UpdateAttributeRequest,
 } from '@/types/product';
 
 export const productApi = {
@@ -175,4 +178,29 @@ export const productApi = {
       '/api/products/validate',
       data
     ),
+
+  // ==========================================
+  // Attributes
+  // ==========================================
+
+  /**
+   * GET /api/attributes
+   * Get all variation attributes
+   */
+  getAttributes: () =>
+    productClient.get<ApiResponse<VariationAttribute[]>>('/api/attributes'),
+
+  /**
+   * POST /api/attributes
+   * Create a new variation attribute
+   */
+  createAttribute: (data: CreateAttributeRequest) =>
+    productClient.post<ApiResponse<VariationAttribute>>('/api/attributes', data),
+
+  /**
+   * PUT /api/attributes/{id}
+   * Update a variation attribute
+   */
+  updateAttribute: (id: string, data: UpdateAttributeRequest) =>
+    productClient.put<ApiResponse<VariationAttribute>>(`/api/attributes/${id}`, data),
 };

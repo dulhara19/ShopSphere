@@ -21,9 +21,9 @@ spring:
 
   # PostgreSQL Configuration
   datasource:
-    url: jdbc:postgresql://localhost:5432/shopsphere_user_dev
-    username: postgres
-    password: postgres
+    url: ${SPRING_DATASOURCE_URL:jdbc:postgresql://localhost:5432/shopsphere_user_dev}
+    username: ${SPRING_DATASOURCE_USERNAME:postgres}
+    password: ${SPRING_DATASOURCE_PASSWORD:postgres}
     driver-class-name: org.postgresql.Driver
     hikari:
       maximum-pool-size: 10
@@ -35,8 +35,8 @@ spring:
   # Redis Configuration
   data:
     redis:
-      host: localhost
-      port: 6380
+      host: ${SPRING_DATA_REDIS_HOST:localhost}
+      port: ${SPRING_DATA_REDIS_PORT:6379}
       database: 0
       timeout: 2000
       password:
@@ -48,10 +48,10 @@ spring:
 
   # RabbitMQ Configuration (Phase 4.3: Event Publishing)
   rabbitmq:
-    host: localhost
-    port: 5672
-    username: guest
-    password: guest
+    host: ${SPRING_RABBITMQ_HOST:localhost}
+    port: ${SPRING_RABBITMQ_PORT:5672}
+    username: ${SPRING_RABBITMQ_USERNAME:guest}
+    password: ${SPRING_RABBITMQ_PASSWORD:guest}
     requested-heartbeat: 30s
     template:
       retry:

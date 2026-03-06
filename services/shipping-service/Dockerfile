@@ -1,12 +1,18 @@
-# Step 1: Build the application using Maven
-FROM maven:3.8.4-openjdk-17 AS build
-WORKDIR /app
+FROM maven:3.9.9-eclipse-temurin-17 AS build
+
+WORKDIR /workspace
+
 COPY pom.xml .
 COPY src ./src
+
 RUN mvn clean package -DskipTests
 
-# Step 2: Run the application
-FROM eclipse-temurin:17-jdk-alpine
+FROM eclipse-temurin:17-jre
+
 WORKDIR /app
-COPY --from=build /app/target/*.jar app.jar
-ENTRYPOINT ["java", "-jar", "app.jar"]
+
+COPY --from=build /workspace/target/*.jar app.jar
+
+EXPOSE 3006
+
+ENTRYPOINT ["java", "-Xmx256m", "-Xms128m", "-jar", "/app/app.jar"]

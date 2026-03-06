@@ -63,6 +63,7 @@ export interface Device {
 
 // Notification list params
 export interface NotificationListParams {
+  userId: string;
   page?: number;
   size?: number;
   type?: NotificationType;

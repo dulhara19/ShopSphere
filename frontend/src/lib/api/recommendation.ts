@@ -140,13 +140,13 @@ export const recommendationApi = {
   // ==========================================
 
   /**
-   * GET /api/recommendations/search-suggestions
+   * GET /api/recommendations/search/autocomplete
    * Get search autocomplete suggestions
    */
   getSearchSuggestions: (query: string) =>
-    recommendationClient.get<ApiResponse<SearchSuggestion[]>>(
-      '/api/recommendations/search-suggestions',
-      { params: { query } }
+    recommendationClient.get<string[]>(
+      '/api/recommendations/search/autocomplete',
+      { params: { q: query } }
     ),
 
   /**

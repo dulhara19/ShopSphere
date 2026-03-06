@@ -6,7 +6,9 @@ spring:
     name: product-service
   data:
     mongodb:
-      uri: mongodb://localhost:27017/productdb
+      uri: ${SPRING_DATA_MONGODB_URI:mongodb://localhost:27017/productdb}
+  elasticsearch:
+    uris: ${SPRING_ELASTICSEARCH_URIS:http://localhost:9200}
   
   # Story 1.4.1: Configure file upload limits
   servlet:

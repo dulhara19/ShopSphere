@@ -1,6 +1,19 @@
 /** @type {import('next').NextConfig} */
+
+const USER_SERVICE = process.env.USER_SERVICE_URL || 'http://localhost:3001';
+const PRODUCT_SERVICE = process.env.PRODUCT_SERVICE_URL || 'http://localhost:3002';
+const INVENTORY_SERVICE = process.env.INVENTORY_SERVICE_URL || 'http://localhost:3003';
+const ORDER_SERVICE = process.env.ORDER_SERVICE_URL || 'http://localhost:3004';
+const PAYMENT_SERVICE = process.env.PAYMENT_SERVICE_URL || 'http://localhost:3005';
+const SHIPPING_SERVICE = process.env.SHIPPING_SERVICE_URL || 'http://localhost:3006';
+const REVIEW_SERVICE = process.env.REVIEW_SERVICE_URL || 'http://localhost:3007';
+const RECOMMENDATION_SERVICE = process.env.RECOMMENDATION_SERVICE_URL || 'http://localhost:3008';
+const NOTIFICATION_SERVICE = process.env.NOTIFICATION_SERVICE_URL || 'http://localhost:3009';
+const ANALYTICS_SERVICE = process.env.ANALYTICS_SERVICE_URL || 'http://localhost:3010';
+
 const nextConfig = {
   reactStrictMode: true,
+  output: 'standalone',
   images: {
     remotePatterns: [
       {
@@ -18,38 +31,38 @@ const nextConfig = {
     ],
   },
   async rewrites() {
-    if (process.env.NODE_ENV === 'development') {
-      return [
-        // User service (3001)
-        { source: '/api/auth/:path*', destination: 'http://localhost:3001/api/auth/:path*' },
-        { source: '/api/users/:path*', destination: 'http://localhost:3001/api/users/:path*' },
-        { source: '/api/admin/users/:path*', destination: 'http://localhost:3001/api/admin/users/:path*' },
-        // Product service (3002)
-        { source: '/api/products/:path*', destination: 'http://localhost:3002/api/products/:path*' },
-        { source: '/api/categories/:path*', destination: 'http://localhost:3002/api/categories/:path*' },
-        // Inventory service (3003)
-        { source: '/api/inventory/:path*', destination: 'http://localhost:3003/api/inventory/:path*' },
-        // Order service (3004)
-        { source: '/api/cart/:path*', destination: 'http://localhost:3004/api/cart/:path*' },
-        { source: '/api/orders/:path*', destination: 'http://localhost:3004/api/orders/:path*' },
-        { source: '/api/admin/orders/:path*', destination: 'http://localhost:3004/api/admin/orders/:path*' },
-        // Review service (3007)
-        { source: '/api/reviews/:path*', destination: 'http://localhost:3007/api/reviews/:path*' },
-        // Recommendation service (3008)
-        { source: '/api/recommendations/:path*', destination: 'http://localhost:3008/api/recommendations/:path*' },
-        { source: '/api/events/:path*', destination: 'http://localhost:3008/api/events/:path*' },
-        // Notification service (3009)
-        { source: '/api/notifications/:path*', destination: 'http://localhost:3009/api/notifications/:path*' },
-        // Payment service (3005)
-        { source: '/api/payments/:path*', destination: 'http://localhost:3005/api/payments/:path*' },
-        { source: '/api/payment-methods/:path*', destination: 'http://localhost:3005/api/payment-methods/:path*' },
-        { source: '/api/transactions/:path*', destination: 'http://localhost:3005/api/transactions/:path*' },
-        { source: '/api/webhooks/:path*', destination: 'http://localhost:3005/api/webhooks/:path*' },
-        // Analytics service (3010)
-        { source: '/api/analytics/:path*', destination: 'http://localhost:3010/api/analytics/:path*' },
-      ];
-    }
-    return [];
+    return [
+      // User service (3001)
+      { source: '/api/auth/:path*', destination: `${USER_SERVICE}/api/auth/:path*` },
+      { source: '/api/users/:path*', destination: `${USER_SERVICE}/api/users/:path*` },
+      { source: '/api/admin/users/:path*', destination: `${USER_SERVICE}/api/admin/users/:path*` },
+      // Product service (3002)
+      { source: '/api/products/:path*', destination: `${PRODUCT_SERVICE}/api/products/:path*` },
+      { source: '/api/categories/:path*', destination: `${PRODUCT_SERVICE}/api/categories/:path*` },
+      { source: '/api/attributes/:path*', destination: `${PRODUCT_SERVICE}/api/attributes/:path*` },
+      // Inventory service (3003)
+      { source: '/api/inventory/:path*', destination: `${INVENTORY_SERVICE}/api/inventory/:path*` },
+      // Order service (3004)
+      { source: '/api/cart/:path*', destination: `${ORDER_SERVICE}/api/cart/:path*` },
+      { source: '/api/orders/:path*', destination: `${ORDER_SERVICE}/api/orders/:path*` },
+      { source: '/api/admin/orders/:path*', destination: `${ORDER_SERVICE}/api/admin/orders/:path*` },
+      // Review service (3007)
+      { source: '/api/reviews/:path*', destination: `${REVIEW_SERVICE}/api/reviews/:path*` },
+      // Recommendation service (3008)
+      { source: '/api/recommendations/:path*', destination: `${RECOMMENDATION_SERVICE}/api/recommendations/:path*` },
+      { source: '/api/events/:path*', destination: `${RECOMMENDATION_SERVICE}/api/events/:path*` },
+      // Notification service (3009)
+      { source: '/api/notifications/:path*', destination: `${NOTIFICATION_SERVICE}/api/notifications/:path*` },
+      // Shipping service (3006)
+      { source: '/api/shipping/:path*', destination: `${SHIPPING_SERVICE}/api/shipping/:path*` },
+      // Payment service (3005)
+      { source: '/api/payments/:path*', destination: `${PAYMENT_SERVICE}/api/payments/:path*` },
+      { source: '/api/payment-methods/:path*', destination: `${PAYMENT_SERVICE}/api/payment-methods/:path*` },
+      { source: '/api/transactions/:path*', destination: `${PAYMENT_SERVICE}/api/transactions/:path*` },
+      { source: '/api/webhooks/:path*', destination: `${PAYMENT_SERVICE}/api/webhooks/:path*` },
+      // Analytics service (3010)
+      { source: '/api/analytics/:path*', destination: `${ANALYTICS_SERVICE}/api/analytics/:path*` },
+    ];
   },
 };
 

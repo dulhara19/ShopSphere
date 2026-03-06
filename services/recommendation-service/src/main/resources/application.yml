@@ -1,0 +1,26 @@
+server:
+  port: ${SERVER_PORT:3008}
+
+spring:
+  application:
+    name: recommendation-service
+  profiles:
+    active: ${SPRING_PROFILES_ACTIVE:dev}
+  data:
+    mongodb:
+      uri: ${SPRING_DATA_MONGODB_URI:mongodb://localhost:27017/recommendation_service}
+      database: recommendation_service
+    redis:
+      host: ${SPRING_DATA_REDIS_HOST:localhost}
+      port: ${SPRING_DATA_REDIS_PORT:6379}
+
+  rabbitmq:
+    host: ${SPRING_RABBITMQ_HOST:localhost}
+    port: ${SPRING_RABBITMQ_PORT:5672}
+    username: ${SPRING_RABBITMQ_USERNAME:guest}
+    password: ${SPRING_RABBITMQ_PASSWORD:guest}
+
+logging:
+  level:
+    com.shopsphere.recommendation: DEBUG
+    org.springframework: INFO

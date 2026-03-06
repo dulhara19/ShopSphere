@@ -134,6 +134,7 @@ services:
       - "3001:3001"
     environment:
       SERVER_PORT: 3001
+      JAVA_OPTS: "-Xmx256m -Xms128m"
       SPRING_DATASOURCE_URL: jdbc:postgresql://shopsphere-postgres:5432/shopsphere_user_dev
       SPRING_DATASOURCE_USERNAME: postgres
       SPRING_DATASOURCE_PASSWORD: postgres
@@ -161,6 +162,7 @@ services:
       - "3002:3002"
     environment:
       SERVER_PORT: 3002
+      JAVA_OPTS: "-Xmx256m -Xms128m"
       SPRING_DATA_MONGODB_URI: mongodb://shopsphere-mongo:27017/productdb
       SPRING_ELASTICSEARCH_URIS: http://shopsphere-elasticsearch:9200
     restart: unless-stopped
@@ -181,6 +183,7 @@ services:
       - "3003:3003"
     environment:
       SERVER_PORT: 3003
+      JAVA_OPTS: "-Xmx256m -Xms128m"
       SPRING_DATASOURCE_URL: jdbc:postgresql://shopsphere-postgres:5432/shopsphere_inventory
       SPRING_DATASOURCE_USERNAME: postgres
       SPRING_DATASOURCE_PASSWORD: postgres
@@ -206,6 +209,7 @@ services:
       - "3004:3004"
     environment:
       SERVER_PORT: 3004
+      JAVA_OPTS: "-Xmx256m -Xms128m"
       SPRING_DATASOURCE_URL: jdbc:postgresql://shopsphere-postgres:5432/shopsphere_orders
       SPRING_DATASOURCE_USERNAME: postgres
       SPRING_DATASOURCE_PASSWORD: postgres
@@ -232,12 +236,12 @@ services:
       - "3005:3005"
     environment:
       SERVER_PORT: 3005
-      SPRING_PROFILES_ACTIVE: prod
+      JAVA_OPTS: "-Xmx256m -Xms128m"
       SPRING_DATASOURCE_URL: jdbc:postgresql://shopsphere-postgres:5432/payment_db
       SPRING_DATASOURCE_USERNAME: postgres
       SPRING_DATASOURCE_PASSWORD: postgres
-      SPRING_JPA_HIBERNATE_DDL_AUTO: validate
-      SPRING_FLYWAY_ENABLED: "true"
+      SPRING_JPA_HIBERNATE_DDL_AUTO: update
+      SPRING_FLYWAY_ENABLED: "false"
       STRIPE_API_KEY: ${STRIPE_API_KEY:-sk_test_placeholder}
       STRIPE_WEBHOOK_SECRET: ${STRIPE_WEBHOOK_SECRET:-whsec_test_placeholder}
     restart: unless-stopped
@@ -256,6 +260,7 @@ services:
       - "3007:3007"
     environment:
       SERVER_PORT: 3007
+      JAVA_OPTS: "-Xmx256m -Xms128m"
       SPRING_DATA_MONGODB_URI: mongodb://shopsphere-mongo:27017/reviewdb
       SPRING_DATA_REDIS_HOST: shopsphere-redis
       SPRING_DATA_REDIS_PORT: 6379
@@ -277,6 +282,7 @@ services:
       - "3008:3008"
     environment:
       SERVER_PORT: 3008
+      JAVA_OPTS: "-Xmx256m -Xms128m"
       SPRING_PROFILES_ACTIVE: dev
       SPRING_DATA_MONGODB_URI: mongodb://shopsphere-mongo:27017/recommendation_service
       SPRING_DATA_REDIS_HOST: shopsphere-redis
@@ -301,6 +307,7 @@ services:
       - "3009:3009"
     environment:
       SERVER_PORT: 3009
+      JAVA_OPTS: "-Xmx256m -Xms128m"
       SPRING_DATA_MONGODB_URI: mongodb://shopsphere-mongo:27017/shopsphere_notification_db
       SPRING_RABBITMQ_HOST: shopsphere-rabbitmq
       SPRING_RABBITMQ_PORT: 5672
@@ -325,12 +332,10 @@ services:
       - "3010:3010"
     environment:
       SERVER_PORT: 3010
-      SPRING_PROFILES_ACTIVE: default
+      JAVA_OPTS: "-Xmx256m -Xms128m"
       SPRING_DATASOURCE_URL: jdbc:postgresql://shopsphere-postgres:5432/analytics_db
       SPRING_DATASOURCE_USERNAME: postgres
       SPRING_DATASOURCE_PASSWORD: postgres
-      SPRING_DATA_REDIS_HOST: shopsphere-redis
-      SPRING_DATA_REDIS_PORT: 6379
       SPRING_REDIS_HOST: shopsphere-redis
       SPRING_REDIS_PORT: 6379
       SPRING_RABBITMQ_HOST: shopsphere-rabbitmq
@@ -338,6 +343,56 @@ services:
       SPRING_RABBITMQ_USERNAME: guest
       SPRING_RABBITMQ_PASSWORD: guest
       SPRING_JPA_HIBERNATE_DDL_AUTO: update
+    restart: unless-stopped
+
+  # ============================================================
+  # SHIPPING SERVICE
+  # ============================================================
+
+  shipping-service:
+    build:
+      context: ./services/shipping-service
+      dockerfile: Dockerfile
+    container_name: shipping-service
+    depends_on:
+      shopsphere-mongo:
+        condition: service_healthy
+    ports:
+      - "3006:3006"
+    environment:
+      SERVER_PORT: 3006
+      JAVA_OPTS: "-Xmx256m -Xms128m"
+      MONGODB_HOST: shopsphere-mongo
+      MONGODB_PORT: 27017
+    restart: unless-stopped
+
+  # ============================================================
+  # FRONTEND
+  # ============================================================
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: shopsphere-frontend
+    depends_on:
+      - user-service
+      - product-service
+      - order-service
+    ports:
+      - "3000:3000"
+    environment:
+      NODE_ENV: production
+      USER_SERVICE_URL: http://user-service:3001
+      PRODUCT_SERVICE_URL: http://product-service:3002
+      INVENTORY_SERVICE_URL: http://inventory-service:3003
+      ORDER_SERVICE_URL: http://order-service:3004
+      PAYMENT_SERVICE_URL: http://payment-service:3005
+      SHIPPING_SERVICE_URL: http://shipping-service:3006
+      REVIEW_SERVICE_URL: http://review-service:3007
+      RECOMMENDATION_SERVICE_URL: http://recommendation-service:3008
+      NOTIFICATION_SERVICE_URL: http://notification-service:3009
+      ANALYTICS_SERVICE_URL: http://analytics-service:3010
     restart: unless-stopped
 
 volumes:
