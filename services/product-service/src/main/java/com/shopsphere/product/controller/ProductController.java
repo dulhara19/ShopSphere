@@ -8,6 +8,9 @@ import org.springframework.data.domain.Page;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
+
+import java.util.List;
 
 @RestController
 @RequestMapping("/api/products")
@@ -66,5 +69,26 @@ public class ProductController {
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "20") int size) {
         return ResponseEntity.ok(productService.getProductsBySeller(sellerId, page, size));
+    }
+
+    @PostMapping("/{id}/images")
+    public ResponseEntity<ProductResponse> uploadImages(
+            @PathVariable String id,
+            @RequestParam("images") List<MultipartFile> images) {
+        return ResponseEntity.ok(productService.uploadImages(id, images));
+    }
+
+    @DeleteMapping("/{id}/images")
+    public ResponseEntity<ProductResponse> deleteImage(
+            @PathVariable String id,
+            @RequestParam String imageUrl) {
+        return ResponseEntity.ok(productService.deleteImage(id, imageUrl));
+    }
+
+    @PatchMapping("/{id}/primary-image")
+    public ResponseEntity<ProductResponse> setPrimaryImage(
+            @PathVariable String id,
+            @RequestBody java.util.Map<String, String> body) {
+        return ResponseEntity.ok(productService.setPrimaryImage(id, body.get("imageUrl")));
     }
 }

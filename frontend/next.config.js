@@ -65,6 +65,8 @@ const nextConfig = {
       { source: '/api/webhooks/:path*', destination: `${PAYMENT_SERVICE}/api/webhooks/:path*` },
       // Analytics service (3010)
       { source: '/api/analytics/:path*', destination: `${ANALYTICS_SERVICE}/api/analytics/:path*` },
+      // Product image uploads (served from product-service)
+      { source: '/uploads/:path*', destination: `${PRODUCT_SERVICE}/uploads/:path*` },
     ];
   },
 };

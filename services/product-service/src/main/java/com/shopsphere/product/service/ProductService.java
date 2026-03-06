@@ -6,20 +6,36 @@ import com.shopsphere.product.model.Product;
 import com.shopsphere.product.model.ProductStatus;
 import com.shopsphere.product.repository.ProductRepository;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
+import org.springframework.web.multipart.MultipartFile;
 
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.util.ArrayList;
 import java.util.List;
+import java.util.UUID;
 import java.util.stream.Collectors;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class ProductService {
 
     private final ProductRepository productRepository;
+
+    @Value("${app.upload-dir:/app/uploads}")
+    private String uploadDir;
+
+    @Value("${app.base-url:}")
+    private String baseUrl;
 
     public Page<ProductResponse> listProducts(int page, int size, String sortBy, String direction) {
         Sort sort = direction.equalsIgnoreCase("desc")
@@ -90,6 +106,65 @@ public class ProductService {
                 .orElseThrow(() -> new ProductNotFoundException(id));
         product.setDeleted(true);
         productRepository.save(product);
+    }
+
+    public ProductResponse uploadImages(String id, List<MultipartFile> files) {
+        Product product = productRepository.findByIdAndDeletedFalse(id)
+                .orElseThrow(() -> new ProductNotFoundException(id));
+
+        List<String> imageUrls = product.getImages() != null ? new ArrayList<>(product.getImages()) : new ArrayList<>();
+
+        try {
+            Path uploadPath = Paths.get(uploadDir, "products", id);
+            Files.createDirectories(uploadPath);
+
+            for (MultipartFile file : files) {
+                String ext = getExtension(file.getOriginalFilename());
+                String filename = UUID.randomUUID() + ext;
+                Path filePath = uploadPath.resolve(filename);
+                file.transferTo(filePath.toFile());
+
+                String imageUrl = "/uploads/products/" + id + "/" + filename;
+                imageUrls.add(imageUrl);
+            }
+        } catch (IOException e) {
+            throw new RuntimeException("Failed to upload images", e);
+        }
+
+        product.setImages(imageUrls);
+        if (product.getPrimaryImage() == null && !imageUrls.isEmpty()) {
+            product.setPrimaryImage(imageUrls.get(0));
+        }
+
+        return toResponse(productRepository.save(product));
+    }
+
+    public ProductResponse deleteImage(String id, String imageUrl) {
+        Product product = productRepository.findByIdAndDeletedFalse(id)
+                .orElseThrow(() -> new ProductNotFoundException(id));
+
+        List<String> images = new ArrayList<>(product.getImages());
+        images.remove(imageUrl);
+        product.setImages(images);
+
+        if (imageUrl.equals(product.getPrimaryImage())) {
+            product.setPrimaryImage(images.isEmpty() ? null : images.get(0));
+        }
+
+        return toResponse(productRepository.save(product));
+    }
+
+    public ProductResponse setPrimaryImage(String id, String imageUrl) {
+        Product product = productRepository.findByIdAndDeletedFalse(id)
+                .orElseThrow(() -> new ProductNotFoundException(id));
+        product.setPrimaryImage(imageUrl);
+        return toResponse(productRepository.save(product));
+    }
+
+    private String getExtension(String filename) {
+        if (filename == null) return ".jpg";
+        int dot = filename.lastIndexOf('.');
+        return dot >= 0 ? filename.substring(dot) : ".jpg";
     }
 
     // Internal methods

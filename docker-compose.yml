@@ -166,6 +166,9 @@ services:
       SPRING_DATA_MONGODB_URI: mongodb://shopsphere-mongo:27017/productdb
       SPRING_DATA_REDIS_HOST: shopsphere-redis
       SPRING_DATA_REDIS_PORT: 6379
+      UPLOAD_DIR: /app/uploads
+    volumes:
+      - product-uploads:/app/uploads
     restart: unless-stopped
 
   inventory-service:
@@ -413,3 +416,4 @@ volumes:
   redis-data:
   rabbitmq-data:
   elasticsearch-data:
+  product-uploads:
