@@ -1,0 +1,1078 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>ShopSphere - Architecture Diagrams</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Segoe UI', sans-serif; background: #f5f5f5; font-size: 16px; }
+        .page {
+            width: 1200px;
+            margin: 40px auto;
+            background: white;
+            border-radius: 12px;
+            padding: 52px 60px;
+            box-shadow: 0 2px 16px rgba(0,0,0,0.06);
+        }
+        h1 { text-align:center; font-size:32px; color:#1a237e; margin-bottom:6px; }
+        h1 small { display:block; font-size:16px; color:#999; font-weight:400; margin-top:6px; margin-bottom: 36px;}
+
+        /* Shared */
+        .row { display:flex; justify-content:center; gap:12px; margin-bottom:0; }
+        .arrow-section { display:flex; justify-content:center; padding:12px 0; }
+        .arrow-section svg { width:40px; height:36px; }
+
+        .box {
+            border-radius:10px;
+            padding:16px 28px;
+            color:white;
+            text-align:center;
+            font-weight:600;
+            font-size:17px;
+        }
+        .box small { display:block; font-size:14px; font-weight:400; opacity:.8; margin-top:3px; }
+
+        /* Diagram 1 */
+        .client { background:#1565c0; width:100%; font-size:20px; padding:22px; }
+        .svc { flex:1; font-size:15px; padding:14px 6px; min-width:0; }
+        .broker { flex:1; }
+        .db { flex:1; }
+
+        .label-row {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            margin-bottom: 12px;
+        }
+        .label-tag {
+            font-size: 13px;
+            font-weight: 700;
+            color: #b0bec5;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            white-space: nowrap;
+            min-width: 90px;
+        }
+        .label-line { flex:1; height:1px; background:#e0e0e0; }
+
+        .docker-border {
+            border: 2px dashed #90caf9;
+            border-radius: 14px;
+            padding: 24px 20px 28px;
+            position: relative;
+        }
+        .docker-tag {
+            position:absolute;
+            bottom:-11px;
+            left:50%;
+            transform:translateX(-50%);
+            background:white;
+            padding:0 14px;
+            font-size:11px;
+            color:#42a5f5;
+            font-weight:600;
+        }
+
+        /* Diagram 2 - Communication */
+        .comm-grid {
+            display: grid;
+            grid-template-columns: 1fr 120px 1fr;
+            grid-template-rows: auto;
+            gap: 0;
+            align-items: center;
+        }
+        .comm-left, .comm-right {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+        .comm-center {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 6px;
+        }
+        .comm-box {
+            border-radius: 8px;
+            padding: 12px 20px;
+            color: white;
+            font-weight: 600;
+            font-size: 16px;
+            text-align: center;
+        }
+        .comm-box small { display:block; font-size:13px; opacity:.8; font-weight:400; }
+        .comm-arrow {
+            font-size: 20px;
+            color: #90a4ae;
+            line-height: 1;
+        }
+        .comm-arrow-label {
+            font-size: 9px;
+            color: #78909c;
+            text-align: center;
+        }
+
+        /* Diagram 3 - Stack */
+        .stack-row { display:flex; gap:12px; margin-bottom:12px; }
+        .stack-card {
+            flex:1;
+            border-radius:10px;
+            padding:16px 20px;
+            color:white;
+        }
+        .stack-card .stitle {
+            font-size:13px;
+            text-transform:uppercase;
+            letter-spacing:1.5px;
+            opacity:.75;
+            margin-bottom:10px;
+            font-weight:600;
+        }
+        .stack-card .sitems {
+            font-size:16px;
+            font-weight:600;
+            line-height:1.8;
+        }
+
+        /* ===== Per-Service Architecture ===== */
+        .svc-page-header {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            margin-bottom: 28px;
+        }
+        .svc-page-icon {
+            width: 64px;
+            height: 64px;
+            border-radius: 14px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 32px;
+            color: white;
+            flex-shrink: 0;
+        }
+        .svc-page-title {
+            font-size: 28px;
+            font-weight: 700;
+            color: #1a237e;
+        }
+        .svc-page-title small {
+            display: block;
+            font-size: 16px;
+            color: #999;
+            font-weight: 400;
+            margin-top: 4px;
+        }
+
+        .svc-arch {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 16px;
+        }
+
+        /* Top info row */
+        .svc-info-row {
+            display: flex;
+            gap: 12px;
+        }
+        .svc-info-card {
+            flex: 1;
+            background: #f8f9fa;
+            border-radius: 10px;
+            padding: 14px 18px;
+            border-left: 4px solid #ccc;
+        }
+        .svc-info-card .info-label {
+            font-size: 13px;
+            text-transform: uppercase;
+            letter-spacing: 1.5px;
+            color: #999;
+            font-weight: 700;
+            margin-bottom: 8px;
+        }
+        .svc-info-card .info-value {
+            font-size: 15px;
+            color: #37474f;
+            font-weight: 500;
+            line-height: 1.7;
+        }
+
+        /* Layered arch for each service */
+        .svc-layers {
+            background: #fafbfc;
+            border: 1.5px solid #e8ecf0;
+            border-radius: 12px;
+            padding: 24px;
+        }
+        .svc-layer-row {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 8px;
+        }
+        .svc-layer-row:last-child { margin-bottom: 0; }
+
+        .svc-layer {
+            flex: 1;
+            border-radius: 8px;
+            padding: 14px 18px;
+            text-align: center;
+            font-size: 16px;
+            font-weight: 600;
+        }
+        .svc-layer small {
+            display: block;
+            font-size: 13px;
+            font-weight: 400;
+            opacity: .85;
+            margin-top: 4px;
+        }
+
+        .layer-controller { background: #e3f2fd; color: #1565c0; border: 1.5px solid #bbdefb; }
+        .layer-service { background: #e8f5e9; color: #2e7d32; border: 1.5px solid #c8e6c9; }
+        .layer-repository { background: #fff3e0; color: #e65100; border: 1.5px solid #ffe0b2; }
+        .layer-model { background: #fce4ec; color: #c62828; border: 1.5px solid #f8bbd0; }
+        .layer-config { background: #f3e5f5; color: #6a1b9a; border: 1.5px solid #e1bee7; }
+        .layer-event { background: #fff8e1; color: #f57f17; border: 1.5px solid #fff9c4; }
+        .layer-security { background: #e0f2f1; color: #00695c; border: 1.5px solid #b2dfdb; }
+        .layer-dto { background: #e8eaf6; color: #283593; border: 1.5px solid #c5cae9; }
+        .layer-external { background: #37474f; color: white; }
+        .layer-db { background: #263238; color: white; }
+
+        .svc-arrow-down {
+            display: flex;
+            justify-content: center;
+            padding: 4px 0;
+        }
+        .svc-arrow-down svg { width: 24px; height: 20px; }
+
+        /* Features list */
+        .svc-features {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            margin-top: 12px;
+        }
+        .svc-feat-tag {
+            background: #f0f4f8;
+            border: 1px solid #e0e6ed;
+            border-radius: 6px;
+            padding: 8px 16px;
+            font-size: 14px;
+            color: #546e7a;
+            font-weight: 500;
+        }
+    </style>
+</head>
+<body>
+
+<!-- ==================== DIAGRAM 1: SYSTEM ARCHITECTURE ==================== -->
+<div class="page">
+    <h1>System Architecture <small>ShopSphere - High-Level Overview</small></h1>
+
+    <div class="docker-border">
+
+        <!-- Client -->
+        <div class="label-row"><span class="label-tag">Client</span><div class="label-line"></div></div>
+        <div class="row">
+            <div class="box client">
+                Next.js Frontend
+                <small>Port 3000 &nbsp;|&nbsp; React &nbsp;|&nbsp; TypeScript &nbsp;|&nbsp; Tailwind CSS</small>
+            </div>
+        </div>
+
+        <div class="arrow-section">
+            <svg viewBox="0 0 40 36"><path d="M20 0 L20 28 M12 22 L20 30 L28 22" stroke="#b0bec5" stroke-width="2.5" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        </div>
+
+        <!-- Microservices -->
+        <div class="label-row"><span class="label-tag">Services</span><div class="label-line"></div></div>
+        <div class="row">
+            <div class="box svc" style="background:#3949ab">User<small>3001</small></div>
+            <div class="box svc" style="background:#2e7d32">Product<small>3002</small></div>
+            <div class="box svc" style="background:#f9a825;color:#3e2723">Inventory<small>3003</small></div>
+            <div class="box svc" style="background:#c62828">Order<small>3004</small></div>
+            <div class="box svc" style="background:#6a1b9a">Payment<small>3005</small></div>
+            <div class="box svc" style="background:#00838f">Shipping<small>3006</small></div>
+            <div class="box svc" style="background:#d84315">Review<small>3007</small></div>
+            <div class="box svc" style="background:#00695c">Recommend<small>3008</small></div>
+            <div class="box svc" style="background:#7b1fa2">Notification<small>3009</small></div>
+            <div class="box svc" style="background:#283593">Analytics<small>3010</small></div>
+        </div>
+
+        <div class="arrow-section">
+            <svg viewBox="0 0 40 36"><path d="M20 0 L20 28 M12 22 L20 30 L28 22" stroke="#b0bec5" stroke-width="2.5" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        </div>
+
+        <!-- Message Brokers -->
+        <div class="label-row"><span class="label-tag">Messaging</span><div class="label-line"></div></div>
+        <div class="row">
+            <div class="box broker" style="background:#e65100">RabbitMQ<small>Port 5672</small></div>
+            <div class="box broker" style="background:#bf360c">Apache Kafka<small>Port 9092</small></div>
+        </div>
+
+        <div class="arrow-section">
+            <svg viewBox="0 0 40 36"><path d="M20 0 L20 28 M12 22 L20 30 L28 22" stroke="#b0bec5" stroke-width="2.5" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        </div>
+
+        <!-- Databases -->
+        <div class="label-row"><span class="label-tag">Data Layer</span><div class="label-line"></div></div>
+        <div class="row">
+            <div class="box db" style="background:#1565c0">
+                PostgreSQL<small>Port 5432 &nbsp;|&nbsp; Relational</small>
+            </div>
+            <div class="box db" style="background:#2e7d32">
+                MongoDB<small>Port 27017 &nbsp;|&nbsp; Document</small>
+            </div>
+            <div class="box db" style="background:#b71c1c">
+                Redis<small>Port 6379 &nbsp;|&nbsp; Cache</small>
+            </div>
+            <div class="box db" style="background:#e65100">
+                Elasticsearch<small>Port 9200 &nbsp;|&nbsp; Search</small>
+            </div>
+        </div>
+
+        <div class="docker-tag">Docker Compose</div>
+    </div>
+</div>
+
+
+<!-- ==================== DIAGRAM 2: COMMUNICATION FLOW ==================== -->
+<div class="page">
+    <h1>Service Communication Flow <small>ShopSphere - How Services Talk to Each Other</small></h1>
+
+    <table style="width:100%; border-collapse:separate; border-spacing:0 6px;">
+        <thead>
+            <tr>
+                <th style="text-align:left; font-size:14px; color:#999; padding:0 0 10px 8px; font-weight:600; letter-spacing:1px;">SERVICE</th>
+                <th style="text-align:left; font-size:14px; color:#999; padding:0 0 10px 0; font-weight:600; letter-spacing:1px;">COMMUNICATES VIA</th>
+                <th style="text-align:left; font-size:14px; color:#999; padding:0 0 10px 0; font-weight:600; letter-spacing:1px;">CONNECTS TO</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr>
+                <td><div class="comm-box" style="background:#3949ab; display:inline-block;">User Service</div></td>
+                <td style="font-size:16px; color:#546e7a;">REST API &nbsp;&bull;&nbsp; RabbitMQ Events</td>
+                <td style="font-size:16px; color:#546e7a;">PostgreSQL &nbsp;&bull;&nbsp; Redis</td>
+            </tr>
+            <tr>
+                <td><div class="comm-box" style="background:#2e7d32; display:inline-block;">Product Service</div></td>
+                <td style="font-size:16px; color:#546e7a;">REST API</td>
+                <td style="font-size:16px; color:#546e7a;">MongoDB &nbsp;&bull;&nbsp; Elasticsearch</td>
+            </tr>
+            <tr>
+                <td><div class="comm-box" style="background:#f9a825; color:#3e2723; display:inline-block;">Inventory Service</div></td>
+                <td style="font-size:16px; color:#546e7a;">REST API &nbsp;&bull;&nbsp; Kafka Events</td>
+                <td style="font-size:16px; color:#546e7a;">PostgreSQL &nbsp;&bull;&nbsp; Redis</td>
+            </tr>
+            <tr>
+                <td><div class="comm-box" style="background:#c62828; display:inline-block;">Order Service</div></td>
+                <td style="font-size:16px; color:#546e7a;">REST API &nbsp;&bull;&nbsp; RabbitMQ Events</td>
+                <td style="font-size:16px; color:#546e7a;">PostgreSQL &nbsp;&bull;&nbsp; Redis</td>
+            </tr>
+            <tr>
+                <td><div class="comm-box" style="background:#6a1b9a; display:inline-block;">Payment Service</div></td>
+                <td style="font-size:16px; color:#546e7a;">REST API &nbsp;&bull;&nbsp; Stripe Webhooks</td>
+                <td style="font-size:16px; color:#546e7a;">PostgreSQL</td>
+            </tr>
+            <tr>
+                <td><div class="comm-box" style="background:#00838f; display:inline-block;">Shipping Service</div></td>
+                <td style="font-size:16px; color:#546e7a;">REST API</td>
+                <td style="font-size:16px; color:#546e7a;">&mdash;</td>
+            </tr>
+            <tr>
+                <td><div class="comm-box" style="background:#d84315; display:inline-block;">Review Service</div></td>
+                <td style="font-size:16px; color:#546e7a;">REST API</td>
+                <td style="font-size:16px; color:#546e7a;">MongoDB &nbsp;&bull;&nbsp; Redis</td>
+            </tr>
+            <tr>
+                <td><div class="comm-box" style="background:#00695c; display:inline-block;">Recommendation</div></td>
+                <td style="font-size:16px; color:#546e7a;">REST API &nbsp;&bull;&nbsp; RabbitMQ Events</td>
+                <td style="font-size:16px; color:#546e7a;">MongoDB &nbsp;&bull;&nbsp; Redis</td>
+            </tr>
+            <tr>
+                <td><div class="comm-box" style="background:#7b1fa2; display:inline-block;">Notification</div></td>
+                <td style="font-size:16px; color:#546e7a;">RabbitMQ Events &nbsp;&bull;&nbsp; SendGrid</td>
+                <td style="font-size:16px; color:#546e7a;">MongoDB</td>
+            </tr>
+            <tr>
+                <td><div class="comm-box" style="background:#283593; display:inline-block;">Analytics Service</div></td>
+                <td style="font-size:16px; color:#546e7a;">REST API &nbsp;&bull;&nbsp; RabbitMQ Events</td>
+                <td style="font-size:16px; color:#546e7a;">PostgreSQL &nbsp;&bull;&nbsp; Redis</td>
+            </tr>
+        </tbody>
+    </table>
+
+    <div style="margin-top:32px;">
+        <h1 style="font-size:20px; margin-bottom:20px;">Communication Pattern<small style="margin-bottom:20px;"></small></h1>
+
+        <div style="display:flex; gap:16px;">
+            <div style="flex:1; background:#e3f2fd; border-radius:10px; padding:20px; text-align:center;">
+                <div style="font-size:28px; margin-bottom:8px;">&#8596;</div>
+                <div style="font-size:17px; font-weight:700; color:#1565c0;">Synchronous</div>
+                <div style="font-size:14px; color:#546e7a; margin-top:4px;">REST API (HTTP/JSON)<br>Direct request &amp; response</div>
+            </div>
+            <div style="flex:1; background:#fff3e0; border-radius:10px; padding:20px; text-align:center;">
+                <div style="font-size:28px; margin-bottom:8px;">&#8644;</div>
+                <div style="font-size:17px; font-weight:700; color:#e65100;">Asynchronous</div>
+                <div style="font-size:14px; color:#546e7a; margin-top:4px;">RabbitMQ &amp; Kafka<br>Fire-and-forget events</div>
+            </div>
+            <div style="flex:1; background:#fce4ec; border-radius:10px; padding:20px; text-align:center;">
+                <div style="font-size:28px; margin-bottom:8px;">&#9889;</div>
+                <div style="font-size:17px; font-weight:700; color:#b71c1c;">Caching</div>
+                <div style="font-size:14px; color:#546e7a; margin-top:4px;">Redis<br>Session &amp; data caching</div>
+            </div>
+            <div style="flex:1; background:#e8f5e9; border-radius:10px; padding:20px; text-align:center;">
+                <div style="font-size:28px; margin-bottom:8px;">&#128269;</div>
+                <div style="font-size:17px; font-weight:700; color:#2e7d32;">Search</div>
+                <div style="font-size:14px; color:#546e7a; margin-top:4px;">Elasticsearch<br>Full-text &amp; faceted search</div>
+            </div>
+        </div>
+    </div>
+</div>
+
+
+<!-- ==================== DIAGRAM 3: TECHNOLOGY STACK ==================== -->
+<div class="page">
+    <h1>Technology Stack <small>ShopSphere - Complete Technology Overview</small></h1>
+
+    <div class="stack-row">
+        <div class="stack-card" style="background:#1565c0;">
+            <div class="stitle">Frontend</div>
+            <div class="sitems">Next.js 14 &nbsp;&bull;&nbsp; React 18 &nbsp;&bull;&nbsp; TypeScript 5 &nbsp;&bull;&nbsp; Tailwind CSS &nbsp;&bull;&nbsp; Zustand &nbsp;&bull;&nbsp; React Query &nbsp;&bull;&nbsp; Radix UI &nbsp;&bull;&nbsp; Axios &nbsp;&bull;&nbsp; Stripe React</div>
+        </div>
+    </div>
+    <div class="stack-row">
+        <div class="stack-card" style="background:#2e7d32;">
+            <div class="stitle">Backend</div>
+            <div class="sitems">Java 17 &nbsp;&bull;&nbsp; Spring Boot 3 &nbsp;&bull;&nbsp; Spring Security 6 &nbsp;&bull;&nbsp; Spring Data JPA &nbsp;&bull;&nbsp; Spring Data MongoDB &nbsp;&bull;&nbsp; Spring AMQP &nbsp;&bull;&nbsp; Spring Kafka &nbsp;&bull;&nbsp; JWT &nbsp;&bull;&nbsp; Flyway &nbsp;&bull;&nbsp; Maven</div>
+        </div>
+    </div>
+    <div class="stack-row">
+        <div class="stack-card" style="background:#e65100;">
+            <div class="stitle">Message Brokers</div>
+            <div class="sitems">RabbitMQ 3 &nbsp;&bull;&nbsp; Apache Kafka 7.6 &nbsp;&bull;&nbsp; Zookeeper</div>
+        </div>
+        <div class="stack-card" style="background:#b71c1c;">
+            <div class="stitle">Caching &amp; Search</div>
+            <div class="sitems">Redis 7 &nbsp;&bull;&nbsp; Elasticsearch 7.17</div>
+        </div>
+    </div>
+    <div class="stack-row">
+        <div class="stack-card" style="background:#1a237e;">
+            <div class="stitle">Databases</div>
+            <div class="sitems">PostgreSQL 15 &nbsp;&bull;&nbsp; MongoDB 7</div>
+        </div>
+        <div class="stack-card" style="background:#37474f;">
+            <div class="stitle">DevOps &amp; Infrastructure</div>
+            <div class="sitems">Docker &nbsp;&bull;&nbsp; Docker Compose &nbsp;&bull;&nbsp; GitHub &nbsp;&bull;&nbsp; Git</div>
+        </div>
+    </div>
+    <div class="stack-row">
+        <div class="stack-card" style="background:#6a1b9a;">
+            <div class="stitle">Payments</div>
+            <div class="sitems">Stripe API &nbsp;&bull;&nbsp; Stripe Java SDK</div>
+        </div>
+        <div class="stack-card" style="background:#00695c;">
+            <div class="stitle">Email</div>
+            <div class="sitems">SendGrid</div>
+        </div>
+        <div class="stack-card" style="background:#bf360c;">
+            <div class="stitle">AI / ML</div>
+            <div class="sitems">DJL (Deep Java Library) &nbsp;&bull;&nbsp; ResNet</div>
+        </div>
+        <div class="stack-card" style="background:#4527a0;">
+            <div class="stitle">Testing</div>
+            <div class="sitems">JUnit 5 &nbsp;&bull;&nbsp; Vitest &nbsp;&bull;&nbsp; Playwright</div>
+        </div>
+    </div>
+</div>
+
+<!-- ==================== SERVICE ARCHITECTURES ==================== -->
+
+<!-- 1. USER SERVICE -->
+<div class="page">
+    <div class="svc-page-header">
+        <div class="svc-page-icon" style="background:#3949ab;">&#128100;</div>
+        <div class="svc-page-title">User Service <small>Port 3001 &nbsp;|&nbsp; Authentication, Profiles &amp; Address Management</small></div>
+    </div>
+
+    <div class="svc-info-row">
+        <div class="svc-info-card" style="border-color:#1565c0;">
+            <div class="info-label">Databases</div>
+            <div class="info-value">PostgreSQL (shopsphere_user_dev)<br>Redis (Token Blacklist &amp; Sessions)</div>
+        </div>
+        <div class="svc-info-card" style="border-color:#e65100;">
+            <div class="info-label">Messaging</div>
+            <div class="info-value">RabbitMQ Publisher<br>Events: user.created, user.updated, user.deleted</div>
+        </div>
+        <div class="svc-info-card" style="border-color:#2e7d32;">
+            <div class="info-label">External</div>
+            <div class="info-value">Google OAuth2<br>JWT (15min access, 7-day refresh)</div>
+        </div>
+    </div>
+
+    <div style="margin-top:20px;">
+        <div class="svc-layers">
+            <div class="svc-layer-row">
+                <div class="svc-layer layer-controller">Controller<small>AuthController &bull; UserController &bull; InternalAuthController &bull; InternalUserController</small></div>
+            </div>
+            <div class="svc-arrow-down"><svg viewBox="0 0 24 20"><path d="M12 0 L12 14 M7 10 L12 16 L17 10" stroke="#b0bec5" stroke-width="2" fill="none" stroke-linecap="round"/></svg></div>
+            <div class="svc-layer-row">
+                <div class="svc-layer layer-security">Security<small>JwtAuthenticationFilter &bull; JwtUtils &bull; OAuth2SuccessHandler</small></div>
+                <div class="svc-layer layer-service">Service<small>AuthService &bull; UserService &bull; AddressService &bull; PasswordResetService &bull; TokenBlacklistService</small></div>
+            </div>
+            <div class="svc-arrow-down"><svg viewBox="0 0 24 20"><path d="M12 0 L12 14 M7 10 L12 16 L17 10" stroke="#b0bec5" stroke-width="2" fill="none" stroke-linecap="round"/></svg></div>
+            <div class="svc-layer-row">
+                <div class="svc-layer layer-repository">Repository<small>UserRepository &bull; AddressRepository &bull; PasswordResetTokenRepository</small></div>
+                <div class="svc-layer layer-event">Event Publisher<small>UserEventPublisher &rarr; RabbitMQ</small></div>
+            </div>
+            <div class="svc-arrow-down"><svg viewBox="0 0 24 20"><path d="M12 0 L12 14 M7 10 L12 16 L17 10" stroke="#b0bec5" stroke-width="2" fill="none" stroke-linecap="round"/></svg></div>
+            <div class="svc-layer-row">
+                <div class="svc-layer layer-model">Model<small>User &bull; Address &bull; Role &bull; PasswordResetToken</small></div>
+            </div>
+            <div class="svc-arrow-down"><svg viewBox="0 0 24 20"><path d="M12 0 L12 14 M7 10 L12 16 L17 10" stroke="#b0bec5" stroke-width="2" fill="none" stroke-linecap="round"/></svg></div>
+            <div class="svc-layer-row">
+                <div class="svc-layer layer-db">PostgreSQL</div>
+                <div class="svc-layer layer-external" style="background:#b71c1c;">Redis</div>
+                <div class="svc-layer layer-external" style="background:#e65100;">RabbitMQ</div>
+            </div>
+        </div>
+    </div>
+
+    <div class="svc-features">
+        <div class="svc-feat-tag">JWT Authentication</div>
+        <div class="svc-feat-tag">Google OAuth2</div>
+        <div class="svc-feat-tag">Password Reset</div>
+        <div class="svc-feat-tag">Token Blacklist</div>
+        <div class="svc-feat-tag">Address Management</div>
+        <div class="svc-feat-tag">Event Publishing</div>
+        <div class="svc-feat-tag">Redis Session Cache</div>
+    </div>
+</div>
+
+<!-- 2. PRODUCT SERVICE -->
+<div class="page">
+    <div class="svc-page-header">
+        <div class="svc-page-icon" style="background:#2e7d32;">&#128722;</div>
+        <div class="svc-page-title">Product Service <small>Port 3002 &nbsp;|&nbsp; Product Catalog, Search &amp; Visual Search</small></div>
+    </div>
+
+    <div class="svc-info-row">
+        <div class="svc-info-card" style="border-color:#2e7d32;">
+            <div class="info-label">Databases</div>
+            <div class="info-value">MongoDB (productdb)<br>Elasticsearch (Search Index)</div>
+        </div>
+        <div class="svc-info-card" style="border-color:#d84315;">
+            <div class="info-label">Integration</div>
+            <div class="info-value">Review Service (REST)<br>Rating aggregation from reviews</div>
+        </div>
+        <div class="svc-info-card" style="border-color:#bf360c;">
+            <div class="info-label">Special</div>
+            <div class="info-value">DJL ResNet Model<br>Visual search with cosine similarity</div>
+        </div>
+    </div>
+
+    <div style="margin-top:20px;">
+        <div class="svc-layers">
+            <div class="svc-layer-row">
+                <div class="svc-layer layer-controller">Controller<small>ProductController &bull; CategoryController &bull; VariationAttributeController</small></div>
+            </div>
+            <div class="svc-arrow-down"><svg viewBox="0 0 24 20"><path d="M12 0 L12 14 M7 10 L12 16 L17 10" stroke="#b0bec5" stroke-width="2" fill="none" stroke-linecap="round"/></svg></div>
+            <div class="svc-layer-row">
+                <div class="svc-layer layer-service">Service<small>ProductService &bull; CategoryService &bull; ImageService &bull; VisualSearchService &bull; ReviewIntegrationService</small></div>
+            </div>
+            <div class="svc-arrow-down"><svg viewBox="0 0 24 20"><path d="M12 0 L12 14 M7 10 L12 16 L17 10" stroke="#b0bec5" stroke-width="2" fill="none" stroke-linecap="round"/></svg></div>
+            <div class="svc-layer-row">
+                <div class="svc-layer layer-repository">Repository<small>ProductRepository &bull; CategoryRepository &bull; VariationAttributeRepository &bull; ProductSearchRepository</small></div>
+            </div>
+            <div class="svc-arrow-down"><svg viewBox="0 0 24 20"><path d="M12 0 L12 14 M7 10 L12 16 L17 10" stroke="#b0bec5" stroke-width="2" fill="none" stroke-linecap="round"/></svg></div>
+            <div class="svc-layer-row">
+                <div class="svc-layer layer-model">Model<small>Product &bull; ProductVariant &bull; Category &bull; VariationAttribute &bull; SearchAnalytics</small></div>
+            </div>
+            <div class="svc-arrow-down"><svg viewBox="0 0 24 20"><path d="M12 0 L12 14 M7 10 L12 16 L17 10" stroke="#b0bec5" stroke-width="2" fill="none" stroke-linecap="round"/></svg></div>
+            <div class="svc-layer-row">
+                <div class="svc-layer layer-external" style="background:#2e7d32;">MongoDB</div>
+                <div class="svc-layer layer-external" style="background:#e65100;">Elasticsearch</div>
+                <div class="svc-layer layer-external" style="background:#78909c;">File Storage (uploads/)</div>
+            </div>
+        </div>
+    </div>
+
+    <div class="svc-features">
+        <div class="svc-feat-tag">Full-Text Search</div>
+        <div class="svc-feat-tag">Faceted Filtering</div>
+        <div class="svc-feat-tag">Visual Search (AI)</div>
+        <div class="svc-feat-tag">Product Variants</div>
+        <div class="svc-feat-tag">Auto-generated SKUs</div>
+        <div class="svc-feat-tag">Image Upload (5MB)</div>
+        <div class="svc-feat-tag">Rating Aggregation</div>
+        <div class="svc-feat-tag">Search Analytics</div>
+    </div>
+</div>
+
+<!-- 3. INVENTORY SERVICE -->
+<div class="page">
+    <div class="svc-page-header">
+        <div class="svc-page-icon" style="background:#f9a825;">&#128230;</div>
+        <div class="svc-page-title">Inventory Service <small>Port 3003 &nbsp;|&nbsp; Stock Management, Warehousing &amp; Reservations</small></div>
+    </div>
+
+    <div class="svc-info-row">
+        <div class="svc-info-card" style="border-color:#1565c0;">
+            <div class="info-label">Databases</div>
+            <div class="info-value">PostgreSQL (shopsphere_inventory)<br>Redis (Stock Cache)</div>
+        </div>
+        <div class="svc-info-card" style="border-color:#bf360c;">
+            <div class="info-label">Messaging</div>
+            <div class="info-value">Kafka Producer<br>Real-time stock update streaming</div>
+        </div>
+        <div class="svc-info-card" style="border-color:#00838f;">
+            <div class="info-label">Special</div>
+            <div class="info-value">Webhook Subscriptions<br>External system notifications</div>
+        </div>
+    </div>
+
+    <div style="margin-top:20px;">
+        <div class="svc-layers">
+            <div class="svc-layer-row">
+                <div class="svc-layer layer-controller">Controller<small>InventoryController &bull; WarehouseController &bull; InternalInventoryController &bull; InventoryAnalyticsController</small></div>
+            </div>
+            <div class="svc-arrow-down"><svg viewBox="0 0 24 20"><path d="M12 0 L12 14 M7 10 L12 16 L17 10" stroke="#b0bec5" stroke-width="2" fill="none" stroke-linecap="round"/></svg></div>
+            <div class="svc-layer-row">
+                <div class="svc-layer layer-service">Service<small>InventoryService &bull; WarehouseService &bull; ReservationService &bull; StockHistoryService &bull; LowStockService &bull; WebhookService</small></div>
+            </div>
+            <div class="svc-arrow-down"><svg viewBox="0 0 24 20"><path d="M12 0 L12 14 M7 10 L12 16 L17 10" stroke="#b0bec5" stroke-width="2" fill="none" stroke-linecap="round"/></svg></div>
+            <div class="svc-layer-row">
+                <div class="svc-layer layer-repository">Repository<small>InventoryRepository &bull; WarehouseRepository &bull; StockReservationRepository &bull; StockMovementLogRepository</small></div>
+                <div class="svc-layer layer-event">Event Streaming<small>InventoryEventService &rarr; Kafka</small></div>
+            </div>
+            <div class="svc-arrow-down"><svg viewBox="0 0 24 20"><path d="M12 0 L12 14 M7 10 L12 16 L17 10" stroke="#b0bec5" stroke-width="2" fill="none" stroke-linecap="round"/></svg></div>
+            <div class="svc-layer-row">
+                <div class="svc-layer layer-model">Model<small>Inventory &bull; Warehouse &bull; WarehouseInventory &bull; StockReservation &bull; StockMovementLog</small></div>
+            </div>
+            <div class="svc-arrow-down"><svg viewBox="0 0 24 20"><path d="M12 0 L12 14 M7 10 L12 16 L17 10" stroke="#b0bec5" stroke-width="2" fill="none" stroke-linecap="round"/></svg></div>
+            <div class="svc-layer-row">
+                <div class="svc-layer layer-db">PostgreSQL</div>
+                <div class="svc-layer layer-external" style="background:#b71c1c;">Redis</div>
+                <div class="svc-layer layer-external" style="background:#bf360c;">Kafka</div>
+            </div>
+        </div>
+    </div>
+
+    <div class="svc-features">
+        <div class="svc-feat-tag">Multi-Warehouse</div>
+        <div class="svc-feat-tag">Stock Reservations (15min TTL)</div>
+        <div class="svc-feat-tag">Low Stock Alerts</div>
+        <div class="svc-feat-tag">Kafka Event Streaming</div>
+        <div class="svc-feat-tag">Audit Trail</div>
+        <div class="svc-feat-tag">Restock Recommendations</div>
+        <div class="svc-feat-tag">Webhook Subscriptions</div>
+        <div class="svc-feat-tag">Dead Stock Detection</div>
+    </div>
+</div>
+
+<!-- 4. ORDER SERVICE -->
+<div class="page">
+    <div class="svc-page-header">
+        <div class="svc-page-icon" style="background:#c62828;">&#128203;</div>
+        <div class="svc-page-title">Order Service <small>Port 3004 &nbsp;|&nbsp; Cart, Checkout &amp; Order Lifecycle</small></div>
+    </div>
+
+    <div class="svc-info-row">
+        <div class="svc-info-card" style="border-color:#1565c0;">
+            <div class="info-label">Databases</div>
+            <div class="info-value">PostgreSQL (shopsphere_orders)<br>Redis (Cart Cache &amp; Idempotency)</div>
+        </div>
+        <div class="svc-info-card" style="border-color:#e65100;">
+            <div class="info-label">Messaging</div>
+            <div class="info-value">RabbitMQ Publisher<br>Events: order.created, order.shipped, order.cancelled</div>
+        </div>
+        <div class="svc-info-card" style="border-color:#6a1b9a;">
+            <div class="info-label">Integration</div>
+            <div class="info-value">Payment Service (REST)<br>Inventory Service (REST)</div>
+        </div>
+    </div>
+
+    <div style="margin-top:20px;">
+        <div class="svc-layers">
+            <div class="svc-layer-row">
+                <div class="svc-layer layer-controller">Controller<small>CartController &bull; CheckoutController &bull; OrderController &bull; AdminOrderController &bull; GuestCartController</small></div>
+            </div>
+            <div class="svc-arrow-down"><svg viewBox="0 0 24 20"><path d="M12 0 L12 14 M7 10 L12 16 L17 10" stroke="#b0bec5" stroke-width="2" fill="none" stroke-linecap="round"/></svg></div>
+            <div class="svc-layer-row">
+                <div class="svc-layer layer-security">Security<small>JwtAuthenticationFilter &bull; ServiceAuthenticationFilter</small></div>
+                <div class="svc-layer layer-service">Service<small>CartService &bull; OrderService &bull; CheckoutService &bull; GuestCartService &bull; IdempotencyService</small></div>
+            </div>
+            <div class="svc-arrow-down"><svg viewBox="0 0 24 20"><path d="M12 0 L12 14 M7 10 L12 16 L17 10" stroke="#b0bec5" stroke-width="2" fill="none" stroke-linecap="round"/></svg></div>
+            <div class="svc-layer-row">
+                <div class="svc-layer layer-repository">Repository<small>CartRepository &bull; OrderRepository &bull; OrderItemRepository &bull; OrderStatusHistoryRepository</small></div>
+                <div class="svc-layer layer-event">Event Publisher<small>OrderEventPublisher &rarr; RabbitMQ</small></div>
+            </div>
+            <div class="svc-arrow-down"><svg viewBox="0 0 24 20"><path d="M12 0 L12 14 M7 10 L12 16 L17 10" stroke="#b0bec5" stroke-width="2" fill="none" stroke-linecap="round"/></svg></div>
+            <div class="svc-layer-row">
+                <div class="svc-layer layer-model">Model<small>Order &bull; Cart &bull; CartItem &bull; OrderItem &bull; OrderStatus &bull; OrderStatusHistory</small></div>
+            </div>
+            <div class="svc-arrow-down"><svg viewBox="0 0 24 20"><path d="M12 0 L12 14 M7 10 L12 16 L17 10" stroke="#b0bec5" stroke-width="2" fill="none" stroke-linecap="round"/></svg></div>
+            <div class="svc-layer-row">
+                <div class="svc-layer layer-db">PostgreSQL</div>
+                <div class="svc-layer layer-external" style="background:#b71c1c;">Redis</div>
+                <div class="svc-layer layer-external" style="background:#e65100;">RabbitMQ</div>
+            </div>
+        </div>
+    </div>
+
+    <div class="svc-features">
+        <div class="svc-feat-tag">Guest Cart (72h TTL)</div>
+        <div class="svc-feat-tag">Multi-Status Workflow</div>
+        <div class="svc-feat-tag">Idempotency Keys</div>
+        <div class="svc-feat-tag">Admin Management</div>
+        <div class="svc-feat-tag">Max 50 Cart Items</div>
+        <div class="svc-feat-tag">Status History Tracking</div>
+        <div class="svc-feat-tag">Event Publishing</div>
+    </div>
+</div>
+
+<!-- 5. PAYMENT SERVICE -->
+<div class="page">
+    <div class="svc-page-header">
+        <div class="svc-page-icon" style="background:#6a1b9a;">&#128179;</div>
+        <div class="svc-page-title">Payment Service <small>Port 3005 &nbsp;|&nbsp; Stripe Payments, Refunds &amp; Transactions</small></div>
+    </div>
+
+    <div class="svc-info-row">
+        <div class="svc-info-card" style="border-color:#1565c0;">
+            <div class="info-label">Database</div>
+            <div class="info-value">PostgreSQL (payment_db)<br>Flyway Migrations</div>
+        </div>
+        <div class="svc-info-card" style="border-color:#6a1b9a;">
+            <div class="info-label">External API</div>
+            <div class="info-value">Stripe API<br>Payment Intents, Webhooks</div>
+        </div>
+        <div class="svc-info-card" style="border-color:#e65100;">
+            <div class="info-label">Events</div>
+            <div class="info-value">PaymentSucceeded, PaymentFailed<br>RefundCompleted</div>
+        </div>
+    </div>
+
+    <div style="margin-top:20px;">
+        <div class="svc-layers">
+            <div class="svc-layer-row">
+                <div class="svc-layer layer-controller">Controller<small>PaymentController &bull; PaymentMethodController &bull; RefundController &bull; TransactionController &bull; WebhookController</small></div>
+            </div>
+            <div class="svc-arrow-down"><svg viewBox="0 0 24 20"><path d="M12 0 L12 14 M7 10 L12 16 L17 10" stroke="#b0bec5" stroke-width="2" fill="none" stroke-linecap="round"/></svg></div>
+            <div class="svc-layer-row">
+                <div class="svc-layer layer-service">Service<small>PaymentService &bull; StripeService &bull; PaymentMethodService &bull; RefundService &bull; WebhookService</small></div>
+            </div>
+            <div class="svc-arrow-down"><svg viewBox="0 0 24 20"><path d="M12 0 L12 14 M7 10 L12 16 L17 10" stroke="#b0bec5" stroke-width="2" fill="none" stroke-linecap="round"/></svg></div>
+            <div class="svc-layer-row">
+                <div class="svc-layer layer-repository">Repository<small>PaymentRepository &bull; PaymentMethodRepository &bull; RefundRepository</small></div>
+                <div class="svc-layer layer-event">Event Publisher<small>PaymentSucceeded &bull; PaymentFailed &bull; RefundCompleted</small></div>
+            </div>
+            <div class="svc-arrow-down"><svg viewBox="0 0 24 20"><path d="M12 0 L12 14 M7 10 L12 16 L17 10" stroke="#b0bec5" stroke-width="2" fill="none" stroke-linecap="round"/></svg></div>
+            <div class="svc-layer-row">
+                <div class="svc-layer layer-model">Model<small>Payment &bull; PaymentMethodEntity &bull; Refund</small></div>
+            </div>
+            <div class="svc-arrow-down"><svg viewBox="0 0 24 20"><path d="M12 0 L12 14 M7 10 L12 16 L17 10" stroke="#b0bec5" stroke-width="2" fill="none" stroke-linecap="round"/></svg></div>
+            <div class="svc-layer-row">
+                <div class="svc-layer layer-db">PostgreSQL (Flyway)</div>
+                <div class="svc-layer layer-external" style="background:#6a1b9a;">Stripe API</div>
+            </div>
+        </div>
+    </div>
+
+    <div class="svc-features">
+        <div class="svc-feat-tag">Stripe Integration</div>
+        <div class="svc-feat-tag">Payment Intents</div>
+        <div class="svc-feat-tag">Card Tokenization</div>
+        <div class="svc-feat-tag">Full/Partial Refunds</div>
+        <div class="svc-feat-tag">Webhook Verification</div>
+        <div class="svc-feat-tag">Flyway Migrations</div>
+        <div class="svc-feat-tag">Transaction Audit</div>
+    </div>
+</div>
+
+<!-- 6. SHIPPING SERVICE -->
+<div class="page">
+    <div class="svc-page-header">
+        <div class="svc-page-icon" style="background:#00838f;">&#128666;</div>
+        <div class="svc-page-title">Shipping Service <small>Port 3006 &nbsp;|&nbsp; Shipment Tracking &amp; Delivery (Skeleton)</small></div>
+    </div>
+
+    <div class="svc-info-row">
+        <div class="svc-info-card" style="border-color:#00838f;">
+            <div class="info-label">Status</div>
+            <div class="info-value">Skeleton Implementation<br>Package structure created, no business logic yet</div>
+        </div>
+        <div class="svc-info-card" style="border-color:#999;">
+            <div class="info-label">Planned</div>
+            <div class="info-value">Carrier Integration (FedEx, UPS, DHL)<br>Tracking &bull; Delivery Estimation &bull; Cost Calculation</div>
+        </div>
+    </div>
+
+    <div style="margin-top:20px;">
+        <div class="svc-layers">
+            <div class="svc-layer-row">
+                <div class="svc-layer layer-controller">Controller<small>(Placeholder)</small></div>
+            </div>
+            <div class="svc-arrow-down"><svg viewBox="0 0 24 20"><path d="M12 0 L12 14 M7 10 L12 16 L17 10" stroke="#b0bec5" stroke-width="2" fill="none" stroke-linecap="round"/></svg></div>
+            <div class="svc-layer-row">
+                <div class="svc-layer layer-service">Service<small>(Placeholder)</small></div>
+                <div class="svc-layer layer-security">Security<small>(Placeholder)</small></div>
+            </div>
+            <div class="svc-arrow-down"><svg viewBox="0 0 24 20"><path d="M12 0 L12 14 M7 10 L12 16 L17 10" stroke="#b0bec5" stroke-width="2" fill="none" stroke-linecap="round"/></svg></div>
+            <div class="svc-layer-row">
+                <div class="svc-layer layer-repository">Repository<small>(Placeholder)</small></div>
+                <div class="svc-layer layer-event">Events<small>(Placeholder)</small></div>
+            </div>
+            <div class="svc-arrow-down"><svg viewBox="0 0 24 20"><path d="M12 0 L12 14 M7 10 L12 16 L17 10" stroke="#b0bec5" stroke-width="2" fill="none" stroke-linecap="round"/></svg></div>
+            <div class="svc-layer-row">
+                <div class="svc-layer" style="background:#cfd8dc; color:#78909c; border:1.5px dashed #b0bec5;">Database (TBD)</div>
+            </div>
+        </div>
+    </div>
+
+    <div class="svc-features">
+        <div class="svc-feat-tag" style="opacity:.5;">Shipment Creation (Planned)</div>
+        <div class="svc-feat-tag" style="opacity:.5;">Carrier Integration (Planned)</div>
+        <div class="svc-feat-tag" style="opacity:.5;">Tracking (Planned)</div>
+        <div class="svc-feat-tag" style="opacity:.5;">Cost Calculation (Planned)</div>
+    </div>
+</div>
+
+<!-- 7. REVIEW SERVICE -->
+<div class="page">
+    <div class="svc-page-header">
+        <div class="svc-page-icon" style="background:#d84315;">&#11088;</div>
+        <div class="svc-page-title">Review Service <small>Port 3007 &nbsp;|&nbsp; Product Reviews &amp; Ratings</small></div>
+    </div>
+
+    <div class="svc-info-row">
+        <div class="svc-info-card" style="border-color:#2e7d32;">
+            <div class="info-label">Databases</div>
+            <div class="info-value">MongoDB (reviewdb)<br>Redis (Review Cache)</div>
+        </div>
+        <div class="svc-info-card" style="border-color:#d84315;">
+            <div class="info-label">Features</div>
+            <div class="info-value">Review CRUD &bull; Rating Aggregation<br>Review Status (Pending, Approved, Rejected)</div>
+        </div>
+    </div>
+
+    <div style="margin-top:20px;">
+        <div class="svc-layers">
+            <div class="svc-layer-row">
+                <div class="svc-layer layer-controller">Controller<small>ReviewController</small></div>
+            </div>
+            <div class="svc-arrow-down"><svg viewBox="0 0 24 20"><path d="M12 0 L12 14 M7 10 L12 16 L17 10" stroke="#b0bec5" stroke-width="2" fill="none" stroke-linecap="round"/></svg></div>
+            <div class="svc-layer-row">
+                <div class="svc-layer layer-service">Service<small>ReviewServiceImpl</small></div>
+            </div>
+            <div class="svc-arrow-down"><svg viewBox="0 0 24 20"><path d="M12 0 L12 14 M7 10 L12 16 L17 10" stroke="#b0bec5" stroke-width="2" fill="none" stroke-linecap="round"/></svg></div>
+            <div class="svc-layer-row">
+                <div class="svc-layer layer-repository">Repository<small>ReviewRepository</small></div>
+            </div>
+            <div class="svc-arrow-down"><svg viewBox="0 0 24 20"><path d="M12 0 L12 14 M7 10 L12 16 L17 10" stroke="#b0bec5" stroke-width="2" fill="none" stroke-linecap="round"/></svg></div>
+            <div class="svc-layer-row">
+                <div class="svc-layer layer-model">Model<small>Review &bull; ReviewStatus</small></div>
+            </div>
+            <div class="svc-arrow-down"><svg viewBox="0 0 24 20"><path d="M12 0 L12 14 M7 10 L12 16 L17 10" stroke="#b0bec5" stroke-width="2" fill="none" stroke-linecap="round"/></svg></div>
+            <div class="svc-layer-row">
+                <div class="svc-layer layer-external" style="background:#2e7d32;">MongoDB</div>
+                <div class="svc-layer layer-external" style="background:#b71c1c;">Redis</div>
+            </div>
+        </div>
+    </div>
+
+    <div class="svc-features">
+        <div class="svc-feat-tag">User Reviews</div>
+        <div class="svc-feat-tag">Star Ratings</div>
+        <div class="svc-feat-tag">Rating Aggregation</div>
+        <div class="svc-feat-tag">Review Moderation</div>
+        <div class="svc-feat-tag">Redis Caching</div>
+    </div>
+</div>
+
+<!-- 8. RECOMMENDATION SERVICE -->
+<div class="page">
+    <div class="svc-page-header">
+        <div class="svc-page-icon" style="background:#00695c;">&#129504;</div>
+        <div class="svc-page-title">Recommendation Service <small>Port 3008 &nbsp;|&nbsp; AI-Powered Product Recommendations</small></div>
+    </div>
+
+    <div class="svc-info-row">
+        <div class="svc-info-card" style="border-color:#2e7d32;">
+            <div class="info-label">Databases</div>
+            <div class="info-value">MongoDB (recommendation_service)<br>Redis (Preferences &amp; Trending Cache)</div>
+        </div>
+        <div class="svc-info-card" style="border-color:#e65100;">
+            <div class="info-label">Messaging</div>
+            <div class="info-value">RabbitMQ Listener<br>Queue: PRODUCT_VIEW events</div>
+        </div>
+        <div class="svc-info-card" style="border-color:#00695c;">
+            <div class="info-label">Algorithms</div>
+            <div class="info-value">Collaborative Filtering &bull; Content-Based<br>Co-Purchase &bull; Trending &bull; Personalized</div>
+        </div>
+    </div>
+
+    <div style="margin-top:20px;">
+        <div class="svc-layers">
+            <div class="svc-layer-row">
+                <div class="svc-layer layer-controller">Controller<small>TrendingController &bull; SimilarProductController &bull; CoPurchaseController &bull; PersonalizationController &bull; RecentlyViewedController &bull; +5 more</small></div>
+            </div>
+            <div class="svc-arrow-down"><svg viewBox="0 0 24 20"><path d="M12 0 L12 14 M7 10 L12 16 L17 10" stroke="#b0bec5" stroke-width="2" fill="none" stroke-linecap="round"/></svg></div>
+            <div class="svc-layer-row">
+                <div class="svc-layer layer-service">Service<small>TrendingProductService &bull; CollaborativeFilteringService &bull; ContentBasedService &bull; CoPurchaseService &bull; PersonalizationService &bull; +5 more</small></div>
+                <div class="svc-layer layer-event">Event Listener<small>ProductViewListener &larr; RabbitMQ</small></div>
+            </div>
+            <div class="svc-arrow-down"><svg viewBox="0 0 24 20"><path d="M12 0 L12 14 M7 10 L12 16 L17 10" stroke="#b0bec5" stroke-width="2" fill="none" stroke-linecap="round"/></svg></div>
+            <div class="svc-layer-row">
+                <div class="svc-layer layer-repository">Repository<small>UserPreferenceRepository &bull; TrendingProductRepository &bull; CoPurchaseMatrixRepository &bull; ProductEmbeddingRepository</small></div>
+            </div>
+            <div class="svc-arrow-down"><svg viewBox="0 0 24 20"><path d="M12 0 L12 14 M7 10 L12 16 L17 10" stroke="#b0bec5" stroke-width="2" fill="none" stroke-linecap="round"/></svg></div>
+            <div class="svc-layer-row">
+                <div class="svc-layer layer-model">Model<small>UserPreference &bull; TrendingProduct &bull; CoPurchaseMatrix &bull; ProductEmbedding &bull; RecommendationEvent</small></div>
+            </div>
+            <div class="svc-arrow-down"><svg viewBox="0 0 24 20"><path d="M12 0 L12 14 M7 10 L12 16 L17 10" stroke="#b0bec5" stroke-width="2" fill="none" stroke-linecap="round"/></svg></div>
+            <div class="svc-layer-row">
+                <div class="svc-layer layer-external" style="background:#2e7d32;">MongoDB</div>
+                <div class="svc-layer layer-external" style="background:#b71c1c;">Redis</div>
+                <div class="svc-layer layer-external" style="background:#e65100;">RabbitMQ</div>
+            </div>
+        </div>
+    </div>
+
+    <div class="svc-features">
+        <div class="svc-feat-tag">Collaborative Filtering</div>
+        <div class="svc-feat-tag">Content-Based</div>
+        <div class="svc-feat-tag">Co-Purchase Matrix</div>
+        <div class="svc-feat-tag">Trending Products</div>
+        <div class="svc-feat-tag">Recently Viewed</div>
+        <div class="svc-feat-tag">Visual Search</div>
+        <div class="svc-feat-tag">Search Suggestions</div>
+        <div class="svc-feat-tag">Event Tracking</div>
+    </div>
+</div>
+
+<!-- 9. NOTIFICATION SERVICE -->
+<div class="page">
+    <div class="svc-page-header">
+        <div class="svc-page-icon" style="background:#7b1fa2;">&#128276;</div>
+        <div class="svc-page-title">Notification Service <small>Port 3009 &nbsp;|&nbsp; Multi-Channel Notifications &amp; Email</small></div>
+    </div>
+
+    <div class="svc-info-row">
+        <div class="svc-info-card" style="border-color:#2e7d32;">
+            <div class="info-label">Database</div>
+            <div class="info-value">MongoDB (shopsphere_notification_db)</div>
+        </div>
+        <div class="svc-info-card" style="border-color:#e65100;">
+            <div class="info-label">Messaging</div>
+            <div class="info-value">RabbitMQ Listener<br>5 queues: Order, User, Payment, Inventory, Review</div>
+        </div>
+        <div class="svc-info-card" style="border-color:#00695c;">
+            <div class="info-label">External</div>
+            <div class="info-value">SendGrid Email API<br>From: noreply@shopsphere.com</div>
+        </div>
+    </div>
+
+    <div style="margin-top:20px;">
+        <div class="svc-layers">
+            <div class="svc-layer-row">
+                <div class="svc-layer layer-controller">Controller<small>NotificationController &bull; EmailController &bull; AdminTemplateController &bull; PreferenceController &bull; HealthController</small></div>
+            </div>
+            <div class="svc-arrow-down"><svg viewBox="0 0 24 20"><path d="M12 0 L12 14 M7 10 L12 16 L17 10" stroke="#b0bec5" stroke-width="2" fill="none" stroke-linecap="round"/></svg></div>
+            <div class="svc-layer-row">
+                <div class="svc-layer layer-service">Service<small>NotificationService &bull; EmailService &bull; TemplateService &bull; PreferenceService &bull; ScheduledNotificationService</small></div>
+                <div class="svc-layer layer-event">Event Listeners<small>OrderEventListener &bull; UserEventListener &bull; PaymentEventListener &bull; InventoryEventListener &bull; ReviewEventListener</small></div>
+            </div>
+            <div class="svc-arrow-down"><svg viewBox="0 0 24 20"><path d="M12 0 L12 14 M7 10 L12 16 L17 10" stroke="#b0bec5" stroke-width="2" fill="none" stroke-linecap="round"/></svg></div>
+            <div class="svc-layer-row">
+                <div class="svc-layer layer-repository">Repository<small>NotificationRepository &bull; EmailLogRepository &bull; EmailTemplateRepository &bull; NotificationPreferenceRepository</small></div>
+            </div>
+            <div class="svc-arrow-down"><svg viewBox="0 0 24 20"><path d="M12 0 L12 14 M7 10 L12 16 L17 10" stroke="#b0bec5" stroke-width="2" fill="none" stroke-linecap="round"/></svg></div>
+            <div class="svc-layer-row">
+                <div class="svc-layer layer-model">Model<small>Notification &bull; EmailTemplate &bull; EmailLog &bull; NotificationPreference &bull; ScheduledNotification</small></div>
+            </div>
+            <div class="svc-arrow-down"><svg viewBox="0 0 24 20"><path d="M12 0 L12 14 M7 10 L12 16 L17 10" stroke="#b0bec5" stroke-width="2" fill="none" stroke-linecap="round"/></svg></div>
+            <div class="svc-layer-row">
+                <div class="svc-layer layer-external" style="background:#2e7d32;">MongoDB</div>
+                <div class="svc-layer layer-external" style="background:#e65100;">RabbitMQ</div>
+                <div class="svc-layer layer-external" style="background:#00695c;">SendGrid</div>
+            </div>
+        </div>
+    </div>
+
+    <div class="svc-features">
+        <div class="svc-feat-tag">Multi-Channel (Email, In-App, SMS)</div>
+        <div class="svc-feat-tag">5 Event Listeners</div>
+        <div class="svc-feat-tag">Email Templates</div>
+        <div class="svc-feat-tag">User Preferences</div>
+        <div class="svc-feat-tag">Scheduled Notifications</div>
+        <div class="svc-feat-tag">Bulk Sending</div>
+        <div class="svc-feat-tag">Email Logging</div>
+    </div>
+</div>
+
+<!-- 10. ANALYTICS SERVICE -->
+<div class="page">
+    <div class="svc-page-header">
+        <div class="svc-page-icon" style="background:#283593;">&#128200;</div>
+        <div class="svc-page-title">Analytics Service <small>Port 3010 &nbsp;|&nbsp; Business Intelligence, Dashboards &amp; Forecasting</small></div>
+    </div>
+
+    <div class="svc-info-row">
+        <div class="svc-info-card" style="border-color:#1565c0;">
+            <div class="info-label">Databases</div>
+            <div class="info-value">PostgreSQL (analytics_db)<br>Redis (Metric Cache)</div>
+        </div>
+        <div class="svc-info-card" style="border-color:#e65100;">
+            <div class="info-label">Messaging</div>
+            <div class="info-value">RabbitMQ Listener<br>Events from Order, Payment, Inventory, User, Review</div>
+        </div>
+        <div class="svc-info-card" style="border-color:#283593;">
+            <div class="info-label">Real-Time</div>
+            <div class="info-value">WebSocket<br>Live dashboard updates</div>
+        </div>
+    </div>
+
+    <div style="margin-top:20px;">
+        <div class="svc-layers">
+            <div class="svc-layer-row">
+                <div class="svc-layer layer-controller">Controller<small>DashboardController &bull; SalesAnalyticsController &bull; ProductAnalyticsController &bull; UserAnalyticsController &bull; ABTestController &bull; ExportController &bull; +4 more</small></div>
+            </div>
+            <div class="svc-arrow-down"><svg viewBox="0 0 24 20"><path d="M12 0 L12 14 M7 10 L12 16 L17 10" stroke="#b0bec5" stroke-width="2" fill="none" stroke-linecap="round"/></svg></div>
+            <div class="svc-layer-row">
+                <div class="svc-layer layer-service">Service<small>DashboardService &bull; SalesAnalyticsService &bull; ProductAnalyticsService &bull; UserAnalyticsService &bull; ForecastingService &bull; ExportService &bull; ABTestService &bull; +4 more</small></div>
+            </div>
+            <div class="svc-arrow-down"><svg viewBox="0 0 24 20"><path d="M12 0 L12 14 M7 10 L12 16 L17 10" stroke="#b0bec5" stroke-width="2" fill="none" stroke-linecap="round"/></svg></div>
+            <div class="svc-layer-row">
+                <div class="svc-layer layer-repository">Repository<small>EventRepository &bull; SalesMetricRepository &bull; ProductMetricRepository &bull; UserMetricRepository &bull; ABTestRepository &bull; ExportRepository</small></div>
+            </div>
+            <div class="svc-arrow-down"><svg viewBox="0 0 24 20"><path d="M12 0 L12 14 M7 10 L12 16 L17 10" stroke="#b0bec5" stroke-width="2" fill="none" stroke-linecap="round"/></svg></div>
+            <div class="svc-layer-row">
+                <div class="svc-layer layer-model">Model<small>Event &bull; SalesMetric &bull; ProductMetric &bull; UserMetric &bull; ABTest &bull; CustomReport &bull; UserCohort</small></div>
+            </div>
+            <div class="svc-arrow-down"><svg viewBox="0 0 24 20"><path d="M12 0 L12 14 M7 10 L12 16 L17 10" stroke="#b0bec5" stroke-width="2" fill="none" stroke-linecap="round"/></svg></div>
+            <div class="svc-layer-row">
+                <div class="svc-layer layer-db">PostgreSQL</div>
+                <div class="svc-layer layer-external" style="background:#b71c1c;">Redis</div>
+                <div class="svc-layer layer-external" style="background:#e65100;">RabbitMQ</div>
+                <div class="svc-layer layer-external" style="background:#283593;">WebSocket</div>
+            </div>
+        </div>
+    </div>
+
+    <div class="svc-features">
+        <div class="svc-feat-tag">Real-Time Dashboard</div>
+        <div class="svc-feat-tag">Sales Forecasting</div>
+        <div class="svc-feat-tag">A/B Testing</div>
+        <div class="svc-feat-tag">User Cohort Analysis</div>
+        <div class="svc-feat-tag">Custom Reports</div>
+        <div class="svc-feat-tag">Data Export (CSV/Excel)</div>
+        <div class="svc-feat-tag">WebSocket Live Updates</div>
+        <div class="svc-feat-tag">Multi-Dimensional Analytics</div>
+    </div>
+</div>
+
+</body>
+</html>
