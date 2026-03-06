@@ -15,7 +15,7 @@ function StatCard({ title, value, color }) {
       <h2 className="text-3xl font-black text-white tracking-tight">{value}</h2>
     </div>
   );
-  
+
 }
 
 function App() {
@@ -29,6 +29,7 @@ function App() {
   useEffect(() => {
     fetchShipments();
   }, []);
+  
 
   const fetchShipments = () => {
     axios.get('http://localhost:8080/api/shipping')
