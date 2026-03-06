@@ -42,7 +42,7 @@ export default function ProductsPage() {
         sort: sort as any,
         minPrice,
         maxPrice,
-        page,
+        page: page - 1,
         size: 12,
       }),
   });
