@@ -15,6 +15,7 @@ function StatCard({ title, value, color }) {
       <h2 className="text-3xl font-black text-white tracking-tight">{value}</h2>
     </div>
   );
+  
 }
 
 function App() {
