@@ -156,7 +156,7 @@ services:
     depends_on:
       shopsphere-mongo:
         condition: service_healthy
-      shopsphere-elasticsearch:
+      shopsphere-redis:
         condition: service_healthy
     ports:
       - "3002:3002"
@@ -164,7 +164,8 @@ services:
       SERVER_PORT: 3002
       JAVA_OPTS: "-Xmx256m -Xms128m"
       SPRING_DATA_MONGODB_URI: mongodb://shopsphere-mongo:27017/productdb
-      SPRING_ELASTICSEARCH_URIS: http://shopsphere-elasticsearch:9200
+      SPRING_DATA_REDIS_HOST: shopsphere-redis
+      SPRING_DATA_REDIS_PORT: 6379
     restart: unless-stopped
 
   inventory-service:
@@ -374,6 +375,17 @@ services:
     build:
       context: ./frontend
       dockerfile: Dockerfile
+      args:
+        USER_SERVICE_URL: http://user-service:3001
+        PRODUCT_SERVICE_URL: http://product-service:3002
+        INVENTORY_SERVICE_URL: http://inventory-service:3003
+        ORDER_SERVICE_URL: http://order-service:3004
+        PAYMENT_SERVICE_URL: http://payment-service:3005
+        SHIPPING_SERVICE_URL: http://shipping-service:3006
+        REVIEW_SERVICE_URL: http://review-service:3007
+        RECOMMENDATION_SERVICE_URL: http://recommendation-service:3008
+        NOTIFICATION_SERVICE_URL: http://notification-service:3009
+        ANALYTICS_SERVICE_URL: http://analytics-service:3010
     container_name: shopsphere-frontend
     depends_on:
       - user-service

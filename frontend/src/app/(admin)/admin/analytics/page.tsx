@@ -269,7 +269,7 @@ export default function AdminAnalyticsPage() {
             </CardHeader>
             <CardContent>
               <div className="space-y-4">
-                {products?.topProducts?.map((product, i) => (
+                {products?.topProducts?.map((product: any, i: number) => (
                   <div key={product.id} className="flex items-center gap-4">
                     <span className="text-lg font-bold text-muted-foreground w-6">
                       {i + 1}
@@ -412,7 +412,7 @@ export default function AdminAnalyticsPage() {
               </CardHeader>
               <CardContent>
                 <div className="space-y-4">
-                  {customers?.topCustomers?.map((customer, i) => (
+                  {customers?.topCustomers?.map((customer: any, i: number) => (
                     <div key={customer.id} className="flex items-center gap-4">
                       <span className="text-lg font-bold text-muted-foreground w-6">
                         {i + 1}

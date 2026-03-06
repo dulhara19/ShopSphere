@@ -37,11 +37,17 @@ public class DashboardService {
     public DashboardDTO getAdminDashboard() {
         String cacheKey = DASHBOARD_CACHE_KEY + "admin:" + LocalDate.now();
 
-        @SuppressWarnings("unchecked")
-        DashboardDTO cached = (DashboardDTO) redisTemplate.opsForValue().get(cacheKey);
-        if (cached != null) {
-            log.info("Dashboard cache hit");
-            return cached;
+        if (redisTemplate != null) {
+            try {
+                @SuppressWarnings("unchecked")
+                DashboardDTO cached = (DashboardDTO) redisTemplate.opsForValue().get(cacheKey);
+                if (cached != null) {
+                    log.info("Dashboard cache hit");
+                    return cached;
+                }
+            } catch (Exception e) {
+                log.warn("Redis cache read failed: {}", e.getMessage());
+            }
         }
 
         LocalDate today = LocalDate.now();
@@ -104,17 +110,29 @@ public class DashboardService {
             .products(productsDashboard)
             .build();
 
-        redisTemplate.opsForValue().set(cacheKey, dashboard, CACHE_TTL_MINUTES, TimeUnit.MINUTES);
+        if (redisTemplate != null) {
+            try {
+                redisTemplate.opsForValue().set(cacheKey, dashboard, CACHE_TTL_MINUTES, TimeUnit.MINUTES);
+            } catch (Exception e) {
+                log.warn("Redis cache write failed: {}", e.getMessage());
+            }
+        }
         return dashboard;
     }
 
     public DashboardDTO getSellerDashboard(String sellerId) {
         String cacheKey = DASHBOARD_CACHE_KEY + "seller:" + sellerId + ":" + LocalDate.now();
 
-        @SuppressWarnings("unchecked")
-        DashboardDTO cached = (DashboardDTO) redisTemplate.opsForValue().get(cacheKey);
-        if (cached != null) {
-            return cached;
+        if (redisTemplate != null) {
+            try {
+                @SuppressWarnings("unchecked")
+                DashboardDTO cached = (DashboardDTO) redisTemplate.opsForValue().get(cacheKey);
+                if (cached != null) {
+                    return cached;
+                }
+            } catch (Exception e) {
+                log.warn("Redis cache read failed: {}", e.getMessage());
+            }
         }
 
         LocalDate today = LocalDate.now();
@@ -137,12 +155,24 @@ public class DashboardService {
             .sales(salesDashboard)
             .build();
 
-        redisTemplate.opsForValue().set(cacheKey, dashboard, CACHE_TTL_MINUTES, TimeUnit.MINUTES);
+        if (redisTemplate != null) {
+            try {
+                redisTemplate.opsForValue().set(cacheKey, dashboard, CACHE_TTL_MINUTES, TimeUnit.MINUTES);
+            } catch (Exception e) {
+                log.warn("Redis cache write failed: {}", e.getMessage());
+            }
+        }
         return dashboard;
     }
 
     public void invalidateDashboardCache() {
         log.info("Invalidating dashboard cache");
-        redisTemplate.keys(DASHBOARD_CACHE_KEY + "*").forEach(key -> redisTemplate.delete(key));
+        if (redisTemplate != null) {
+            try {
+                redisTemplate.keys(DASHBOARD_CACHE_KEY + "*").forEach(key -> redisTemplate.delete(key));
+            } catch (Exception e) {
+                log.warn("Redis cache invalidation failed: {}", e.getMessage());
+            }
+        }
     }
 }

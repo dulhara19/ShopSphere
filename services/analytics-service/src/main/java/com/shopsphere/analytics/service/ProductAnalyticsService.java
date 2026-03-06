@@ -53,55 +53,66 @@ public class ProductAnalyticsService {
     public List<ProductMetricDTO> getTopViewedProducts(int limit, LocalDate from, LocalDate to) {
         String cacheKey = PRODUCT_CACHE_KEY + "top-viewed:" + from + ":" + to + ":" + limit;
 
-        @SuppressWarnings("unchecked")
-        List<ProductMetricDTO> cached = (List<ProductMetricDTO>) redisTemplate.opsForValue().get(cacheKey);
-        if (cached != null) {
-            return cached;
-        }
+        List<ProductMetricDTO> cached = getFromCache(cacheKey);
+        if (cached != null) return cached;
 
         List<ProductMetric> topProducts = productMetricRepository.findTopViewedProducts(from, to, limit);
         List<ProductMetricDTO> result = topProducts.stream()
             .map(this::convertToDTO)
             .collect(Collectors.toList());
 
-        redisTemplate.opsForValue().set(cacheKey, result, CACHE_TTL_MINUTES, TimeUnit.MINUTES);
+        putInCache(cacheKey, result);
         return result;
     }
 
     public List<ProductMetricDTO> getTopSellingProducts(int limit, LocalDate from, LocalDate to) {
         String cacheKey = PRODUCT_CACHE_KEY + "top-selling:" + from + ":" + to + ":" + limit;
 
-        @SuppressWarnings("unchecked")
-        List<ProductMetricDTO> cached = (List<ProductMetricDTO>) redisTemplate.opsForValue().get(cacheKey);
-        if (cached != null) {
-            return cached;
-        }
+        List<ProductMetricDTO> cached = getFromCache(cacheKey);
+        if (cached != null) return cached;
 
         List<ProductMetric> topProducts = productMetricRepository.findTopSellingProducts(from, to, limit);
         List<ProductMetricDTO> result = topProducts.stream()
             .map(this::convertToDTO)
             .collect(Collectors.toList());
 
-        redisTemplate.opsForValue().set(cacheKey, result, CACHE_TTL_MINUTES, TimeUnit.MINUTES);
+        putInCache(cacheKey, result);
         return result;
     }
 
     public List<ProductMetricDTO> getTopRevenueProducts(int limit, LocalDate from, LocalDate to) {
         String cacheKey = PRODUCT_CACHE_KEY + "top-revenue:" + from + ":" + to + ":" + limit;
 
-        @SuppressWarnings("unchecked")
-        List<ProductMetricDTO> cached = (List<ProductMetricDTO>) redisTemplate.opsForValue().get(cacheKey);
-        if (cached != null) {
-            return cached;
-        }
+        List<ProductMetricDTO> cached = getFromCache(cacheKey);
+        if (cached != null) return cached;
 
         List<ProductMetric> topProducts = productMetricRepository.findTopRevenueProducts(from, to, limit);
         List<ProductMetricDTO> result = topProducts.stream()
             .map(this::convertToDTO)
             .collect(Collectors.toList());
 
-        redisTemplate.opsForValue().set(cacheKey, result, CACHE_TTL_MINUTES, TimeUnit.MINUTES);
+        putInCache(cacheKey, result);
         return result;
+    }
+
+    @SuppressWarnings("unchecked")
+    private <T> T getFromCache(String key) {
+        if (redisTemplate == null) return null;
+        try {
+            return (T) redisTemplate.opsForValue().get(key);
+        } catch (Exception e) {
+            log.warn("Redis cache read failed: {}", e.getMessage());
+            return null;
+        }
+    }
+
+    private void putInCache(String key, Object value) {
+        if (redisTemplate == null) return;
+        try {
+            redisTemplate.opsForValue().set(key, value, CACHE_TTL_MINUTES, TimeUnit.MINUTES);
+        } catch (Exception e) {
+            log.warn("Redis cache write failed: {}", e.getMessage());
+        }
     }
 
     public List<ProductMetricDTO> getCategoryPerformance(String categoryId, LocalDate from, LocalDate to) {

@@ -39,40 +39,54 @@ public class UserAnalyticsService {
     public Long getDailyActiveUsers(LocalDate date) {
         String cacheKey = USER_CACHE_KEY + "dau:" + date;
 
-        Long cached = (Long) redisTemplate.opsForValue().get(cacheKey);
-        if (cached != null) {
-            return cached;
-        }
+        Long cached = getFromCache(cacheKey);
+        if (cached != null) return cached;
 
         Long dau = userMetricRepository.countActiveUsersByDate(date);
-        redisTemplate.opsForValue().set(cacheKey, dau, CACHE_TTL_MINUTES, TimeUnit.MINUTES);
+        putInCache(cacheKey, dau);
         return dau;
     }
 
     public Long getWeeklyActiveUsers(LocalDate startOfWeek, LocalDate endOfWeek) {
         String cacheKey = USER_CACHE_KEY + "wau:" + startOfWeek + ":" + endOfWeek;
 
-        Long cached = (Long) redisTemplate.opsForValue().get(cacheKey);
-        if (cached != null) {
-            return cached;
-        }
+        Long cached = getFromCache(cacheKey);
+        if (cached != null) return cached;
 
         Long wau = userMetricRepository.countWeeklyActiveUsers(startOfWeek, endOfWeek);
-        redisTemplate.opsForValue().set(cacheKey, wau, CACHE_TTL_MINUTES, TimeUnit.MINUTES);
+        putInCache(cacheKey, wau);
         return wau;
     }
 
     public Long getMonthlyActiveUsers(LocalDate startOfMonth, LocalDate endOfMonth) {
         String cacheKey = USER_CACHE_KEY + "mau:" + startOfMonth + ":" + endOfMonth;
 
-        Long cached = (Long) redisTemplate.opsForValue().get(cacheKey);
-        if (cached != null) {
-            return cached;
-        }
+        Long cached = getFromCache(cacheKey);
+        if (cached != null) return cached;
 
         Long mau = userMetricRepository.countMonthlyActiveUsers(startOfMonth, endOfMonth);
-        redisTemplate.opsForValue().set(cacheKey, mau, CACHE_TTL_MINUTES, TimeUnit.MINUTES);
+        putInCache(cacheKey, mau);
         return mau;
+    }
+
+    @SuppressWarnings("unchecked")
+    private <T> T getFromCache(String key) {
+        if (redisTemplate == null) return null;
+        try {
+            return (T) redisTemplate.opsForValue().get(key);
+        } catch (Exception e) {
+            log.warn("Redis cache read failed: {}", e.getMessage());
+            return null;
+        }
+    }
+
+    private void putInCache(String key, Object value) {
+        if (redisTemplate == null) return;
+        try {
+            redisTemplate.opsForValue().set(key, value, CACHE_TTL_MINUTES, TimeUnit.MINUTES);
+        } catch (Exception e) {
+            log.warn("Redis cache write failed: {}", e.getMessage());
+        }
     }
 
     public List<UserMetricDTO> getNewUserRegistrations(LocalDate from, LocalDate to) {

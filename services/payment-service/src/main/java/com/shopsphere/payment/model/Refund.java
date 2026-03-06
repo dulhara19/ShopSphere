@@ -25,7 +25,7 @@ public class Refund {
     @Column(columnDefinition = "uuid")
     private String id;
 
-    @Column(nullable = false)
+    @Column(nullable = false, columnDefinition = "uuid")
     private String paymentId;
 
     @Column(name = "stripe_refund_id")

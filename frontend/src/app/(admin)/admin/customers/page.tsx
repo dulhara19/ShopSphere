@@ -67,7 +67,7 @@ export default function AdminCustomersPage() {
   const customers = rawCustomers?.content || rawCustomers || [];
   const pagination = rawCustomers?.totalPages
     ? { totalPages: rawCustomers.totalPages, totalItems: rawCustomers.totalElements }
-    : customersData?.data?.pagination;
+    : (customersData?.data as any)?.pagination;
 
   return (
     <div className="space-y-6">

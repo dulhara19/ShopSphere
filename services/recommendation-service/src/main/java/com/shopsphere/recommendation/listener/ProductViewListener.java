@@ -1,5 +1,6 @@
 package com.shopsphere.recommendation.listener;
 
+import com.shopsphere.recommendation.config.RabbitMQConfig;
 import com.shopsphere.recommendation.service.RecentlyViewedService;
 import org.springframework.amqp.rabbit.annotation.RabbitListener;
 import org.springframework.stereotype.Component;
@@ -15,7 +16,7 @@ public class ProductViewListener {
         this.recentlyViewedService = recentlyViewedService;
     }
 
-    @RabbitListener(queues = "PRODUCT_VIEW") // listen to the PRODUCT_VIEW queue
+    @RabbitListener(queues = RabbitMQConfig.PRODUCT_VIEW_QUEUE)
     public void handleProductViewEvent(ProductViewEvent event) {
         recentlyViewedService.addRecentlyViewed(event.getUserId(), event.getProductId());
         System.out.println("Received PRODUCT_VIEW event: " + event);

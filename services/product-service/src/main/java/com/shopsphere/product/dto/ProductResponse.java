@@ -1,27 +1,21 @@
-package com.shopsphere.product.model;
+package com.shopsphere.product.dto;
 
+import com.shopsphere.product.model.ProductStatus;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
-import org.springframework.data.annotation.CreatedDate;
-import org.springframework.data.annotation.Id;
-import org.springframework.data.annotation.LastModifiedDate;
-import org.springframework.data.mongodb.core.mapping.Document;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
-import java.util.ArrayList;
 import java.util.List;
 
 @Data
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-@Document("products")
-public class Product {
+public class ProductResponse {
 
-    @Id
     private String id;
     private String sellerId;
     private String name;
@@ -29,22 +23,11 @@ public class Product {
     private BigDecimal price;
     private BigDecimal compareAtPrice;
     private String categoryId;
-
-    @Builder.Default
-    private List<String> images = new ArrayList<>();
+    private List<String> images;
     private String primaryImage;
-
-    @Builder.Default
-    private ProductStatus status = ProductStatus.ACTIVE;
+    private ProductStatus status;
     private String sku;
     private String brand;
-
-    @Builder.Default
-    private boolean deleted = false;
-
-    @CreatedDate
     private LocalDateTime createdAt;
-
-    @LastModifiedDate
     private LocalDateTime updatedAt;
 }

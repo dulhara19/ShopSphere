@@ -1,10 +1,11 @@
 package com.shopsphere.product.controller;
 
-import com.shopsphere.product.dto.CategoryDetailResponseDTO;
-import com.shopsphere.product.dto.CategoryResponseDTO;
-import com.shopsphere.product.model.Category;
+import com.shopsphere.product.dto.CategoryResponse;
+import com.shopsphere.product.dto.CreateCategoryRequest;
 import com.shopsphere.product.service.CategoryService;
-import org.springframework.beans.factory.annotation.Autowired;
+import jakarta.validation.Valid;
+import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -12,57 +13,29 @@ import java.util.List;
 
 @RestController
 @RequestMapping("/api/categories")
+@RequiredArgsConstructor
+@CrossOrigin(origins = "*")
 public class CategoryController {
 
-    @Autowired
-    private CategoryService categoryService;
+    private final CategoryService categoryService;
 
-    /**
-     * 1.2.1: Create category (Admin)
-     */
-    @PostMapping
-    public ResponseEntity<Category> createCategory(@RequestBody Category category) {
-        Category createdCategory = categoryService.createCategory(category);
-        return ResponseEntity.ok(createdCategory);
-    }
-
-    /**
-     * 1.2.2: List all categories (Hierarchy + Product count)
-     * URL: GET /api/categories
-     */
     @GetMapping
-    public ResponseEntity<List<CategoryResponseDTO>> getAllCategories() {
-        List<CategoryResponseDTO> categories = categoryService.getAllCategoriesHierarchy();
-        return ResponseEntity.ok(categories);
+    public ResponseEntity<List<CategoryResponse>> getAllCategories() {
+        return ResponseEntity.ok(categoryService.getAllCategories());
     }
 
-    /**
-     * 1.2.3: Get category by ID
-     * URL: GET /api/categories/{id}
-     */
+    @PostMapping
+    public ResponseEntity<CategoryResponse> createCategory(@Valid @RequestBody CreateCategoryRequest request) {
+        return ResponseEntity.status(HttpStatus.CREATED).body(categoryService.createCategory(request));
+    }
+
     @GetMapping("/{id}")
-    public ResponseEntity<CategoryDetailResponseDTO> getCategoryById(@PathVariable String id) {
-        CategoryDetailResponseDTO categoryDetail = categoryService.getCategoryById(id);
-        return ResponseEntity.ok(categoryDetail);
+    public ResponseEntity<CategoryResponse> getCategory(@PathVariable String id) {
+        return ResponseEntity.ok(categoryService.getCategory(id));
     }
 
-    /**
-     * 1.2.4: Update category (Admin)
-     * URL: PUT /api/categories/{id}
-     */
-    @PutMapping("/{id}")
-    public ResponseEntity<Category> updateCategory(@PathVariable String id, @RequestBody Category category) {
-        Category updatedCategory = categoryService.updateCategory(id, category);
-        return ResponseEntity.ok(updatedCategory);
-    }
-
-    /**
-     * 1.2.5: Delete category (Admin)
-     * URL: DELETE /api/categories/{id}
-     */
-    @DeleteMapping("/{id}")
-    public ResponseEntity<Void> deleteCategory(@PathVariable String id) {
-        categoryService.deleteCategory(id);
-        return ResponseEntity.noContent().build(); 
+    @GetMapping("/{id}/subcategories")
+    public ResponseEntity<List<CategoryResponse>> getSubcategories(@PathVariable String id) {
+        return ResponseEntity.ok(categoryService.getSubcategories(id));
     }
 }

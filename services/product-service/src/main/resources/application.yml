@@ -1,5 +1,5 @@
 server:
-  port: 3002
+  port: ${SERVER_PORT:3002}
 
 spring:
   application:
@@ -7,16 +7,15 @@ spring:
   data:
     mongodb:
       uri: ${SPRING_DATA_MONGODB_URI:mongodb://localhost:27017/productdb}
-  elasticsearch:
-    uris: ${SPRING_ELASTICSEARCH_URIS:http://localhost:9200}
-  
-  # Story 1.4.1: Configure file upload limits
-  servlet:
-    multipart:
-      enabled: true
-      max-file-size: 5MB
-      max-request-size: 50MB
+    redis:
+      host: ${SPRING_DATA_REDIS_HOST:localhost}
+      port: ${SPRING_DATA_REDIS_PORT:6379}
 
-# Custom configuration for image storage
-file:
-  upload-dir: uploads/products
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info
+  endpoint:
+    health:
+      show-details: always

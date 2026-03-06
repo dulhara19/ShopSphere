@@ -1,12 +1,9 @@
-package com.shopsphere.product.model;
+package com.shopsphere.product.dto;
 
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
-import org.springframework.data.annotation.CreatedDate;
-import org.springframework.data.annotation.Id;
-import org.springframework.data.mongodb.core.mapping.Document;
 
 import java.time.LocalDateTime;
 
@@ -14,16 +11,12 @@ import java.time.LocalDateTime;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-@Document("categories")
-public class Category {
+public class CategoryResponse {
 
-    @Id
     private String id;
     private String name;
     private String parentId;
     private String image;
     private String description;
-
-    @CreatedDate
     private LocalDateTime createdAt;
 }
