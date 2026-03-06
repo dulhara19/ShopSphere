@@ -10,6 +10,7 @@ import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Component;
 
 import java.util.Set;
+import java.util.UUID;
 
 @Component
 @RequiredArgsConstructor
@@ -23,6 +24,7 @@ public class DataSeeder implements CommandLineRunner {
     public void run(String... args) {
         if (!userRepository.existsByEmail("admin@shopsphere.com")) {
             User admin = User.builder()
+                    .id(UUID.randomUUID())
                     .username("admin")
                     .email("admin@shopsphere.com")
                     .passwordHash(passwordEncoder.encode("Admin12345"))
@@ -40,6 +42,7 @@ public class DataSeeder implements CommandLineRunner {
 
         if (!userRepository.existsByEmail("customer@example.com")) {
             User customer = User.builder()
+                    .id(UUID.randomUUID())
                     .username("customer")
                     .email("customer@example.com")
                     .passwordHash(passwordEncoder.encode("password123"))
