@@ -27,11 +27,13 @@ public class ProductController {
             @RequestParam(defaultValue = "createdAt") String sortBy,
             @RequestParam(defaultValue = "desc") String direction,
             @RequestParam(required = false) String keyword,
+            @RequestParam(required = false) String search,
             @RequestParam(required = false) String categoryId) {
 
+        String searchTerm = keyword != null ? keyword : search;
         Page<ProductResponse> result;
-        if (keyword != null && !keyword.isBlank()) {
-            result = productService.searchProducts(keyword, page, size);
+        if (searchTerm != null && !searchTerm.isBlank()) {
+            result = productService.searchProducts(searchTerm, page, size);
         } else if (categoryId != null && !categoryId.isBlank()) {
             result = productService.getProductsByCategory(categoryId, page, size);
         } else {

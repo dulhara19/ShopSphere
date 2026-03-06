@@ -81,7 +81,7 @@ export default function AdminProductsPage() {
     queryKey: ['adminProducts', page, statusFilter, searchQuery],
     queryFn: () =>
       productApi.getProducts({
-        page,
+        page: page - 1,
         size: 10,
         status: statusFilter !== 'all' ? (statusFilter as ProductStatus) : undefined,
         search: searchQuery || undefined,
