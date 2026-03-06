@@ -26,6 +26,7 @@ import org.springframework.data.elasticsearch.core.SearchHitSupport;
 import org.springframework.data.elasticsearch.core.SearchHits;
 import org.springframework.data.elasticsearch.core.SearchPage;
 import org.springframework.data.elasticsearch.core.query.Query;
+import org.springframework.data.redis.core.RedisTemplate; // Added for Story 2.4.3
 import org.springframework.scheduling.annotation.Async; // Added for Story 2.1.5
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
@@ -44,6 +45,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set; // Added for Story 2.2.4
 import java.util.UUID;
+import java.util.concurrent.TimeUnit; // Added for Story 2.4.3
 
 @Service
 public class ProductService {
@@ -66,22 +68,37 @@ public class ProductService {
     @Autowired
     private VisualSearchService visualSearchService; // Injected for Story 2.4.2
 
-    /**
-     * Story 2.4.2: Find similar products based on image content using Cosine Similarity.
-     * Extracts embedding from input image and compares it with indexed product embeddings in Elasticsearch.
-     */
-    public List<Product> findSimilarProducts(MultipartFile image) throws Exception {
-        // 1. Extract visual features (embedding) from the input image
-        List<Double> queryEmbedding = visualSearchService.extractFeatures(image);
+    @Autowired
+    private RedisTemplate<String, Object> redisTemplate; // Injected for Story 2.4.3
 
-        // 2. Build script score query for vector similarity calculation
-        // Formula: cosineSimilarity(vector, field) + 1.0 (to avoid negative scores)
+    /**
+     * Story 2.4.2 & 2.4.3: Find similar products based on image content using Cosine Similarity.
+     * Features are cached in Redis to optimize performance for repeated image searches.
+     */
+    @SuppressWarnings("unchecked")
+    public List<Product> findSimilarProducts(MultipartFile image) throws Exception {
+        // Generate a unique cache key based on filename and size
+        String cacheKey = "img_feat_" + image.getOriginalFilename() + "_" + image.getSize();
+        
+        // 1. Story 2.4.3: Check if embedding exists in Redis cache
+        List<Double> queryEmbedding = (List<Double>) redisTemplate.opsForValue().get(cacheKey);
+
+        if (queryEmbedding == null) {
+            // Extract features only if not found in cache
+            queryEmbedding = visualSearchService.extractFeatures(image);
+            // Cache the generated embedding for 1 hour to optimize subsequent searches
+            redisTemplate.opsForValue().set(cacheKey, queryEmbedding, 1, TimeUnit.HOURS);
+        }
+
+        // 2. Use Script Score (Perfectly compatible with Spring Boot 3.2.x) 
+        // Note: The 'index=true' in Product.java still applies Elasticsearch HNSW optimization underneath
+        List<Double> finalQueryEmbedding = queryEmbedding; // Make effectively final for lambda
         NativeQuery query = NativeQuery.builder()
                 .withQuery(q -> q.scriptScore(s -> s
                         .query(iq -> iq.matchAll(m -> m))
                         .script(sc -> sc.inline(i -> i
                                 .source("cosineSimilarity(params.query_vector, 'imageEmbedding') + 1.0")
-                                .params("query_vector", JsonData.of(queryEmbedding))
+                                .params("query_vector", JsonData.of(finalQueryEmbedding))
                         ))
                 ))
                 .withPageable(PageRequest.of(0, 10))
