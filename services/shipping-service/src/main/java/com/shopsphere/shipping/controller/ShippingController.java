@@ -10,9 +10,11 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 
+import java.util.List;
+import java.util.stream.Collectors;
+
 @RestController
 @RequestMapping("/api/shipping")
-@CrossOrigin(origins = "http://localhost:3000") 
 public class ShippingController {
 
     @Autowired
@@ -20,16 +22,22 @@ public class ShippingController {
 
     private ShippingDTO convertToDto(Shipping shipping) {
         if (shipping == null) return null;
-        
+
         ShippingDTO dto = new ShippingDTO();
+        dto.setId(shipping.getId());
         dto.setOrderId(shipping.getOrderId());
         dto.setTrackingNumber(shipping.getTrackingNumber());
         dto.setCarrier(shipping.getCarrier());
+        dto.setServiceType(shipping.getServiceType());
         dto.setStatus(shipping.getStatus());
         dto.setShippingCost(shipping.getShippingCost());
         dto.setStreet(shipping.getStreet());
         dto.setCity(shipping.getCity());
         dto.setZipCode(shipping.getZipCode());
+        dto.setCountry(shipping.getCountry());
+        dto.setEstimatedDays(shipping.getEstimatedDays());
+        dto.setCreatedAt(shipping.getCreatedAt());
+        dto.setUpdatedAt(shipping.getUpdatedAt());
         return dto;
     }
 
@@ -43,6 +51,13 @@ public class ShippingController {
     public ResponseEntity<ShippingDTO> getShippingByTrackingNumber(@PathVariable String trackingNumber) {
         Shipping shipping = service.getShippingByTrackingNumber(trackingNumber);
         return ResponseEntity.ok(convertToDto(shipping));
+    }
+
+    @GetMapping("/order/{orderId}")
+    public ResponseEntity<List<ShippingDTO>> getShipmentsByOrderId(@PathVariable String orderId) {
+        List<ShippingDTO> shipments = service.getShipmentsByOrderId(orderId)
+                .stream().map(this::convertToDto).collect(Collectors.toList());
+        return ResponseEntity.ok(shipments);
     }
 
     @PutMapping("/update-status/{trackingNumber}")

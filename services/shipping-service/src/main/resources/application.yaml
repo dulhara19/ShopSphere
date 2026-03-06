@@ -4,9 +4,11 @@ server:
 spring:
   data:
     mongodb:
-      host: localhost
-      port: 27017
+      host: ${MONGODB_HOST:localhost}
+      port: ${MONGODB_PORT:27017}
       database: shopsphere_shipping
   application:
     name: shipping-service
 
+cors:
+  allowed-origins: ${CORS_ALLOWED_ORIGINS:http://localhost:3000}

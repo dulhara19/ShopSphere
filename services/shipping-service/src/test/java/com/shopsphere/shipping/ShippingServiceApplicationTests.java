@@ -1,4 +1,4 @@
-package com.example.shipping_service;
+package com.shopsphere.shipping;
 
 import org.junit.jupiter.api.Test;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -9,5 +9,4 @@ class ShippingServiceApplicationTests {
 	@Test
 	void contextLoads() {
 	}
-
 }
