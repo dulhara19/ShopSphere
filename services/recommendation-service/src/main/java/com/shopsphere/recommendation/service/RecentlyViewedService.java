@@ -69,7 +69,6 @@ public class RecentlyViewedService {
      */
     public void mergeSessionToUser(String userId, String sessionId) {
         String sessionKey = "recently-viewed:" + sessionId;
-        String userKey = getKey(userId);
 
         List<String> sessionProducts = redisTemplate.opsForList().range(sessionKey, 0, -1)
             .stream().map(Object::toString).collect(Collectors.toList());
