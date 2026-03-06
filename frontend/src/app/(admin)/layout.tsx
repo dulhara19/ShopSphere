@@ -110,9 +110,13 @@ export default function AdminLayout({
   useEffect(() => {
     if (!isLoading && !isAuthenticated) {
       router.push('/login');
+    } else if (!isLoading && isAuthenticated && user) {
+      const isAdmin = user.role === 'ADMIN' || user.roles?.includes('ADMIN');
+      if (!isAdmin) {
+        router.push('/');
+      }
     }
-    // In a real app, you would also check if the user has admin role
-  }, [isAuthenticated, isLoading, router]);
+  }, [isAuthenticated, isLoading, user, router]);
 
   const handleLogout = () => {
     logout();
@@ -178,7 +182,7 @@ export default function AdminLayout({
             <DropdownMenuTrigger asChild>
               <Button variant="ghost" className="relative h-9 w-9 rounded-full">
                 <Avatar className="h-9 w-9">
-                  <AvatarImage src={user?.avatar} />
+                  <AvatarImage src={user?.avatarUrl || (user as any)?.avatar} />
                   <AvatarFallback>{getInitials()}</AvatarFallback>
                 </Avatar>
               </Button>

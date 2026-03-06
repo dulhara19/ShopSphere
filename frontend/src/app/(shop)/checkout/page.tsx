@@ -147,9 +147,9 @@ export default function CheckoutPage() {
     const address = addresses.find((a) => a.id === addressId);
     if (address) {
       shippingForm.reset({
-        name: address.name,
-        addressLine1: address.addressLine1,
-        addressLine2: address.addressLine2 || '',
+        name: address.fullName || (address as any).name || '',
+        addressLine1: address.line1 || (address as any).addressLine1 || '',
+        addressLine2: address.line2 || (address as any).addressLine2 || '',
         city: address.city,
         state: address.state,
         postalCode: address.postalCode,
@@ -169,17 +169,29 @@ export default function CheckoutPage() {
   };
 
   const handlePlaceOrder = async () => {
-    if (!cart || !shippingData || !selectedRate) return;
+    if (!cart || !shippingData) return;
 
     setIsProcessing(true);
     try {
       // Step 1: Create order via order service
+      const nameParts = (shippingData.name || '').split(' ');
+      const firstName = nameParts[0] || '';
+      const lastName = nameParts.slice(1).join(' ') || '';
       const orderResponse = await orderApi.checkout({
-        shippingAddressId: undefined,
-        shippingAddress: shippingData,
+        shippingAddress: {
+          firstName,
+          lastName,
+          address: shippingData.addressLine1 + (shippingData.addressLine2 ? ', ' + shippingData.addressLine2 : ''),
+          city: shippingData.city,
+          state: shippingData.state,
+          postalCode: shippingData.postalCode,
+          country: shippingData.country,
+          phone: shippingData.phone || '',
+        },
         shippingMethodId: selectedRate.id,
         paymentMethodId: 'card',
-      });
+        idempotencyKey: crypto.randomUUID(),
+      } as any);
       const order: any = orderResponse.data?.data || orderResponse.data;
 
       // Step 2: Create payment intent via payment service
@@ -297,7 +309,7 @@ export default function CheckoutPage() {
                       <SelectContent>
                         {addresses.map((address) => (
                           <SelectItem key={address.id} value={address.id}>
-                            {address.name} - {address.addressLine1}, {address.city}
+                            {address.fullName || (address as any).name} - {address.line1 || (address as any).addressLine1}, {address.city}
                           </SelectItem>
                         ))}
                       </SelectContent>

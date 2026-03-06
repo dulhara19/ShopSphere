@@ -56,7 +56,7 @@ export default function AdminCustomersPage() {
     queryKey: ['adminCustomers', page, statusFilter, searchQuery],
     queryFn: () =>
       userApi.listUsers({
-        page,
+        page: page - 1,
         size: 10,
         role: 'CUSTOMER',
         search: searchQuery || undefined,
@@ -81,10 +81,10 @@ export default function AdminCustomersPage() {
       {/* Stats Cards */}
       <div className="grid gap-4 md:grid-cols-4">
         {[
-          { label: 'Total Customers', count: 1234, growth: '+12%' },
-          { label: 'Active (30 days)', count: 456, growth: '+8%' },
-          { label: 'New This Month', count: 89, growth: '+23%' },
-          { label: 'Avg. Order Value', count: '$127', growth: '+5%' },
+          { label: 'Total Customers', count: pagination?.totalItems || customers.length },
+          { label: 'Active', count: customers.filter((c: any) => c.status === 'ACTIVE' || c.isEnabled).length },
+          { label: 'On This Page', count: customers.length },
+          { label: 'Pages', count: pagination?.totalPages || 1 },
         ].map((stat) => (
           <Card key={stat.label}>
             <CardContent className="pt-6">
@@ -93,7 +93,6 @@ export default function AdminCustomersPage() {
                   <p className="text-sm text-muted-foreground">{stat.label}</p>
                   <p className="text-2xl font-bold">{stat.count}</p>
                 </div>
-                <span className="text-sm text-green-600">{stat.growth}</span>
               </div>
             </CardContent>
           </Card>
@@ -179,7 +178,7 @@ export default function AdminCustomersPage() {
                       <TableCell>
                         <div className="flex items-center gap-3">
                           <Avatar>
-                            <AvatarImage src={customer.avatar} />
+                            <AvatarImage src={customer.avatarUrl || customer.profilePictureUrl || customer.avatar} />
                             <AvatarFallback>
                               {customer.firstName?.[0]}
                               {customer.lastName?.[0]}
@@ -198,14 +197,14 @@ export default function AdminCustomersPage() {
                       <TableCell>
                         <Badge
                           variant={
-                            customer.status === 'ACTIVE'
+                            (customer.status === 'ACTIVE' || customer.isEnabled)
                               ? 'default'
-                              : customer.status === 'SUSPENDED'
+                              : (customer.status === 'SUSPENDED' || customer.isAccountLocked)
                               ? 'destructive'
                               : 'secondary'
                           }
                         >
-                          {customer.status}
+                          {customer.status || (customer.isEnabled ? 'ACTIVE' : customer.isAccountLocked ? 'SUSPENDED' : 'INACTIVE')}
                         </Badge>
                       </TableCell>
                       <TableCell>{customer.orderCount || 0}</TableCell>

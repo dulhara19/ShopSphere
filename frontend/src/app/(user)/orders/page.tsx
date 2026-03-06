@@ -207,7 +207,7 @@ export default function OrdersPage() {
                     </div>
                     <div className="text-right">
                       <p className="font-medium">
-                        {formatPriceSimple(order.total)}
+                        {formatPriceSimple(order.totalAmount || order.total)}
                       </p>
                       <ChevronRight className="h-5 w-5 ml-auto mt-1 text-muted-foreground" />
                     </div>

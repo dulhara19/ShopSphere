@@ -15,18 +15,36 @@ import java.util.UUID;
 @AllArgsConstructor
 public class CheckoutRequest {
 
-    @NotNull(message = "Shipping address ID is required")
     private UUID shippingAddressId;
 
-    @NotNull(message = "Billing address ID is required")
     private UUID billingAddressId;
 
-    @NotNull(message = "Payment method is required")
     private PaymentMethod paymentMethod;
+
+    // Inline address for when no saved address is used
+    private ShippingAddress shippingAddress;
+
+    private String shippingMethodId;
+
+    private String paymentMethodId;
 
     private String couponCode;
 
     private String notes;
 
     private String idempotencyKey;
+
+    @Data
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class ShippingAddress {
+        private String firstName;
+        private String lastName;
+        private String address;
+        private String city;
+        private String state;
+        private String postalCode;
+        private String country;
+        private String phone;
+    }
 }

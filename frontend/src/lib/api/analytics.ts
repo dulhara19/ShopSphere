@@ -134,7 +134,7 @@ export const analyticsApi = {
    */
   exportReport: (data: ExportReportRequest) =>
     analyticsClient.post<ApiResponse<ExportReportResponse>>(
-      '/api/analytics/reports/export',
+      '/api/analytics/export',
       data
     ),
 };

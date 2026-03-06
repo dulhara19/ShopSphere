@@ -112,10 +112,26 @@ public class CheckoutService {
                 throw new RuntimeException("Failed to reserve inventory. Please try again.");
             }
 
-            // TODO: In production, validate addresses from User Service
-            // For MVP: Mock address
-            Address shippingAddress = createMockAddress(request.getShippingAddressId());
-            Address billingAddress = createMockAddress(request.getBillingAddressId());
+            // Build address from inline data if provided, otherwise use mock
+            Address shippingAddress;
+            if (request.getShippingAddress() != null) {
+                CheckoutRequest.ShippingAddress sa = request.getShippingAddress();
+                shippingAddress = Address.builder()
+                    .id(UUID.randomUUID())
+                    .fullName((sa.getFirstName() != null ? sa.getFirstName() : "") + " " + (sa.getLastName() != null ? sa.getLastName() : ""))
+                    .addressLine1(sa.getAddress())
+                    .city(sa.getCity())
+                    .state(sa.getState())
+                    .postalCode(sa.getPostalCode())
+                    .country(sa.getCountry())
+                    .phone(sa.getPhone())
+                    .build();
+            } else {
+                shippingAddress = createMockAddress(request.getShippingAddressId());
+            }
+            Address billingAddress = request.getBillingAddressId() != null
+                ? createMockAddress(request.getBillingAddressId())
+                : shippingAddress;
 
             // Create order
             Order order = Order.builder()
@@ -129,7 +145,7 @@ public class CheckoutService {
                 .shippingAmount(totals.getShippingAmount())
                 .discountAmount(totals.getDiscountAmount())
                 .totalAmount(totals.getTotalAmount())
-                .paymentMethod(request.getPaymentMethod())
+                .paymentMethod(request.getPaymentMethod() != null ? request.getPaymentMethod() : PaymentMethod.CARD)
                 .paymentStatus(PaymentStatus.PENDING)
                 .notes(request.getNotes())
                 .couponCode(request.getCouponCode())

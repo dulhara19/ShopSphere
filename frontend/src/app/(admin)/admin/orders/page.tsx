@@ -80,7 +80,7 @@ export default function AdminOrdersPage() {
     queryKey: ['adminOrders', page, statusFilter, searchQuery],
     queryFn: () =>
       orderApi.listAllOrders({
-        page,
+        page: page - 1,
         size: 10,
         status: statusFilter !== 'all' ? (statusFilter as OrderStatus) : undefined,
       }),
@@ -116,10 +116,10 @@ export default function AdminOrdersPage() {
       {/* Stats Cards */}
       <div className="grid gap-4 md:grid-cols-4">
         {[
-          { label: 'Pending', count: 12, color: 'text-yellow-600' },
-          { label: 'Processing', count: 8, color: 'text-purple-600' },
-          { label: 'Shipped', count: 24, color: 'text-blue-600' },
-          { label: 'Delivered', count: 156, color: 'text-green-600' },
+          { label: 'Pending', count: orders.filter((o: any) => o.status === 'PENDING').length, color: 'text-yellow-600' },
+          { label: 'Processing', count: orders.filter((o: any) => o.status === 'PROCESSING').length, color: 'text-purple-600' },
+          { label: 'Shipped', count: orders.filter((o: any) => o.status === 'SHIPPED').length, color: 'text-blue-600' },
+          { label: 'Delivered', count: orders.filter((o: any) => o.status === 'DELIVERED').length, color: 'text-green-600' },
         ].map((stat) => (
           <Card key={stat.label}>
             <CardContent className="pt-6">
@@ -244,7 +244,7 @@ export default function AdminOrdersPage() {
                       </TableCell>
                       <TableCell>{order.items.length}</TableCell>
                       <TableCell className="font-medium">
-                        {formatPriceSimple(order.total)}
+                        {formatPriceSimple(order.totalAmount || order.total)}
                       </TableCell>
                       <TableCell className="text-muted-foreground">
                         {formatDate(order.createdAt)}

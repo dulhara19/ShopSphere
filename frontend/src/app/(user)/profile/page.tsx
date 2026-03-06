@@ -94,7 +94,7 @@ export default function ProfilePage() {
           <div className="flex items-center gap-4">
             <div className="relative">
               <Avatar className="h-24 w-24">
-                <AvatarImage src={user?.avatar} />
+                <AvatarImage src={user?.avatarUrl || (user as any)?.avatar} />
                 <AvatarFallback className="text-2xl">{getInitials()}</AvatarFallback>
               </Avatar>
               <Button

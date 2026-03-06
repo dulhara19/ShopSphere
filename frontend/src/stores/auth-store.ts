@@ -36,6 +36,7 @@ interface AuthState {
   register: (data: RegisterRequest) => Promise<void>;
   logout: () => Promise<void>;
   refreshUser: () => Promise<void>;
+  updateProfile: (data: Partial<User>) => Promise<void>;
   setUser: (user: User | null) => void;
   setLoading: (loading: boolean) => void;
   setError: (error: string | null) => void;
@@ -209,6 +210,27 @@ export const useAuthStore = create<AuthState>()(
             isAuthenticated: false,
             isLoading: false,
           });
+        }
+      },
+
+      // Update profile
+      updateProfile: async (data: Partial<User>) => {
+        const { user } = get();
+        if (!user) throw new Error('Not authenticated');
+        set({ isLoading: true, error: null });
+        try {
+          await userApi.updateProfile(user.id, data as any);
+          // Merge updated fields into current user
+          set({
+            user: { ...user, ...data },
+            isLoading: false,
+          });
+        } catch (error: any) {
+          set({
+            isLoading: false,
+            error: error.response?.data?.message || 'Failed to update profile',
+          });
+          throw error;
         }
       },
 

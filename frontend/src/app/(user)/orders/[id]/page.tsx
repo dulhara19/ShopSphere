@@ -220,7 +220,7 @@ export default function OrderDetailPage() {
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <p className="font-medium">{order.shippingAddress.name}</p>
+            <p className="font-medium">{order.shippingAddress.fullName || order.shippingAddress.name}</p>
             <p className="text-sm text-muted-foreground">
               {order.shippingAddress.addressLine1}
               {order.shippingAddress.addressLine2 && (
@@ -329,25 +329,25 @@ export default function OrderDetailPage() {
             <div className="flex justify-between text-sm">
               <span className="text-muted-foreground">Shipping</span>
               <span>
-                {order.shippingTotal === 0
+                {(order.shippingAmount || order.shippingTotal) === 0
                   ? 'Free'
-                  : formatPriceSimple(order.shippingTotal)}
+                  : formatPriceSimple(order.shippingAmount || order.shippingTotal)}
               </span>
             </div>
             <div className="flex justify-between text-sm">
               <span className="text-muted-foreground">Tax</span>
-              <span>{formatPriceSimple(order.taxTotal)}</span>
+              <span>{formatPriceSimple(order.taxAmount || order.taxTotal)}</span>
             </div>
-            {order.discountTotal > 0 && (
+            {(order.discountAmount || order.discountTotal) > 0 && (
               <div className="flex justify-between text-sm text-green-600">
                 <span>Discount</span>
-                <span>-{formatPriceSimple(order.discountTotal)}</span>
+                <span>-{formatPriceSimple(order.discountAmount || order.discountTotal)}</span>
               </div>
             )}
             <Separator />
             <div className="flex justify-between font-medium">
               <span>Total</span>
-              <span>{formatPriceSimple(order.total)}</span>
+              <span>{formatPriceSimple(order.totalAmount || order.total)}</span>
             </div>
           </div>
         </CardContent>
