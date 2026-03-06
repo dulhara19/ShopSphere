@@ -3,6 +3,7 @@ package com.shopsphere.product.service;
 import com.shopsphere.product.dto.ProductInternalResponseDTO;
 import com.shopsphere.product.dto.ProductSearchResponseDTO;
 import com.shopsphere.product.dto.ProductValidationResponseDTO;
+import com.shopsphere.product.dto.ReviewSummaryDTO; // Added for Story 2.5.2
 import com.shopsphere.product.dto.VariantCombinationDTO; // Added for Story 2.2.4
 import com.shopsphere.product.dto.VariantSelectionResponseDTO; // Added for Story 2.2.4
 import com.shopsphere.product.exception.ProductNotFoundException;
@@ -550,7 +551,8 @@ public class ProductService {
     }
 
     /**
-     * Story 2.3.2: Update product rating (Called by Review Service internally)
+     * Story 2.3.2 & 2.5.2: Update product rating (Called by Review Service internally)
+     * Updates MongoDB, Elasticsearch, and refreshes the Redis Cache immediately.
      */
     public void updateProductRating(String productId, Double newAverage, Integer newCount) {
         Product product = getProductById(productId);
@@ -558,7 +560,15 @@ public class ProductService {
         product.setReviewCount(newCount);
         product.setUpdatedAt(LocalDateTime.now());
         
+        // 1. Update MongoDB
         Product updatedProduct = productRepository.save(product);
-        productSearchRepository.save(updatedProduct); // Sync with Elasticsearch
+        
+        // 2. Sync with Elasticsearch
+        productSearchRepository.save(updatedProduct); 
+        
+        // 3. Story 2.5.2: Update Redis Cache to reflect new reviews immediately
+        String cacheKey = "rating_summary_" + productId;
+        ReviewSummaryDTO updatedSummary = new ReviewSummaryDTO(newAverage, newCount);
+        redisTemplate.opsForValue().set(cacheKey, updatedSummary, 30, TimeUnit.MINUTES);
     }
 }
