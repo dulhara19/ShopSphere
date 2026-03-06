@@ -67,8 +67,15 @@ public class ProductService {
     }
 
     public ProductResponse createProduct(CreateProductRequest request) {
+        ProductStatus status = ProductStatus.ACTIVE;
+        if (request.getStatus() != null) {
+            try {
+                status = ProductStatus.valueOf(request.getStatus());
+            } catch (IllegalArgumentException ignored) {}
+        }
+
         Product product = Product.builder()
-                .sellerId(request.getSellerId())
+                .sellerId(request.getSellerId() != null ? request.getSellerId() : "admin")
                 .name(request.getName())
                 .description(request.getDescription())
                 .price(request.getPrice())
@@ -78,7 +85,7 @@ public class ProductService {
                 .primaryImage(request.getPrimaryImage())
                 .sku(request.getSku())
                 .brand(request.getBrand())
-                .status(ProductStatus.ACTIVE)
+                .status(status)
                 .build();
         return toResponse(productRepository.save(product));
     }

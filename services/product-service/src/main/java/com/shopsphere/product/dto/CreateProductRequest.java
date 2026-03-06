@@ -17,7 +17,6 @@ import java.util.List;
 @AllArgsConstructor
 public class CreateProductRequest {
 
-    @NotBlank
     private String sellerId;
 
     @NotBlank
@@ -35,4 +34,6 @@ public class CreateProductRequest {
     private String primaryImage;
     private String sku;
     private String brand;
+    private String status;
+    private List<String> tags;
 }
