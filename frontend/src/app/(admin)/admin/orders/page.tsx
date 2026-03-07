@@ -80,7 +80,7 @@ export default function AdminOrdersPage() {
     queryKey: ['adminOrders', page, statusFilter, searchQuery],
     queryFn: () =>
       orderApi.listAllOrders({
-        page: page - 1,
+        page: page,
         size: 10,
         status: statusFilter !== 'all' ? (statusFilter as OrderStatus) : undefined,
       }),
