@@ -160,7 +160,7 @@ class CartServiceTest {
             for (int i = 0; i < 50; i++) {
                 CartItem item = CartItem.builder()
                     .id(UUID.randomUUID())
-                    .productId(UUID.randomUUID())
+                    .productId(UUID.randomUUID().toString())
                     .productName("Product " + i)
                     .quantity(1)
                     .unitPrice(BigDecimal.valueOf(10))
@@ -169,7 +169,7 @@ class CartServiceTest {
             }
 
             AddToCartRequest request = AddToCartRequest.builder()
-                .productId(UUID.randomUUID())
+                .productId(UUID.randomUUID().toString())
                 .quantity(1)
                 .build();
 
@@ -190,7 +190,7 @@ class CartServiceTest {
         void shouldReturnValidForCartWithItems() {
             CartItem item = CartItem.builder()
                 .id(UUID.randomUUID())
-                .productId(UUID.randomUUID())
+                .productId(UUID.randomUUID().toString())
                 .productName("Test Product")
                 .quantity(2)
                 .unitPrice(BigDecimal.valueOf(99.99))
@@ -289,7 +289,7 @@ class CartServiceTest {
         void shouldClearAllItemsFromCart() {
             CartItem item = CartItem.builder()
                 .id(UUID.randomUUID())
-                .productId(UUID.randomUUID())
+                .productId(UUID.randomUUID().toString())
                 .productName("Test Product")
                 .quantity(2)
                 .unitPrice(BigDecimal.valueOf(99.99))

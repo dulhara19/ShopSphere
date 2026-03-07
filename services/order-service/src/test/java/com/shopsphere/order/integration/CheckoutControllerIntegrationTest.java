@@ -54,7 +54,7 @@ class CheckoutControllerIntegrationTest extends BaseIntegrationTest {
             .build();
 
         CartItem item = CartItem.builder()
-            .productId(UUID.randomUUID())
+            .productId(UUID.randomUUID().toString())
             .productName("Test Product")
             .productImage("https://example.com/image.jpg")
             .quantity(2)
@@ -103,7 +103,7 @@ class CheckoutControllerIntegrationTest extends BaseIntegrationTest {
             // Create cart with smaller total
             cart.clearItems();
             CartItem smallItem = CartItem.builder()
-                .productId(UUID.randomUUID())
+                .productId(UUID.randomUUID().toString())
                 .productName("Small Product")
                 .quantity(1)
                 .unitPrice(BigDecimal.valueOf(30.00))

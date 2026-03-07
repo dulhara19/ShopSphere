@@ -76,7 +76,7 @@ class CartControllerIntegrationTest extends BaseIntegrationTest {
         @DisplayName("should add item to cart")
         void shouldAddItemToCart() throws Exception {
             AddToCartRequest request = AddToCartRequest.builder()
-                .productId(UUID.randomUUID())
+                .productId(UUID.randomUUID().toString())
                 .quantity(2)
                 .build();
 
@@ -94,7 +94,7 @@ class CartControllerIntegrationTest extends BaseIntegrationTest {
         @DisplayName("should reject invalid quantity")
         void shouldRejectInvalidQuantity() throws Exception {
             AddToCartRequest request = AddToCartRequest.builder()
-                .productId(UUID.randomUUID())
+                .productId(UUID.randomUUID().toString())
                 .quantity(0)
                 .build();
 
@@ -115,7 +115,7 @@ class CartControllerIntegrationTest extends BaseIntegrationTest {
         void shouldUpdateCartItemQuantity() throws Exception {
             // Add item first
             CartItem item = CartItem.builder()
-                .productId(UUID.randomUUID())
+                .productId(UUID.randomUUID().toString())
                 .productName("Test Product")
                 .quantity(1)
                 .unitPrice(BigDecimal.valueOf(10.00))
@@ -145,7 +145,7 @@ class CartControllerIntegrationTest extends BaseIntegrationTest {
         @DisplayName("should remove item from cart")
         void shouldRemoveItemFromCart() throws Exception {
             CartItem item = CartItem.builder()
-                .productId(UUID.randomUUID())
+                .productId(UUID.randomUUID().toString())
                 .productName("Test Product")
                 .quantity(1)
                 .unitPrice(BigDecimal.valueOf(10.00))
@@ -170,13 +170,13 @@ class CartControllerIntegrationTest extends BaseIntegrationTest {
         @DisplayName("should clear all items from cart")
         void shouldClearAllItemsFromCart() throws Exception {
             CartItem item1 = CartItem.builder()
-                .productId(UUID.randomUUID())
+                .productId(UUID.randomUUID().toString())
                 .productName("Product 1")
                 .quantity(1)
                 .unitPrice(BigDecimal.valueOf(10.00))
                 .build();
             CartItem item2 = CartItem.builder()
-                .productId(UUID.randomUUID())
+                .productId(UUID.randomUUID().toString())
                 .productName("Product 2")
                 .quantity(2)
                 .unitPrice(BigDecimal.valueOf(20.00))

@@ -136,7 +136,7 @@ class OrderServiceTest {
         @DisplayName("should cancel pending order")
         void shouldCancelPendingOrder() {
             OrderItem item = OrderItem.builder()
-                .productId(UUID.randomUUID())
+                .productId(UUID.randomUUID().toString())
                 .quantity(1)
                 .build();
             order.addItem(item);

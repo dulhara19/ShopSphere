@@ -60,7 +60,7 @@ class OrderControllerIntegrationTest extends BaseIntegrationTest {
             .build();
 
         OrderItem item = OrderItem.builder()
-            .productId(UUID.randomUUID())
+            .productId(UUID.randomUUID().toString())
             .productName("Test Product")
             .quantity(2)
             .unitPrice(BigDecimal.valueOf(50.00))

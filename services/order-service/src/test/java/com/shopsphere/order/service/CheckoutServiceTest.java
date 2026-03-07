@@ -77,7 +77,7 @@ class CheckoutServiceTest {
         void shouldCalculateTotalsCorrectly() {
             CartItem item = CartItem.builder()
                 .id(UUID.randomUUID())
-                .productId(UUID.randomUUID())
+                .productId(UUID.randomUUID().toString())
                 .productName("Test Product")
                 .quantity(2)
                 .unitPrice(BigDecimal.valueOf(50.00))
@@ -99,7 +99,7 @@ class CheckoutServiceTest {
         void shouldApplyShippingForOrdersUnderThreshold() {
             CartItem item = CartItem.builder()
                 .id(UUID.randomUUID())
-                .productId(UUID.randomUUID())
+                .productId(UUID.randomUUID().toString())
                 .productName("Test Product")
                 .quantity(1)
                 .unitPrice(BigDecimal.valueOf(30.00))
@@ -118,7 +118,7 @@ class CheckoutServiceTest {
         void shouldApplyDiscountWithCouponCode() {
             CartItem item = CartItem.builder()
                 .id(UUID.randomUUID())
-                .productId(UUID.randomUUID())
+                .productId(UUID.randomUUID().toString())
                 .productName("Test Product")
                 .quantity(1)
                 .unitPrice(BigDecimal.valueOf(100.00))
@@ -151,7 +151,7 @@ class CheckoutServiceTest {
         void setUpCartWithItem() {
             CartItem item = CartItem.builder()
                 .id(UUID.randomUUID())
-                .productId(UUID.randomUUID())
+                .productId(UUID.randomUUID().toString())
                 .productName("Test Product")
                 .quantity(1)
                 .unitPrice(BigDecimal.valueOf(100.00))
