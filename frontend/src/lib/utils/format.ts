@@ -19,7 +19,7 @@ export function formatPrice(price: number, currency = DEFAULT_CURRENCY): string 
  * Format price as simple number with symbol
  */
 export function formatPriceSimple(price: number): string {
-  return `${CURRENCY_SYMBOL}${price.toFixed(2)}`;
+  return `${CURRENCY_SYMBOL}${(price ?? 0).toFixed(2)}`;
 }
 
 /**
