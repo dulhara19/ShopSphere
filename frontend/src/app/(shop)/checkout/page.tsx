@@ -169,7 +169,16 @@ export default function CheckoutPage() {
   };
 
   const handlePlaceOrder = async () => {
-    if (!cart || !shippingData) return;
+    console.log('handlePlaceOrder called', { cart: !!cart, shippingData: !!shippingData });
+    if (!cart || !shippingData) {
+      console.error('Place order blocked:', { cart, shippingData });
+      toast({
+        title: 'Error',
+        description: !cart ? 'Cart is empty.' : 'Shipping data is missing. Please go back and fill shipping details.',
+        variant: 'destructive',
+      });
+      return;
+    }
 
     setIsProcessing(true);
     try {
