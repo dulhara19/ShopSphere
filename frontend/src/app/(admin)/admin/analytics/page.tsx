@@ -61,9 +61,57 @@ export default function AdminAnalyticsPage() {
     queryFn: () => analyticsApi.getDashboard(dateRange),
   });
 
-  const sales = salesData?.data?.data || salesData?.data || ({} as any);
-  const products = productData?.data?.data || productData?.data || ({} as any);
-  const customers = customerData?.data?.data || customerData?.data || ({} as any);
+  // Backend returns arrays — aggregate into summary objects
+  const salesRaw: any[] = salesData?.data?.data || salesData?.data || [];
+  const salesList = Array.isArray(salesRaw) ? salesRaw : [];
+  const sales = {
+    totalRevenue: salesList.reduce((sum: number, d: any) => sum + (d.totalRevenue || 0), 0),
+    totalOrders: salesList.reduce((sum: number, d: any) => sum + (d.totalOrders || 0), 0),
+    averageOrderValue: salesList.length
+      ? salesList.reduce((sum: number, d: any) => sum + (d.averageOrderValue || 0), 0) / salesList.length
+      : 0,
+    totalVisitors: salesList.reduce((sum: number, d: any) => sum + (d.viewCount || 0), 0),
+    conversionRate: salesList.length
+      ? +(
+          (salesList.reduce((s: number, d: any) => s + (d.purchaseCount || 0), 0) /
+            Math.max(salesList.reduce((s: number, d: any) => s + (d.viewCount || 0), 0), 1)) *
+          100
+        ).toFixed(1)
+      : 0,
+    cartAbandonmentRate: salesList.length
+      ? +(
+          ((salesList.reduce((s: number, d: any) => s + (d.addToCartCount || 0), 0) -
+            salesList.reduce((s: number, d: any) => s + (d.purchaseCount || 0), 0)) /
+            Math.max(salesList.reduce((s: number, d: any) => s + (d.addToCartCount || 0), 0), 1)) *
+          100
+        ).toFixed(1)
+      : 0,
+    abandonedCarts:
+      salesList.reduce((s: number, d: any) => s + (d.addToCartCount || 0), 0) -
+      salesList.reduce((s: number, d: any) => s + (d.purchaseCount || 0), 0),
+    revenueChange: 0,
+    dataPoints: salesList,
+  };
+
+  const productsRaw: any[] = productData?.data?.data || productData?.data || [];
+  const productList = Array.isArray(productsRaw) ? productsRaw : [];
+  const products = {
+    totalUnitsSold: productList.reduce((sum: number, d: any) => sum + (d.unitsSold || 0), 0),
+    totalViews: productList.reduce((sum: number, d: any) => sum + (d.viewCount || 0), 0),
+    averageRating: productList.length
+      ? productList.reduce((sum: number, d: any) => sum + (d.avgRating || 0), 0) / productList.length
+      : 0,
+    topProducts: productList.slice(0, 10).map((p: any) => ({
+      id: p.productId,
+      name: p.productName || p.productId,
+      unitsSold: p.unitsSold,
+      revenue: p.revenue,
+      views: p.viewCount,
+    })),
+  };
+
+  const customerRaw = customerData?.data?.data || customerData?.data || {};
+  const customers = Array.isArray(customerRaw) ? {} : customerRaw;
 
   return (
     <div className="space-y-6">
