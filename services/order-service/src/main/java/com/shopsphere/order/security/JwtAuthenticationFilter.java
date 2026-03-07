@@ -53,7 +53,12 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         if (token != null) {
             try {
                 Claims claims = validateToken(token);
-                UUID userId = UUID.fromString(claims.getSubject());
+                // userId may be in dedicated claim or in subject
+                String userIdStr = claims.get("userId", String.class);
+                if (userIdStr == null) {
+                    userIdStr = claims.getSubject();
+                }
+                UUID userId = UUID.fromString(userIdStr);
                 List<String> roles = claims.get("roles", List.class);
 
                 List<SimpleGrantedAuthority> authorities = roles != null
