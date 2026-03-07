@@ -31,22 +31,34 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { formatPriceSimple } from '@/lib/utils/format';
 
+function getDateRange(range: string): { startDate: string; endDate: string } {
+  const end = new Date();
+  const start = new Date();
+  const days = parseInt(range) || 30;
+  start.setDate(end.getDate() - days);
+  return {
+    startDate: start.toISOString().split('T')[0],
+    endDate: end.toISOString().split('T')[0],
+  };
+}
+
 export default function AdminAnalyticsPage() {
   const [timeRange, setTimeRange] = useState('30d');
+  const dateRange = getDateRange(timeRange);
 
   const { data: salesData, isLoading: salesLoading } = useQuery({
     queryKey: ['salesAnalytics', timeRange],
-    queryFn: () => analyticsApi.getSalesAnalytics({ startDate: '', endDate: '' }),
+    queryFn: () => analyticsApi.getSalesAnalytics(dateRange),
   });
 
   const { data: productData, isLoading: productLoading } = useQuery({
     queryKey: ['productAnalytics', timeRange],
-    queryFn: () => analyticsApi.getTopSellingProducts({ startDate: '', endDate: '', limit: 10 }),
+    queryFn: () => analyticsApi.getTopSellingProducts({ ...dateRange, limit: 10 }),
   });
 
   const { data: customerData, isLoading: customerLoading } = useQuery({
     queryKey: ['customerAnalytics', timeRange],
-    queryFn: () => analyticsApi.getDashboard({ startDate: '', endDate: '' }),
+    queryFn: () => analyticsApi.getDashboard(dateRange),
   });
 
   const sales = salesData?.data?.data || salesData?.data || ({} as any);
