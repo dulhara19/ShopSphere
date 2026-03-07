@@ -17,7 +17,7 @@ public class InventoryService {
         // For MVP: Mock implementation - always succeeds
         log.info("Reserving inventory for order {}: {} products", orderId, productQuantities.size());
 
-        for (Map.Entry<UUID, Integer> entry : productQuantities.entrySet()) {
+        for (Map.Entry<String, Integer> entry : productQuantities.entrySet()) {
             log.debug("Reserving {} units of product {}", entry.getValue(), entry.getKey());
         }
 
@@ -29,7 +29,7 @@ public class InventoryService {
         // In production: Call Inventory Service to release reserved stock (e.g., on order cancellation)
         log.info("Releasing inventory for order {}: {} products", orderId, productQuantities.size());
 
-        for (Map.Entry<UUID, Integer> entry : productQuantities.entrySet()) {
+        for (Map.Entry<String, Integer> entry : productQuantities.entrySet()) {
             log.debug("Releasing {} units of product {}", entry.getValue(), entry.getKey());
         }
     }
