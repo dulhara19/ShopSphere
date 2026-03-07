@@ -57,6 +57,7 @@ const nextConfig = {
       { source: '/api/events/:path*', destination: `${RECOMMENDATION_SERVICE}/api/events/:path*` },
       // Notification service (3009)
       { source: '/api/notifications/:path*', destination: `${NOTIFICATION_SERVICE}/api/notifications/:path*` },
+      { source: '/internal/notifications/:path*', destination: `${NOTIFICATION_SERVICE}/internal/notifications/:path*` },
       // Shipping service (3006)
       { source: '/api/shipping/:path*', destination: `${SHIPPING_SERVICE}/api/shipping/:path*` },
       // Payment service (3005)
