@@ -95,7 +95,8 @@ export function createServiceClient(service: ServiceName): AxiosInstance {
             const { userApi } = await import('./user');
             const response = await userApi.refreshToken({ refreshToken });
 
-            const { accessToken, refreshToken: newRefreshToken } = response.data;
+            const payload = response.data?.data || response.data;
+            const { accessToken, refreshToken: newRefreshToken } = payload;
 
             setStorageItem(ACCESS_TOKEN_KEY, accessToken);
             setStorageItem(REFRESH_TOKEN_KEY, newRefreshToken);

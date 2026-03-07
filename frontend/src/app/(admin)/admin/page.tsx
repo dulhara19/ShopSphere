@@ -28,7 +28,23 @@ export default function AdminDashboardPage() {
     queryFn: () => analyticsApi.getDashboard({ startDate: '', endDate: '' }),
   });
 
-  const metrics: any = dashboardData?.data?.data || dashboardData?.data;
+  const raw: any = dashboardData?.data?.data || dashboardData?.data || {};
+  // Backend returns nested { sales, orders, users, products } — flatten for cards
+  const metrics: any = raw?.sales
+    ? {
+        totalRevenue: raw.sales?.totalRevenue ?? 0,
+        revenueChange: raw.sales?.revenueChange ?? 0,
+        totalOrders: raw.orders?.totalOrders ?? 0,
+        ordersChange: raw.orders?.ordersChange ?? 0,
+        totalCustomers: raw.users?.totalUsers ?? 0,
+        customersChange: raw.users?.usersChange ?? 0,
+        totalProducts: raw.products?.totalProducts ?? 0,
+        productsChange: raw.products?.productsChange ?? 0,
+        recentOrders: raw.orders?.recentOrders,
+        topProducts: raw.products?.topProducts,
+        lowStockProducts: raw.products?.lowStockProducts,
+      }
+    : raw;
 
   const statCards = [
     {

@@ -110,8 +110,14 @@ export default function AdminAnalyticsPage() {
     })),
   };
 
-  const customerRaw = customerData?.data?.data || customerData?.data || {};
-  const customers = Array.isArray(customerRaw) ? {} : customerRaw;
+  const dashRaw = customerData?.data?.data || customerData?.data || {};
+  const usersData = dashRaw?.users || {};
+  const customers = {
+    totalCustomers: usersData.totalUsers || 0,
+    newCustomers: usersData.newUsers || 0,
+    returningCustomers: usersData.returningUsers || 0,
+    averageLifetimeValue: usersData.averageLifetimeValue || 0,
+  };
 
   return (
     <div className="space-y-6">
