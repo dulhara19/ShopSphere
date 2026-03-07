@@ -188,7 +188,7 @@ export default function CheckoutPage() {
           country: shippingData.country,
           phone: shippingData.phone || '',
         },
-        shippingMethodId: selectedRate.id,
+        shippingMethodId: selectedRate?.id || 'standard',
         paymentMethodId: 'card',
         idempotencyKey: crypto.randomUUID(),
       } as any);
@@ -478,7 +478,7 @@ export default function CheckoutPage() {
                         <Skeleton key={i} className="h-16 w-full" />
                       ))}
                     </div>
-                  ) : (
+                  ) : shippingRates.length > 0 ? (
                     <RadioGroup
                       value={selectedShippingRate}
                       onValueChange={setSelectedShippingRate}
@@ -510,6 +510,12 @@ export default function CheckoutPage() {
                         </div>
                       ))}
                     </RadioGroup>
+                  ) : (
+                    <div className="p-4 border rounded-lg bg-muted/50">
+                      <p className="font-medium">Standard Shipping</p>
+                      <p className="text-sm text-muted-foreground">5-7 business days</p>
+                      <p className="text-sm font-medium mt-1">Free</p>
+                    </div>
                   )}
                 </CardContent>
               </Card>
@@ -608,7 +614,6 @@ export default function CheckoutPage() {
                         <Button
                           type="submit"
                           className="flex-1"
-                          disabled={!selectedShippingRate}
                         >
                           Review Order
                           <ChevronRight className="ml-2 h-4 w-4" />
@@ -670,8 +675,7 @@ export default function CheckoutPage() {
                     Shipping Method
                   </h3>
                   <p className="text-sm text-muted-foreground">
-                    {selectedRate?.name} - {selectedRate?.estimatedDays} business
-                    days
+                    {selectedRate ? `${selectedRate.name} - ${selectedRate.estimatedDays} business days` : 'Standard Shipping'}
                   </p>
                   <Button
                     variant="link"
