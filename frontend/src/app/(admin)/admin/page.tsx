@@ -41,7 +41,12 @@ export default function AdminDashboardPage() {
         totalProducts: raw.products?.totalProducts ?? 0,
         productsChange: raw.products?.productsChange ?? 0,
         recentOrders: raw.orders?.recentOrders,
-        topProducts: raw.products?.topProducts,
+        topProducts: (raw.products?.topSelling || []).map((p: any) => ({
+          id: p.productId,
+          name: p.productName || p.productId,
+          unitsSold: p.unitsSold,
+          revenue: p.revenue,
+        })),
         lowStockProducts: raw.products?.lowStockProducts,
       }
     : raw;
