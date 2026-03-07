@@ -13,6 +13,7 @@ import {
   LogOut,
   Menu,
   Bell,
+  Warehouse,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useAuthStore } from '@/stores/auth-store';
@@ -41,6 +42,11 @@ const sidebarNav = [
     title: 'Products',
     href: '/admin/products',
     icon: Package,
+  },
+  {
+    title: 'Inventory',
+    href: '/admin/inventory',
+    icon: Warehouse,
   },
   {
     title: 'Orders',

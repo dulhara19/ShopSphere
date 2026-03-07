@@ -23,7 +23,7 @@ import {
   UpdateInventoryRequest,
   BulkUpdateInventoryRequest,
   SetThresholdRequest,
-} from '@/types/api/inventory';
+} from '@/types/inventory';
 
 export const inventoryApi = {
   // ==========================================
@@ -72,7 +72,8 @@ export const inventoryApi = {
   setThreshold: (productId: string, data: SetThresholdRequest) =>
     inventoryClient.put<ApiResponse<InventoryItem>>(
       `/api/inventory/${productId}/threshold`,
-      data
+      null,
+      { params: { threshold: data.lowStockThreshold } }
     ),
 
   // ==========================================

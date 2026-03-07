@@ -1,4 +1,3 @@
-// ...existing code...
 package com.shopsphere.review.dto;
 
 import com.shopsphere.review.model.ReviewStatus;
@@ -9,7 +8,7 @@ import java.time.Instant;
 
 @Data
 @Builder
-public class ReviewResponse {
+public class FeaturedReviewResponse {
     private String id;
     private String productId;
     private String userId;
@@ -20,5 +19,6 @@ public class ReviewResponse {
     private Instant createdAt;
     private Instant updatedAt;
     private int helpfulCount;
+    private boolean featured;
+    private String featuredReason;
 }
-// ...existing code...

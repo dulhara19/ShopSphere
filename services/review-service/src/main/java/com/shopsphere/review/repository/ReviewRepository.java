@@ -23,5 +23,10 @@ public interface ReviewRepository extends MongoRepository<Review, String> {
      * Helper to fetch all non-deleted reviews for a product.
      */
     List<Review> findByProductIdAndDeletedFalse(String productId);
+
+    /**
+     * Find non-deleted reviews for a user with pagination.
+     */
+    Page<Review> findByUserIdAndDeletedFalse(String userId, Pageable pageable);
 }
 
