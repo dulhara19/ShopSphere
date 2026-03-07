@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Bell, Check, CheckCheck, Trash2, Package, CreditCard, Truck, Megaphone, Settings } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -71,7 +71,7 @@ export function NotificationDropdown() {
   }, [countData, setUnreadNotificationCount]);
 
   // Fetch recent notifications — only when dropdown is open
-  const { data: notifData, isLoading, refetch } = useQuery({
+  const { data: notifData, isLoading, isError, refetch } = useQuery({
     queryKey: ['notificationsDropdown', userId],
     queryFn: () =>
       notificationApi.getNotifications({
@@ -80,15 +80,9 @@ export function NotificationDropdown() {
         size: 10,
       }),
     enabled: !!userId && isOpen,
+    staleTime: 0,
     retry: 1,
   });
-
-  // Refetch when dropdown opens
-  useEffect(() => {
-    if (isOpen && userId) {
-      refetch();
-    }
-  }, [isOpen, userId, refetch]);
 
   // Extract notifications — backend returns Spring Page with `content` array
   const rawData = notifData?.data;
@@ -163,6 +157,23 @@ export function NotificationDropdown() {
         {isLoading ? (
           <div className="py-8 text-center text-sm text-muted-foreground">
             Loading...
+          </div>
+        ) : isError ? (
+          <div className="py-8 text-center text-sm text-muted-foreground">
+            <Bell className="h-8 w-8 mx-auto mb-2 opacity-50" />
+            <p>Failed to load notifications</p>
+            <Button
+              variant="ghost"
+              size="sm"
+              className="mt-2 text-xs"
+              onClick={(e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                refetch();
+              }}
+            >
+              Retry
+            </Button>
           </div>
         ) : notifications.length === 0 ? (
           <div className="py-8 text-center text-sm text-muted-foreground">
