@@ -90,7 +90,7 @@ export default function OrderDetailPage() {
   });
 
   const cancelMutation = useMutation({
-    mutationFn: () => orderApi.cancelOrder(orderId),
+    mutationFn: () => orderApi.cancelOrder(orderId, { reason: 'Cancelled by customer' }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['order', orderId] });
       queryClient.invalidateQueries({ queryKey: ['orders'] });
