@@ -7,11 +7,9 @@ import {
   ShoppingCart,
   User,
   Menu,
-  Bell,
   LogOut,
   Settings,
   Package,
-  Heart,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -28,7 +26,8 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
 import { useAuthStore, useUser, useIsAuthenticated } from '@/stores/auth-store';
 import { useCartStore, useCartItemCount } from '@/stores/cart-store';
-import { useUIStore, useUnreadNotifications } from '@/stores/ui-store';
+import { useUIStore } from '@/stores/ui-store';
+import { NotificationDropdown } from '@/components/notifications/notification-dropdown';
 import { useState } from 'react';
 
 export function Header() {
@@ -36,7 +35,6 @@ export function Header() {
   const user = useUser();
   const isAuthenticated = useIsAuthenticated();
   const cartItemCount = useCartItemCount();
-  const unreadNotifications = useUnreadNotifications();
   const { logout } = useAuthStore();
   const { setDrawerOpen } = useCartStore();
   const { setMobileNavOpen, isMobileNavOpen } = useUIStore();
@@ -150,19 +148,7 @@ export function Header() {
         {/* Right Side Actions */}
         <div className="flex items-center space-x-2">
           {/* Notifications */}
-          {isAuthenticated && (
-            <Button variant="ghost" size="icon" className="relative">
-              <Bell className="h-5 w-5" />
-              {unreadNotifications > 0 && (
-                <Badge
-                  variant="destructive"
-                  className="absolute -top-1 -right-1 h-5 w-5 flex items-center justify-center p-0 text-xs"
-                >
-                  {unreadNotifications}
-                </Badge>
-              )}
-            </Button>
-          )}
+          {isAuthenticated && <NotificationDropdown />}
 
           {/* Cart */}
           <Button
