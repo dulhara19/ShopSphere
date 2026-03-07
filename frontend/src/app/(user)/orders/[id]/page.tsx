@@ -220,24 +220,30 @@ export default function OrderDetailPage() {
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <p className="font-medium">{order.shippingAddress.fullName || order.shippingAddress.name}</p>
-            <p className="text-sm text-muted-foreground">
-              {order.shippingAddress.addressLine1}
-              {order.shippingAddress.addressLine2 && (
-                <>, {order.shippingAddress.addressLine2}</>
-              )}
-            </p>
-            <p className="text-sm text-muted-foreground">
-              {order.shippingAddress.city}, {order.shippingAddress.state}{' '}
-              {order.shippingAddress.postalCode}
-            </p>
-            <p className="text-sm text-muted-foreground">
-              {order.shippingAddress.country}
-            </p>
-            {order.shippingAddress.phone && (
-              <p className="text-sm text-muted-foreground mt-2">
-                {order.shippingAddress.phone}
-              </p>
+            {order.shippingAddress ? (
+              <>
+                <p className="font-medium">{order.shippingAddress.fullName || order.shippingAddress.name || 'N/A'}</p>
+                <p className="text-sm text-muted-foreground">
+                  {order.shippingAddress.addressLine1}
+                  {order.shippingAddress.addressLine2 && (
+                    <>, {order.shippingAddress.addressLine2}</>
+                  )}
+                </p>
+                <p className="text-sm text-muted-foreground">
+                  {order.shippingAddress.city}, {order.shippingAddress.state}{' '}
+                  {order.shippingAddress.postalCode}
+                </p>
+                <p className="text-sm text-muted-foreground">
+                  {order.shippingAddress.country}
+                </p>
+                {order.shippingAddress.phone && (
+                  <p className="text-sm text-muted-foreground mt-2">
+                    {order.shippingAddress.phone}
+                  </p>
+                )}
+              </>
+            ) : (
+              <p className="text-sm text-muted-foreground">No shipping address provided</p>
             )}
           </CardContent>
         </Card>
@@ -278,13 +284,13 @@ export default function OrderDetailPage() {
         <CardHeader>
           <CardTitle>Order Items</CardTitle>
           <CardDescription>
-            {order.items.length} item{order.items.length !== 1 ? 's' : ''} in
+            {(order.items || []).length} item{(order.items || []).length !== 1 ? 's' : ''} in
             this order
           </CardDescription>
         </CardHeader>
         <CardContent>
           <div className="space-y-4">
-            {order.items.map((item) => (
+            {(order.items || []).map((item) => (
               <div key={item.id} className="flex gap-4">
                 <div className="relative h-20 w-20 rounded-md overflow-hidden bg-muted">
                   <Image
