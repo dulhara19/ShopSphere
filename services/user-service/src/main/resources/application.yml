@@ -92,7 +92,7 @@ server:
 # JWT Configuration
 jwt:
   secret: ${JWT_SECRET:shopsphere-dev-secret-key-minimum-32-characters-long-2026}
-  expiration: 900000 # 15 minutes
+  expiration: 86400000 # 24 hours
   refresh-expiration: 604800000 # 7 days
 
 # Logging Configuration
