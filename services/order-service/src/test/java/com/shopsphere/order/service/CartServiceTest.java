@@ -87,7 +87,7 @@ class CartServiceTest {
         @Test
         @DisplayName("should add new item to cart")
         void shouldAddNewItemToCart() {
-            UUID productId = UUID.randomUUID();
+            String productId = UUID.randomUUID().toString();
             AddToCartRequest request = AddToCartRequest.builder()
                 .productId(productId)
                 .quantity(2)
@@ -105,7 +105,7 @@ class CartServiceTest {
         @Test
         @DisplayName("should update quantity when adding existing item")
         void shouldUpdateQuantityWhenAddingExistingItem() {
-            UUID productId = UUID.randomUUID();
+            String productId = UUID.randomUUID().toString();
             CartItem existingItem = CartItem.builder()
                 .id(UUID.randomUUID())
                 .productId(productId)
@@ -131,7 +131,7 @@ class CartServiceTest {
         @Test
         @DisplayName("should throw exception when exceeding max quantity")
         void shouldThrowExceptionWhenExceedingMaxQuantity() {
-            UUID productId = UUID.randomUUID();
+            String productId = UUID.randomUUID().toString();
             CartItem existingItem = CartItem.builder()
                 .id(UUID.randomUUID())
                 .productId(productId)
