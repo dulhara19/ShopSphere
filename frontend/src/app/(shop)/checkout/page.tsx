@@ -182,6 +182,7 @@ export default function CheckoutPage() {
 
     setIsProcessing(true);
     try {
+      console.log('Starting checkout...');
       // Step 1: Create order via order service
       const nameParts = (shippingData.name || '').split(' ');
       const firstName = nameParts[0] || '';
@@ -199,7 +200,7 @@ export default function CheckoutPage() {
         },
         shippingMethodId: selectedRate?.id || 'standard',
         paymentMethodId: 'card',
-        idempotencyKey: crypto.randomUUID(),
+        idempotencyKey: Math.random().toString(36).substring(2) + Date.now().toString(36),
       } as any);
       const order: any = orderResponse.data?.data || orderResponse.data;
 
@@ -231,10 +232,11 @@ export default function CheckoutPage() {
         description: `Order #${order.orderNumber || order.id} has been created.`,
       });
       router.push(`/orders/${order.id}`);
-    } catch (error) {
+    } catch (error: any) {
+      console.error('Checkout error:', error);
       toast({
         title: 'Error',
-        description: 'Failed to place order. Please try again.',
+        description: error?.response?.data?.message || error?.message || 'Failed to place order. Please try again.',
         variant: 'destructive',
       });
     } finally {
