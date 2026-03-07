@@ -48,8 +48,27 @@ export default function ProductDetailPage() {
 
   const product = productData?.data?.data || productData?.data;
   const reviewsRaw = reviewsData?.data?.data || reviewsData?.data;
-  const reviews = reviewsRaw?.content || reviewsRaw || [];
-  const ratingSummary = ratingSummaryData?.data?.data || ratingSummaryData?.data;
+  const rawReviews: any[] = reviewsRaw?.content || reviewsRaw || [];
+  // Map backend ReviewResponse fields to frontend Review shape
+  const reviews = rawReviews.map((r: any) => ({
+    ...r,
+    userName: r.userName || r.userId || 'Anonymous',
+    content: r.content || r.body || '',
+    verified: r.verified ?? false,
+    userAvatar: r.userAvatar || '',
+  }));
+  const rawSummary = ratingSummaryData?.data?.data || ratingSummaryData?.data;
+  // Normalize distribution keys from string ("1") to number (1)
+  const ratingSummary = rawSummary
+    ? {
+        ...rawSummary,
+        distribution: rawSummary.distribution
+          ? Object.fromEntries(
+              Object.entries(rawSummary.distribution).map(([k, v]) => [Number(k), v])
+            )
+          : { 1: 0, 2: 0, 3: 0, 4: 0, 5: 0 },
+      }
+    : null;
   const similarProducts = similarData?.data?.data || similarData?.data || [];
 
   const handleAddToCart = async () => {
