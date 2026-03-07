@@ -101,7 +101,7 @@ public class CheckoutService {
             OrderTotalsDto totals = calculateTotals(userId, request.getShippingAddressId(), request.getCouponCode());
 
             // Reserve inventory before creating order
-            Map<UUID, Integer> productQuantities = cart.getItems().stream()
+            Map<String, Integer> productQuantities = cart.getItems().stream()
                 .collect(Collectors.toMap(CartItem::getProductId, CartItem::getQuantity));
 
             // Generate order ID early for inventory reservation tracking

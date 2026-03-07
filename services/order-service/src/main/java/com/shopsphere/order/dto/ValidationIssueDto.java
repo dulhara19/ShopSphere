@@ -14,7 +14,7 @@ import java.util.UUID;
 @AllArgsConstructor
 public class ValidationIssueDto {
 
-    private UUID productId;
+    private String productId;
     private String productName;
     private IssueType issue;
     private Integer currentStock;

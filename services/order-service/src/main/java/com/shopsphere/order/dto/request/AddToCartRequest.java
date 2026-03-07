@@ -7,8 +7,6 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
-import java.util.UUID;
-
 @Data
 @Builder
 @NoArgsConstructor
@@ -16,7 +14,7 @@ import java.util.UUID;
 public class AddToCartRequest {
 
     @NotNull(message = "Product ID is required")
-    private UUID productId;
+    private String productId;
 
     @Min(value = 1, message = "Quantity must be at least 1")
     @Builder.Default

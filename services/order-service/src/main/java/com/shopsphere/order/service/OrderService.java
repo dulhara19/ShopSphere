@@ -111,7 +111,7 @@ public class OrderService {
         order = orderRepository.save(order);
 
         // Release reserved inventory
-        Map<UUID, Integer> productQuantities = order.getItems().stream()
+        Map<String, Integer> productQuantities = order.getItems().stream()
             .collect(Collectors.toMap(
                 item -> item.getProductId(),
                 item -> item.getQuantity()

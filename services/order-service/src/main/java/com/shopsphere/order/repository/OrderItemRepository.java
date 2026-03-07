@@ -12,5 +12,5 @@ public interface OrderItemRepository extends JpaRepository<OrderItem, UUID> {
 
     List<OrderItem> findByOrderId(UUID orderId);
 
-    List<OrderItem> findByProductId(UUID productId);
+    List<OrderItem> findByProductId(String productId);
 }

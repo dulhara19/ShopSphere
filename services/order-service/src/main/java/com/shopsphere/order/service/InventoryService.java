@@ -12,7 +12,7 @@ import java.util.UUID;
 @Slf4j
 public class InventoryService {
 
-    public boolean reserveInventory(UUID orderId, Map<UUID, Integer> productQuantities) {
+    public boolean reserveInventory(UUID orderId, Map<String, Integer> productQuantities) {
         // In production: Call Inventory Service via HTTP/gRPC to reserve stock
         // For MVP: Mock implementation - always succeeds
         log.info("Reserving inventory for order {}: {} products", orderId, productQuantities.size());
@@ -25,7 +25,7 @@ public class InventoryService {
         return true;
     }
 
-    public void releaseInventory(UUID orderId, Map<UUID, Integer> productQuantities) {
+    public void releaseInventory(UUID orderId, Map<String, Integer> productQuantities) {
         // In production: Call Inventory Service to release reserved stock (e.g., on order cancellation)
         log.info("Releasing inventory for order {}: {} products", orderId, productQuantities.size());
 
@@ -34,7 +34,7 @@ public class InventoryService {
         }
     }
 
-    public boolean checkAvailability(UUID productId, int quantity) {
+    public boolean checkAvailability(String productId, int quantity) {
         // In production: Call Inventory Service to check stock
         // For MVP: Mock - always available
         log.debug("Checking availability for product {}: {} units", productId, quantity);

@@ -27,7 +27,7 @@ public class OrderItem {
     private Order order;
 
     @Column(name = "product_id", nullable = false)
-    private UUID productId;
+    private String productId;
 
     @Column(name = "product_name", nullable = false)
     private String productName;

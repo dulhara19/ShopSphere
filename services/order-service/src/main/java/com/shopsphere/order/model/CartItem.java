@@ -31,7 +31,7 @@ public class CartItem {
     private Cart cart;
 
     @Column(name = "product_id", nullable = false)
-    private UUID productId;
+    private String productId;
 
     @Column(name = "product_name")
     private String productName;
