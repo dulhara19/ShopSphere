@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Bell, Check, CheckCheck, Trash2, Package, CreditCard, Truck, Megaphone, Settings } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -52,23 +52,26 @@ export function NotificationDropdown() {
   const userId = user?.id;
   const { setUnreadNotificationCount } = useUIStore();
   const unreadCount = useUIStore((s) => s.unreadNotificationCount);
+  const [isOpen, setIsOpen] = useState(false);
 
-  // Fetch unread count
+  // Fetch unread count — runs on mount and every 30s
   const { data: countData } = useQuery({
     queryKey: ['notificationUnreadCount', userId],
     queryFn: () => notificationApi.getUnreadCount(userId!),
     enabled: !!userId,
     refetchInterval: 30000,
+    retry: 1,
   });
 
   // Sync unread count to UI store
   useEffect(() => {
-    const count = countData?.data?.count ?? countData?.data?.data?.count ?? 0;
+    const raw = countData?.data;
+    const count = raw?.count ?? raw?.data?.count ?? 0;
     setUnreadNotificationCount(count);
   }, [countData, setUnreadNotificationCount]);
 
-  // Fetch recent notifications
-  const { data: notifData, isLoading } = useQuery({
+  // Fetch recent notifications — only when dropdown is open
+  const { data: notifData, isLoading, refetch } = useQuery({
     queryKey: ['notificationsDropdown', userId],
     queryFn: () =>
       notificationApi.getNotifications({
@@ -76,13 +79,24 @@ export function NotificationDropdown() {
         page: 0,
         size: 10,
       }),
-    enabled: !!userId,
+    enabled: !!userId && isOpen,
+    retry: 1,
   });
 
+  // Refetch when dropdown opens
+  useEffect(() => {
+    if (isOpen && userId) {
+      refetch();
+    }
+  }, [isOpen, userId, refetch]);
+
   // Extract notifications — backend returns Spring Page with `content` array
+  const rawData = notifData?.data;
   const rawNotifications =
-    notifData?.data?.content || notifData?.data?.data?.content || notifData?.data?.data || notifData?.data || [];
-  const notifications: NotificationType[] = (Array.isArray(rawNotifications) ? rawNotifications : []).map(mapNotification);
+    rawData?.content || rawData?.data?.content || rawData?.data || rawData || [];
+  const notifications: NotificationType[] = (
+    Array.isArray(rawNotifications) ? rawNotifications : []
+  ).map(mapNotification);
 
   // Mark as read mutation
   const markReadMutation = useMutation({
@@ -111,10 +125,8 @@ export function NotificationDropdown() {
     },
   });
 
-  if (!userId) return null;
-
   return (
-    <DropdownMenu>
+    <DropdownMenu open={isOpen} onOpenChange={setIsOpen}>
       <DropdownMenuTrigger asChild>
         <Button variant="ghost" size="icon" className="relative">
           <Bell className="h-5 w-5" />
@@ -138,6 +150,7 @@ export function NotificationDropdown() {
               className="h-auto py-0 px-2 text-xs text-muted-foreground"
               onClick={(e) => {
                 e.preventDefault();
+                e.stopPropagation();
                 markAllReadMutation.mutate();
               }}
             >
@@ -153,6 +166,7 @@ export function NotificationDropdown() {
           </div>
         ) : notifications.length === 0 ? (
           <div className="py-8 text-center text-sm text-muted-foreground">
+            <Bell className="h-8 w-8 mx-auto mb-2 opacity-50" />
             No notifications yet
           </div>
         ) : (
@@ -165,7 +179,8 @@ export function NotificationDropdown() {
                   className={`flex items-start gap-3 p-3 cursor-pointer ${
                     !notif.isRead ? 'bg-accent/50' : ''
                   }`}
-                  onClick={() => {
+                  onSelect={(e) => {
+                    e.preventDefault();
                     if (!notif.isRead) {
                       markReadMutation.mutate(notif.id);
                     }
@@ -197,17 +212,6 @@ export function NotificationDropdown() {
                         : ''}
                     </p>
                   </div>
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    className="h-6 w-6 shrink-0 opacity-0 group-hover:opacity-100"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      deleteMutation.mutate(notif.id);
-                    }}
-                  >
-                    <Trash2 className="h-3 w-3" />
-                  </Button>
                 </DropdownMenuItem>
               );
             })}
