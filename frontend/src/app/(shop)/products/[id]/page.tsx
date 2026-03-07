@@ -3,18 +3,32 @@
 import { useParams } from 'next/navigation';
 import Image from 'next/image';
 import Link from 'next/link';
-import { useQuery } from '@tanstack/react-query';
-import { Star, Minus, Plus, ShoppingCart, Heart, Share2 } from 'lucide-react';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { Star, Minus, Plus, ShoppingCart, Heart, Share2, Pencil } from 'lucide-react';
 import { productApi } from '@/lib/api/product';
 import { reviewApi } from '@/lib/api/review';
+import { reviewClient } from '@/lib/api/client';
 import { recommendationApi } from '@/lib/api/recommendation';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
 import { Separator } from '@/components/ui/separator';
+import { Textarea } from '@/components/ui/textarea';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog';
 import { ProductGrid } from '@/components/products/product-grid';
 import { useCartStore } from '@/stores/cart-store';
+import { useAuthStore } from '@/stores/auth-store';
+import { useToast } from '@/hooks/use-toast';
 import { formatPriceSimple, formatRelativeTime, formatRating } from '@/lib/utils/format';
 import { useState } from 'react';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -25,6 +39,43 @@ export default function ProductDetailPage() {
   const [quantity, setQuantity] = useState(1);
   const [selectedImage, setSelectedImage] = useState(0);
   const { addItem, isLoading: cartLoading } = useCartStore();
+  const { user, isAuthenticated } = useAuthStore();
+  const { toast } = useToast();
+  const queryClient = useQueryClient();
+
+  // Review form state
+  const [showReviewForm, setShowReviewForm] = useState(false);
+  const [reviewRating, setReviewRating] = useState(5);
+  const [reviewTitle, setReviewTitle] = useState('');
+  const [reviewBody, setReviewBody] = useState('');
+
+  const createReviewMutation = useMutation({
+    mutationFn: (data: { productId: string; userId: string; rating: number; title: string; body: string }) =>
+      reviewClient.post('/api/reviews', data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['reviews', productId] });
+      queryClient.invalidateQueries({ queryKey: ['ratingSummary', productId] });
+      toast({ title: 'Review submitted successfully' });
+      setShowReviewForm(false);
+      setReviewRating(5);
+      setReviewTitle('');
+      setReviewBody('');
+    },
+    onError: () => {
+      toast({ title: 'Failed to submit review', variant: 'destructive' });
+    },
+  });
+
+  const handleSubmitReview = () => {
+    if (!user) return;
+    createReviewMutation.mutate({
+      productId,
+      userId: user.id,
+      rating: reviewRating,
+      title: reviewTitle,
+      body: reviewBody,
+    });
+  };
 
   const { data: productData, isLoading: productLoading } = useQuery({
     queryKey: ['product', productId],
@@ -302,6 +353,20 @@ export default function ProductDetailPage() {
             </div>
           )}
 
+          {/* Write a Review Button */}
+          <div className="mb-6">
+            {isAuthenticated ? (
+              <Button onClick={() => setShowReviewForm(true)}>
+                <Pencil className="h-4 w-4 mr-2" />
+                Write a Review
+              </Button>
+            ) : (
+              <Button asChild variant="outline">
+                <Link href="/login">Log in to write a review</Link>
+              </Button>
+            )}
+          </div>
+
           <div className="space-y-6">
             {reviews.map((review) => (
               <div key={review.id} className="border-b pb-6">
@@ -362,6 +427,74 @@ export default function ProductDetailPage() {
           <ProductGrid products={similarProducts} />
         </section>
       )}
+
+      {/* Write Review Dialog */}
+      <Dialog open={showReviewForm} onOpenChange={setShowReviewForm}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Write a Review</DialogTitle>
+            <DialogDescription>
+              Share your experience with {product.name}
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4 py-4">
+            <div className="space-y-2">
+              <Label>Rating</Label>
+              <div className="flex gap-1">
+                {[1, 2, 3, 4, 5].map((star) => (
+                  <button
+                    key={star}
+                    type="button"
+                    onClick={() => setReviewRating(star)}
+                    className="p-0.5"
+                  >
+                    <Star
+                      className={`h-7 w-7 ${
+                        star <= reviewRating
+                          ? 'fill-yellow-400 text-yellow-400'
+                          : 'text-muted hover:text-yellow-300'
+                      }`}
+                    />
+                  </button>
+                ))}
+              </div>
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="review-title">Title</Label>
+              <Input
+                id="review-title"
+                placeholder="Summarize your experience"
+                value={reviewTitle}
+                onChange={(e) => setReviewTitle(e.target.value)}
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="review-body">Review</Label>
+              <Textarea
+                id="review-body"
+                placeholder="What did you like or dislike about this product?"
+                rows={4}
+                value={reviewBody}
+                onChange={(e) => setReviewBody(e.target.value)}
+              />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={() => setShowReviewForm(false)}
+            >
+              Cancel
+            </Button>
+            <Button
+              onClick={handleSubmitReview}
+              disabled={createReviewMutation.isPending || !reviewBody.trim()}
+            >
+              {createReviewMutation.isPending ? 'Submitting...' : 'Submit Review'}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
