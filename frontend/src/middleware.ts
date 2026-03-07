@@ -62,8 +62,19 @@ const DEFAULT_URLS: Record<string, string> = {
   ANALYTICS_SERVICE_URL: 'http://localhost:3010',
 };
 
+// Paths handled by Next.js API routes (POST body forwarding workaround)
+const API_ROUTE_POSTS = ['/api/reviews'];
+
 export function middleware(request: NextRequest) {
   const { pathname, search } = request.nextUrl;
+
+  // Let Next.js API routes handle POST requests that need body forwarding
+  if (
+    request.method === 'POST' &&
+    API_ROUTE_POSTS.some((p) => pathname === p || pathname.startsWith(p + '/'))
+  ) {
+    return NextResponse.next();
+  }
 
   for (const [prefix, envKey] of ROUTE_MAP) {
     if (pathname.startsWith(prefix)) {
