@@ -23,6 +23,12 @@ import {
   ExportReportResponse,
 } from '@/types/analytics';
 
+// Backend expects `from` / `to` instead of `startDate` / `endDate`
+function toBackendParams(params: AnalyticsParams & Record<string, unknown>) {
+  const { startDate, endDate, ...rest } = params;
+  return { from: startDate, to: endDate, ...rest };
+}
+
 export const analyticsApi = {
   // ==========================================
   // Event Tracking
@@ -68,7 +74,7 @@ export const analyticsApi = {
    */
   getSalesAnalytics: (params: AnalyticsParams & { granularity?: string }) =>
     analyticsClient.get<ApiResponse<SalesAnalytics>>('/api/analytics/sales/by-date', {
-      params,
+      params: toBackendParams(params),
     }),
 
   /**
@@ -78,7 +84,7 @@ export const analyticsApi = {
   getSalesSummary: (params: AnalyticsParams) =>
     analyticsClient.get<ApiResponse<SalesAnalytics['summary']>>(
       '/api/analytics/sales/summary',
-      { params }
+      { params: toBackendParams(params) }
     ),
 
   /**
@@ -88,7 +94,7 @@ export const analyticsApi = {
   getSalesByCategory: (params: AnalyticsParams) =>
     analyticsClient.get<ApiResponse<CategorySales[]>>(
       '/api/analytics/sales/by-category',
-      { params }
+      { params: toBackendParams(params) }
     ),
 
   /**
@@ -97,7 +103,7 @@ export const analyticsApi = {
    */
   getConversionFunnel: (params: AnalyticsParams) =>
     analyticsClient.get<ApiResponse<unknown>>('/api/analytics/sales/funnel', {
-      params,
+      params: toBackendParams(params),
     }),
 
   // ==========================================
@@ -111,7 +117,7 @@ export const analyticsApi = {
   getTopSellingProducts: (params: AnalyticsParams & { limit?: number }) =>
     analyticsClient.get<ApiResponse<TopSellingProduct[]>>(
       '/api/analytics/products/top-selling',
-      { params }
+      { params: toBackendParams(params) }
     ),
 
   /**
@@ -121,7 +127,7 @@ export const analyticsApi = {
   getProductPerformance: (productId: string, params: AnalyticsParams) =>
     analyticsClient.get<ApiResponse<ProductPerformance>>(
       `/api/analytics/products/${productId}/performance`,
-      { params }
+      { params: toBackendParams(params) }
     ),
 
   // ==========================================
