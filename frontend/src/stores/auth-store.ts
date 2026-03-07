@@ -66,9 +66,18 @@ export const useAuthStore = create<AuthState>()(
           setStorageItem(ACCESS_TOKEN_KEY, accessToken);
           setStorageItem(REFRESH_TOKEN_KEY, refreshToken);
 
+          // Extract userId from JWT if not in response body
+          let userId = rest.userId || rest.id || '';
+          if (!userId && accessToken) {
+            try {
+              const payload = JSON.parse(atob(accessToken.split('.')[1]));
+              userId = payload.userId || payload.sub || '';
+            } catch { /* ignore decode errors */ }
+          }
+
           // Build user object from flat response
           const user: User = {
-            id: rest.userId || rest.id || '',
+            id: userId,
             email: rest.email,
             firstName: rest.firstName,
             lastName: rest.lastName,
@@ -117,8 +126,17 @@ export const useAuthStore = create<AuthState>()(
           setStorageItem(ACCESS_TOKEN_KEY, accessToken);
           setStorageItem(REFRESH_TOKEN_KEY, refreshToken);
 
+          // Extract userId from JWT if not in response body
+          let regUserId = rest.userId || rest.id || regData.userId || '';
+          if (!regUserId && accessToken) {
+            try {
+              const payload = JSON.parse(atob(accessToken.split('.')[1]));
+              regUserId = payload.userId || payload.sub || '';
+            } catch { /* ignore decode errors */ }
+          }
+
           const user: User = {
-            id: rest.userId || rest.id || regData.userId || '',
+            id: regUserId,
             email: rest.email,
             firstName: rest.firstName,
             lastName: rest.lastName,
